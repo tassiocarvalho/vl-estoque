@@ -546,7 +546,7 @@ sequenceDiagram
         A-->>W: 401 "Usuário ou senha inválidos"
     else senha correta
         A->>DB: zera tentativas, registra auditoria
-        A-->>W: Set-Cookie httpOnly; SameSite=Strict (JWT + tokenVersion)
+        A-->>W: Cookie de sessão httpOnly e SameSite=Strict (JWT + tokenVersion)
         opt senha provisória
             W-->>U: Tela "Crie sua senha pessoal"
         end
