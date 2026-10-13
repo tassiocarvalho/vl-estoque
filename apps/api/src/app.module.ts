@@ -16,6 +16,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { PurchaseRequestsModule } from './modules/purchase-requests/purchase-requests.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { SetupModule } from './modules/setup/setup.module';
 import { StockModule } from './modules/stock/stock.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -41,6 +42,7 @@ const staticFiles = existsSync(webDist)
     PurchaseRequestsModule,
     ReportsModule,
     IntegrationModule,
+    SetupModule,
   ],
   providers: [
     // A ordem importa: limite de requisições → sessão → permissões → PIN.

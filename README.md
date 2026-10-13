@@ -17,6 +17,8 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?logo=pwa&logoColor=white)
 
+<a href="https://github.com/tassiocarvalho/vl-estoque-download/releases/latest/download/VL-Estoque-Setup-1.0.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
+
 <img src="docs/screenshots/painel.png" width="900" alt="Painel do sistema" />
 
 </div>
@@ -725,7 +727,26 @@ Reenviar o mesmo `externalId` não duplica a baixa.
 
 ## 🚀 Como rodar
 
-### Requisitos
+### Opção 1 · Aplicativo para Windows (recomendado para a loja)
+
+1. Baixe o instalador: **[VL-Estoque-Setup-1.0.0.exe](https://github.com/tassiocarvalho/vl-estoque-download/releases/latest/download/VL-Estoque-Setup-1.0.0.exe)**
+2. Execute e siga os passos. Ele cria um atalho **VL Estoque** na área de trabalho.
+3. Na primeira abertura, o app mostra a **senha provisória do `admin`**. Anote-a, porque o sistema pede a troca no primeiro acesso.
+
+O app abre em **janela própria** (sem barra de endereço) e já traz tudo embutido: banco PostgreSQL, API e telas. Não é preciso instalar Node.js nem nada além dele.
+
+| Item | Onde fica |
+|---|---|
+| Dados do estoque | `%LOCALAPPDATA%\VLEstoque\pgdata` (preservados ao desinstalar) |
+| Senhas geradas na instalação | `%LOCALAPPDATA%\VLEstoque\config.json` |
+| Logs | `%LOCALAPPDATA%\VLEstoque\logs` |
+| Acesso pelo celular (mesma rede) | `http://IP-DO-COMPUTADOR:3030` |
+
+> ⚠️ Como o instalador não tem assinatura digital, o Windows pode exibir o aviso “O Windows protegeu o computador”. Clique em **Mais informações → Executar assim mesmo**.
+
+Para gerar um novo instalador: `npm run dist` (saída em `apps/desktop/release/`).
+
+### Opção 2 · Pelo código-fonte
 
 | Item | Versão |
 |---|---|
@@ -761,6 +782,8 @@ O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps
 | `npm run dev` | Banco, API e front com recarga automática |
 | `npm run build` · `npm start` | Build e execução em produção |
 | `npm test` | Testes das regras de negócio (Vitest) |
+| `npm run desktop` | Abre o app desktop (Electron) a partir do código |
+| `npm run dist` | Gera o instalador do Windows (`.exe`) |
 | `npm run typecheck` | Verificação de tipos da API e do front |
 | `npm run db:demo -w @vl/api` | Dados de demonstração |
 | `npm run db:stop -w @vl/api` | Desliga o banco embutido |
@@ -789,11 +812,14 @@ sistema-estoque/
 │   │           ├── reports/
 │   │           ├── auth/ users/ settings/ audit/ categories/
 │   │           └── integration/     # 🔌 adaptador do PDV
-│   └── web/                         # Front-end (React PWA)
-│       └── src/
-│           ├── components/          # layout + UI reutilizável
-│           ├── features/            # uma pasta por funcionalidade
-│           └── lib/                 # cliente HTTP, tipos, formatação
+│   ├── web/                         # Front-end (React PWA)
+│   │   └── src/
+│   │       ├── components/          # layout + UI reutilizável
+│   │       ├── features/            # uma pasta por funcionalidade
+│   │       └── lib/                 # cliente HTTP, tipos, formatação
+│   └── desktop/                     # 🖥️ App Windows (Electron + instalador NSIS)
+│       ├── src/main.mjs             # liga banco → migrations → API → janela
+│       └── scripts/package.mjs      # gera o VL-Estoque-Setup.exe
 ├── docs/screenshots/
 ├── scripts/setup.mjs
 └── iniciar-sistema.bat

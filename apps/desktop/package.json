@@ -1,0 +1,17 @@
+{
+  "name": "@vl/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "V&L Estoque — aplicativo desktop",
+  "author": "Tassio Carvalho",
+  "main": "src/main.mjs",
+  "scripts": {
+    "postinstall": "install-electron",
+    "start": "electron .",
+    "dist": "node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "electron": "44.7.1",
+    "electron-builder": "^26.15.3"
+  }
+}

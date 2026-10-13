@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'" />
+    <title>V&amp;L Estoque</title>
+    <style>
+      html, body { margin: 0; height: 100%; font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
+      body {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+        background: radial-gradient(circle at 30% 20%, #1c7f60, #134337 70%); color: #fff;
+        -webkit-app-region: drag; user-select: none;
+      }
+      img { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); }
+      h1 { margin: 0; font-size: 20px; font-weight: 600; }
+      p { margin: 0; font-size: 13px; color: #b4e6d0; min-height: 18px; }
+      .bar { width: 180px; height: 4px; border-radius: 4px; background: rgb(255 255 255 / 0.15); overflow: hidden; }
+      .bar span { display: block; width: 40%; height: 100%; border-radius: 4px; background: #82d2b3; animation: load 1.2s ease-in-out infinite; }
+      @keyframes load { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+    </style>
+  </head>
+  <body>
+    <img src="icon.png" alt="" />
+    <h1>V&amp;L Estoque</h1>
+    <div class="bar"><span></span></div>
+    <p id="status">Iniciando...</p>
+  </body>
+</html>
