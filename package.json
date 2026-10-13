@@ -1,0 +1,34 @@
+{
+  "name": "vl-estoque",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de gestão de estoque — V&L Mercadinho e Panificadora",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "concurrently -k -n banco,api,web -c blue,green,magenta \"npm run db -w @vl/api\" \"npm run dev -w @vl/api\" \"npm run dev -w @vl/web\"",
+    "build": "npm run build -w @vl/web && npm run build -w @vl/api",
+    "start": "concurrently -k -n banco,app -c blue,green \"npm run db -w @vl/api\" \"npm run start:prod -w @vl/api\"",
+    "test": "npm run test -w @vl/api",
+    "typecheck": "npm run typecheck -w @vl/api && npm run typecheck -w @vl/web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "prisma@6.19.3": true,
+    "@embedded-postgres/windows-x64@18.4.0-beta.17": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
+  }
+}

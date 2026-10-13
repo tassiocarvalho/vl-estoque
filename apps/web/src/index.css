@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+
+  --color-brand-50: #effaf5;
+  --color-brand-100: #d8f3e6;
+  --color-brand-200: #b4e6d0;
+  --color-brand-300: #82d2b3;
+  --color-brand-400: #4db891;
+  --color-brand-500: #2a9d76;
+  --color-brand-600: #1c7f60;
+  --color-brand-700: #18664f;
+  --color-brand-800: #165141;
+  --color-brand-900: #134337;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  input[type='number']::-webkit-inner-spin-button {
+    @apply opacity-50;
+  }
+}
+
+@layer components {
+  .table-base {
+    @apply w-full text-left text-sm;
+  }
+  .table-base thead th {
+    @apply sticky top-0 bg-slate-50/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur;
+  }
+  .table-base tbody td {
+    @apply border-t border-slate-100 px-4 py-3 align-middle;
+  }
+  .table-base tbody tr {
+    @apply transition-colors hover:bg-slate-50/80;
+  }
+}
+
+/* Impressão: esconde a navegação e imprime só o conteúdo (relatórios e pedidos). */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    @apply bg-white;
+  }
+  .print-full {
+    @apply m-0 p-0 shadow-none;
+  }
+}

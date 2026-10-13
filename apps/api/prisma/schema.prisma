@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Usuários e acesso ────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN // Administrador (dono/gerente)
+  STOCKIST // Estoquista
+  CASHIER // Caixa
+}
+
+model User {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String
+  username            String    @unique
+  passwordHash        String
+  pinHash             String?
+  role                Role
+  active              Boolean   @default(true)
+  mustChangePassword  Boolean   @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  /// Incrementado no logout, troca de senha ou desativação: invalida sessões antigas.
+  tokenVersion        Int       @default(0)
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  movements        StockMovement[]
+  purchaseRequests PurchaseRequest[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+// ─── Catálogo ─────────────────────────────────────────────────────────────────
+
+/// Categoria (parentId nulo) ou subcategoria (parentId preenchido).
+model Category {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  parentId  String?    @db.Uuid
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children  Category[] @relation("CategoryTree")
+  products  Product[]
+  createdAt DateTime   @default(now())
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+enum Unit {
+  UN
+  KG
+  G
+  L
+  ML
+  M
+  CX
+  PCT
+  DZ
+}
+
+model Product {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String
+  sku                 String    @unique
+  barcode             String?   @unique
+  categoryId          String    @db.Uuid
+  category            Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit                Unit
+  avgDailyConsumption Decimal   @db.Decimal(12, 3)
+  maxDailyConsumption Decimal   @db.Decimal(12, 3)
+  leadTimeDays        Int
+  /// Indicadores calculados pelo domínio (EM, ES e PP) — armazenados para filtros rápidos.
+  minimumStock        Decimal   @db.Decimal(12, 3)
+  safetyStock         Decimal   @db.Decimal(12, 3)
+  reorderPoint        Decimal   @db.Decimal(12, 3)
+  /// Saldo atual (cache). A fonte da verdade é a soma das movimentações.
+  currentStock        Decimal   @default(0) @db.Decimal(12, 3)
+  /// Preenchido quando o produto vai para a lixeira.
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  movements        StockMovement[]
+  purchaseRequests PurchaseRequest[]
+
+  @@index([deletedAt])
+  @@index([name])
+  @@index([categoryId])
+  @@map("products")
+}
+
+// ─── Movimentação de estoque (livro de registros imutável) ────────────────────
+
+enum MovementType {
+  IN_PURCHASE // Entrada: pedido recebido
+  IN_RETURN // Entrada: retorno ao estoque
+  IN_ADJUSTMENT // Entrada: ajuste / estoque inicial
+  OUT_SALE // Saída: venda
+  OUT_LOSS // Saída: perda, quebra ou vencimento
+  OUT_ADJUSTMENT // Saída: ajuste de inventário
+}
+
+enum MovementSource {
+  APP
+  PDV
+}
+
+model StockMovement {
+  /// Gerado no dispositivo: permite sincronização offline sem duplicar registros.
+  id           String         @id @default(uuid()) @db.Uuid
+  productId    String         @db.Uuid
+  product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type         MovementType
+  quantity     Decimal        @db.Decimal(12, 3)
+  balanceAfter Decimal        @db.Decimal(12, 3)
+  note         String?
+  source       MovementSource @default(APP)
+  userId       String?        @db.Uuid
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  occurredAt   DateTime
+  createdAt    DateTime       @default(now())
+
+  @@index([productId, occurredAt])
+  @@index([occurredAt])
+  @@map("stock_movements")
+}
+
+// ─── Solicitações de pedido ───────────────────────────────────────────────────
+
+enum PurchaseRequestStatus {
+  PENDING // Aguardando a gestão
+  ORDERED // Pedido feito ao fornecedor
+  RECEIVED // Mercadoria recebida
+  CANCELED
+}
+
+model PurchaseRequest {
+  id                String                @id @default(uuid()) @db.Uuid
+  productId         String                @db.Uuid
+  product           Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status            PurchaseRequestStatus @default(PENDING)
+  suggestedQuantity Decimal               @db.Decimal(12, 3)
+  stockAtRequest    Decimal               @db.Decimal(12, 3)
+  reorderPoint      Decimal               @db.Decimal(12, 3)
+  note              String?
+  /// Nulo quando a solicitação foi gerada automaticamente pelo sistema.
+  createdById       String?               @db.Uuid
+  createdBy         User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  closedAt          DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("purchase_requests")
+}
+
+// ─── Configuração e auditoria ─────────────────────────────────────────────────
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
