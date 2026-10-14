@@ -774,6 +774,41 @@ No Windows, para usar no dia a dia, basta dar **dois cliques em `iniciar-sistema
 
 O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps/api/.env` (`ADMIN_INITIAL_PASSWORD`). O sistema obriga a troca no primeiro acesso.
 
+### Opção 3 · Publicado na nuvem (acesso de qualquer lugar)
+
+```mermaid
+flowchart LR
+    U["💻📱 PC do caixa, celular do estoque<br/>(navegador ou app instalado)"] -->|HTTPS| C["Caddy<br/>certificado automático"]
+    subgraph O["Servidor Oracle Cloud · Always Free"]
+        C --> A["API NestJS + telas"]
+        B["Backup diário<br/>(14 dias)"]
+    end
+    A -->|SSL| N[("PostgreSQL<br/>Neon")]
+    B -.->|pg_dump| N
+    G["GitHub<br/>push na main"] -->|Actions + SSH| O
+```
+
+| Requisito do documento | Como fica atendido |
+|---|---|
+| Salvamento em nuvem | Banco no **Neon** (gerenciado, com histórico de restauração) + **backup diário** independente no servidor |
+| Atualização automática | Cada `git push` na `main` publica sozinho (GitHub Actions); as telas (PWA) se atualizam ao abrir |
+| Acesso por vários aparelhos, inclusive 4G/5G | Endereço HTTPS público; no celular ou PC, use **“Instalar app”** do navegador |
+| Funcionar sem internet | Modo offline do PWA: movimentações entram numa fila e sincronizam depois |
+
+**Implantação (uma vez):**
+
+1. Crie um projeto no [Neon](https://neon.tech) (região São Paulo) e copie a *connection string*.
+2. Crie uma VM Ubuntu no [Oracle Cloud](https://cloud.oracle.com) (*Always Free*) e libere as portas **80** e **443** na *Security List* da rede.
+3. No servidor: `sudo DATABASE_URL='<string do Neon>' bash server-setup.sh` (arquivo em [`deploy/`](deploy/)).
+4. Cadastre no GitHub a variável `DEPLOY_HOST` e os segredos `DEPLOY_SSH_KEY` e `DEPLOY_KNOWN_HOSTS`.
+
+| Arquivo | Função |
+|---|---|
+| [`deploy/server-setup.sh`](deploy/server-setup.sh) | Instala Node.js, Caddy (HTTPS) e cliente PostgreSQL; cria usuário, serviço, firewall e backup |
+| [`deploy/deploy.sh`](deploy/deploy.sh) | Baixa a versão nova, compila, aplica migrations e reinicia |
+| [`deploy/backup.sh`](deploy/backup.sh) | `pg_dump` diário às 03:30, guardando 14 dias |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | Publicação automática a cada push |
+
 ### Comandos
 
 | Comando | Descrição |
