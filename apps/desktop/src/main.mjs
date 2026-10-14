@@ -3,7 +3,8 @@
  *
  * Ao abrir: liga o PostgreSQL embutido → aplica as migrations → sobe a API (que também
  * entrega as telas) → mostra o sistema numa janela própria, sem barra de endereço.
- * Ao fechar a janela, desliga tudo de forma limpa.
+ * Faz backup no Google Drive ao abrir, a cada 4 horas e ao fechar; numa instalação nova,
+ * oferece restaurar o backup mais recente. Ao fechar a janela, desliga tudo de forma limpa.
  */
 import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
 import { spawn } from 'node:child_process';
@@ -12,6 +13,7 @@ import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync }
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { BACKUP_FOLDER_NAME, createBackupService, findGoogleDrive, listBackups } from './backup.mjs';
 import { createDatabase } from './database.mjs';
 
 const require = createRequire(import.meta.url);
@@ -31,6 +33,8 @@ const APP_URL = `http://localhost:${API_PORT}`;
 const dataRoot = join(process.env.LOCALAPPDATA ?? app.getPath('userData'), 'VLEstoque');
 const configPath = join(dataRoot, 'config.json');
 const logsDir = join(dataRoot, 'logs');
+const localBackupDir = join(dataRoot, 'backups');
+const BACKUP_INTERVAL_MS = 4 * 60 * 60 * 1000;
 mkdirSync(logsDir, { recursive: true });
 const log = createWriteStream(join(logsDir, 'app.log'), { flags: 'a' });
 const writeLog = (message) => log.write(`[${new Date().toISOString()}] ${message}\n`);
@@ -39,6 +43,10 @@ let splash = null;
 let mainWindow = null;
 let apiProcess = null;
 let database = null;
+let backups = null;
+let backupTimer = null;
+let backupRunning = null;
+let restoredFrom = null;
 let cleanedUp = false;
 
 // ─── Configuração (segredos gerados na primeira execução) ─────────────────────
@@ -110,6 +118,8 @@ function setStatus(text) {
 async function startServices(config) {
   const databaseUrl = `postgresql://vl_estoque:${encodeURIComponent(config.dbPassword)}@127.0.0.1:${DB_PORT}/vl_estoque?schema=public`;
 
+  const isNewDatabase = !existsSync(join(dataRoot, 'pgdata', 'PG_VERSION'));
+
   setStatus('Iniciando o banco de dados...');
   database = await createDatabase({
     dataDir: join(dataRoot, 'pgdata'),
@@ -127,6 +137,12 @@ async function startServices(config) {
     PRISMA_HIDE_UPDATE_MESSAGE: '1',
     CHECKPOINT_DISABLE: '1',
   });
+
+  backups = createBackupService({
+    connection: { host: '127.0.0.1', port: DB_PORT, user: 'vl_estoque', password: config.dbPassword, database: 'vl_estoque' },
+    log: writeLog,
+  });
+  if (isNewDatabase) await offerRestore(config);
 
   setStatus('Iniciando o sistema...');
   apiProcess = runNode(API_ENTRY, [], {
@@ -204,14 +220,119 @@ async function showFirstRunInfo(config) {
   saveConfig({ ...config, adminPasswordShown: true });
 }
 
+// ─── Backup no Google Drive ──────────────────────────────────────────────────
+
+const formatDate = (date) => date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+function cloudBackupDir(config) {
+  if (config.backupDir) return config.backupDir;
+  const drive = findGoogleDrive();
+  return drive ? join(drive, BACKUP_FOLDER_NAME) : null;
+}
+
+/** Instalação nova (computador novo ou reinstalação): oferece trazer os dados do último backup. */
+async function offerRestore(config) {
+  const [latest] = [...listBackups(cloudBackupDir(config)), ...listBackups(localBackupDir)].sort(
+    (a, b) => b.modifiedAt - a.modifiedAt,
+  );
+  if (!latest) return;
+  const { response } = await dialog.showMessageBox({
+    type: 'question',
+    title: 'V&L Estoque',
+    message: 'Encontramos um backup dos seus dados',
+    detail: `Backup de ${formatDate(latest.modifiedAt)}\n${latest.path}\n\nDeseja restaurar os produtos, movimentações e usuários?`,
+    buttons: ['Restaurar dados', 'Começar do zero'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (response !== 0) return;
+  setStatus('Restaurando o backup...');
+  await backups.restore(latest.path);
+  restoredFrom = latest.modifiedAt;
+  // Os usuários vieram do backup: a senha provisória gerada nesta instalação não vale.
+  config.adminPasswordShown = true;
+  saveConfig(config);
+}
+
+/** Na primeira vez, encontra a pasta do Google Drive (ou pede uma pasta sincronizada). */
+async function setupBackupFolder(config) {
+  if (config.backupDir) return;
+  const drive = findGoogleDrive();
+  if (drive) {
+    config.backupDir = join(drive, BACKUP_FOLDER_NAME);
+    saveConfig(config);
+    await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'V&L Estoque',
+      message: 'Backup automático no Google Drive ativado',
+      detail: `Os dados serão copiados ao abrir, a cada 4 horas e ao fechar o sistema, para:\n${config.backupDir}`,
+      buttons: ['OK'],
+    });
+    return;
+  }
+  if (config.backupPromptDismissed) return;
+  const { response, checkboxChecked } = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: 'V&L Estoque',
+    message: 'Backup na nuvem ainda não configurado',
+    detail:
+      'Para não perder os dados se o computador der defeito, instale o “Google Drive para computador” ' +
+      '(google.com/drive/download) e entre com a sua conta Google. O V&L Estoque encontra a pasta sozinho ' +
+      'na próxima vez que abrir.\n\nSe preferir, escolha agora uma pasta que seja sincronizada com a nuvem.\n\n' +
+      'Enquanto isso, os backups ficam só neste computador.',
+    buttons: ['Escolher pasta...', 'Agora não'],
+    defaultId: 1,
+    cancelId: 1,
+    checkboxLabel: 'Não perguntar novamente',
+  });
+  if (checkboxChecked) config.backupPromptDismissed = true;
+  if (response === 0) {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Pasta sincronizada com a nuvem',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (!canceled && filePaths[0]) config.backupDir = join(filePaths[0], BACKUP_FOLDER_NAME);
+  }
+  saveConfig(config);
+}
+
+/** Faz o backup na pasta da nuvem; se ela não estiver disponível (Drive fechado), neste computador. */
+function runBackup(config) {
+  if (!backups) return Promise.resolve();
+  backupRunning ??= (async () => {
+    const cloudDir = config.backupDir && existsSync(dirname(config.backupDir)) ? config.backupDir : null;
+    if (config.backupDir && !cloudDir) writeLog(`Pasta da nuvem indisponível (${config.backupDir}); backup local`);
+    try {
+      await backups.backup(cloudDir ?? localBackupDir);
+    } catch (error) {
+      writeLog(`Falha no backup: ${error?.stack ?? error}`);
+    }
+  })().finally(() => (backupRunning = null));
+  return backupRunning;
+}
+
 async function boot() {
   Menu.setApplicationMenu(null);
   createSplash();
   try {
     const config = loadConfig();
     await startServices(config);
+    shutdownBackup = () => runBackup(config);
     await createMainWindow();
     await showFirstRunInfo(config);
+    if (restoredFrom) {
+      await dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'V&L Estoque',
+        message: 'Dados restaurados com sucesso!',
+        detail: `Backup de ${formatDate(restoredFrom)}.\nEntre com os usuários e senhas de sempre.`,
+        buttons: ['OK'],
+      });
+    }
+    await setupBackupFolder(config);
+    void runBackup(config);
+    backupTimer = setInterval(() => void runBackup(config), BACKUP_INTERVAL_MS);
+    app.on('before-quit', () => clearInterval(backupTimer));
   } catch (error) {
     writeLog(`ERRO: ${error?.stack ?? error}`);
     splash?.destroy();
@@ -225,8 +346,11 @@ async function boot() {
 
 // ─── Encerramento ────────────────────────────────────────────────────────────
 
+let shutdownBackup = null;
+
 async function cleanup() {
   writeLog('Encerrando...');
+  await shutdownBackup?.(); // último backup antes de desligar o banco
   if (apiProcess && apiProcess.exitCode == null) apiProcess.kill();
   try {
     await database?.stop();

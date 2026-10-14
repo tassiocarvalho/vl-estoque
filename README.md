@@ -17,7 +17,7 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?logo=pwa&logoColor=white)
 
-<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.0.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
+<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.1.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
 
 <img src="docs/screenshots/painel.png" width="900" alt="Painel do sistema" />
 
@@ -729,7 +729,7 @@ Reenviar o mesmo `externalId` não duplica a baixa.
 
 ### Opção 1 · Aplicativo para Windows (recomendado para a loja)
 
-1. Baixe o instalador: **[VL-Estoque-Setup-1.0.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.0.0.exe)**
+1. Baixe o instalador: **[VL-Estoque-Setup-1.1.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.1.0.exe)**
 2. Execute e siga os passos. Ele cria um atalho **VL Estoque** na área de trabalho.
 3. Na primeira abertura, o app mostra a **senha provisória do `admin`**. Anote-a, porque o sistema pede a troca no primeiro acesso.
 
@@ -740,7 +740,24 @@ O app abre em **janela própria** (sem barra de endereço) e já traz tudo embut
 | Dados do estoque | `%LOCALAPPDATA%\VLEstoque\pgdata` (preservados ao desinstalar) |
 | Senhas geradas na instalação | `%LOCALAPPDATA%\VLEstoque\config.json` |
 | Logs | `%LOCALAPPDATA%\VLEstoque\logs` |
+| Backups automáticos | `Meu Drive\VL Estoque - Backups` no Google Drive (ou `%LOCALAPPDATA%\VLEstoque\backups` sem o Drive) |
 | Acesso pelo celular (mesma rede) | `http://IP-DO-COMPUTADOR:3030` |
+
+#### ☁️ Backup no Google Drive
+
+Atende ao requisito de **salvamento em nuvem** sem servidor nem mensalidade:
+
+1. Instale o [Google Drive para computador](https://www.google.com/drive/download/) e entre com a conta Google da loja.
+2. O app encontra a pasta **Meu Drive** sozinho e passa a salvar uma cópia dos dados **ao abrir, a cada 4 horas e ao fechar**. É um arquivo por dia, e ficam guardados os últimos 30 dias.
+3. O Drive sincroniza essas cópias com a nuvem.
+
+**Se o computador der defeito:** instale o Drive e o V&L Estoque no computador novo. Na primeira abertura, o app encontra o backup mais recente e pergunta se deseja **restaurar os dados**.
+
+| Situação | O que acontece |
+|---|---|
+| Drive ainda não instalado | O app avisa e oferece escolher outra pasta sincronizada; enquanto isso, guarda o backup só no computador |
+| Drive fechado ou sem internet | O backup é salvo no computador e o Drive envia quando voltar |
+| Backup de uma versão anterior | Restaura normalmente: os dados entram no formato da versão atual |
 
 > ⚠️ Como o instalador não tem assinatura digital, o Windows pode exibir o aviso “O Windows protegeu o computador”. Clique em **Mais informações → Executar assim mesmo**.
 
@@ -773,41 +790,6 @@ npm run build && npm start
 No Windows, para usar no dia a dia, basta dar **dois cliques em `iniciar-sistema.bat`**.
 
 O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps/api/.env` (`ADMIN_INITIAL_PASSWORD`). O sistema obriga a troca no primeiro acesso.
-
-### Opção 3 · Publicado na nuvem (acesso de qualquer lugar)
-
-```mermaid
-flowchart LR
-    U["💻📱 PC do caixa, celular do estoque<br/>(navegador ou app instalado)"] -->|HTTPS| C["Caddy<br/>certificado automático"]
-    subgraph O["Servidor Oracle Cloud · Always Free"]
-        C --> A["API NestJS + telas"]
-        B["Backup diário<br/>(14 dias)"]
-    end
-    A -->|SSL| N[("PostgreSQL<br/>Neon")]
-    B -.->|pg_dump| N
-    G["GitHub<br/>push na main"] -->|Actions + SSH| O
-```
-
-| Requisito do documento | Como fica atendido |
-|---|---|
-| Salvamento em nuvem | Banco no **Neon** (gerenciado, com histórico de restauração) + **backup diário** independente no servidor |
-| Atualização automática | Cada `git push` na `main` publica sozinho (GitHub Actions); as telas (PWA) se atualizam ao abrir |
-| Acesso por vários aparelhos, inclusive 4G/5G | Endereço HTTPS público; no celular ou PC, use **“Instalar app”** do navegador |
-| Funcionar sem internet | Modo offline do PWA: movimentações entram numa fila e sincronizam depois |
-
-**Implantação (uma vez):**
-
-1. Crie um projeto no [Neon](https://neon.tech) (região São Paulo) e copie a *connection string*.
-2. Crie uma VM Ubuntu no [Oracle Cloud](https://cloud.oracle.com) (*Always Free*) e libere as portas **80** e **443** na *Security List* da rede.
-3. No servidor: `sudo DATABASE_URL='<string do Neon>' bash server-setup.sh` (arquivo em [`deploy/`](deploy/)).
-4. Cadastre no GitHub a variável `DEPLOY_HOST` e os segredos `DEPLOY_SSH_KEY` e `DEPLOY_KNOWN_HOSTS`.
-
-| Arquivo | Função |
-|---|---|
-| [`deploy/server-setup.sh`](deploy/server-setup.sh) | Instala Node.js, Caddy (HTTPS) e cliente PostgreSQL; cria usuário, serviço, firewall e backup |
-| [`deploy/deploy.sh`](deploy/deploy.sh) | Baixa a versão nova, compila, aplica migrations e reinicia |
-| [`deploy/backup.sh`](deploy/backup.sh) | `pg_dump` diário às 03:30, guardando 14 dias |
-| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | Publicação automática a cada push |
 
 ### Comandos
 
