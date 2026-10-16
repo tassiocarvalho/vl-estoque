@@ -8,7 +8,7 @@ import { Card, EmptyState, ErrorState, LoadingState, PageHeader, Pagination, Tab
 import { Input } from '@/components/ui/Form';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { errorMessage, isCanceled } from '@/lib/api';
-import { formatNumber, formatQuantity } from '@/lib/format';
+import { formatMoney, formatNumber, formatQuantity } from '@/lib/format';
 import { UNIT_SHORT } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import type { Product } from '@/lib/types';
@@ -138,6 +138,7 @@ export function ProductsPage() {
                   <tr>
                     <th>Produto</th>
                     <th className="hidden md:table-cell">Categoria</th>
+                    <th className="hidden text-right lg:table-cell">Preço</th>
                     <th className="text-right">Saldo</th>
                     <th className="hidden text-right sm:table-cell">Ponto de pedido</th>
                     <th>Situação</th>
@@ -155,6 +156,9 @@ export function ProductsPage() {
                         </p>
                       </td>
                       <td className="hidden text-slate-600 md:table-cell">{product.category.path}</td>
+                      <td className="hidden text-right tabular-nums lg:table-cell">
+                        {product.salePrice > 0 ? formatMoney(product.salePrice) : <span className="text-xs text-slate-400">sem preço</span>}
+                      </td>
                       <td className="text-right font-semibold tabular-nums text-slate-900">
                         {formatQuantity(product.currentStock, product.unit)}
                       </td>

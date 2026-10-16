@@ -9,6 +9,8 @@ export enum Permission {
   CATEGORY_MANAGE = 'category:manage',
   STOCK_IN = 'stock:in',
   STOCK_OUT = 'stock:out',
+  /** Ajuste manual de inventário (entrada ou saída): restrito ao administrador. */
+  STOCK_ADJUST = 'stock:adjust',
   MOVEMENT_READ = 'movement:read',
   PURCHASE_READ = 'purchase:read',
   PURCHASE_MANAGE = 'purchase:manage',
@@ -16,26 +18,60 @@ export enum Permission {
   USER_MANAGE = 'user:manage',
   SETTINGS_MANAGE = 'settings:manage',
   AUDIT_READ = 'audit:read',
+
+  // ─── Frente de caixa ───
+  /** Abrir/fechar o próprio caixa e vender. */
+  POS_SELL = 'pos:sell',
+  /** Dar desconto acima do limite livre do operador. */
+  POS_DISCOUNT = 'pos:discount',
+  /** Cancelar uma venda já finalizada (estorna o estoque). */
+  POS_CANCEL = 'pos:cancel',
+  /** Sangria e suprimento. */
+  CASH_MOVEMENT = 'cash:movement',
+  /** Consultar vendas e caixas de todos os operadores. */
+  SALES_READ = 'sales:read',
 }
 
-const CASHIER: Permission[] = [Permission.PRODUCT_READ, Permission.STOCK_OUT];
+const CASHIER: Permission[] = [Permission.PRODUCT_READ, Permission.POS_SELL];
 
 const STOCKIST: Permission[] = [
-  ...CASHIER,
+  Permission.PRODUCT_READ,
   Permission.PRODUCT_WRITE,
   Permission.CATEGORY_MANAGE,
   Permission.STOCK_IN,
+  Permission.STOCK_OUT,
   Permission.MOVEMENT_READ,
   Permission.PURCHASE_READ,
   Permission.PURCHASE_MANAGE,
   Permission.REPORT_READ,
 ];
 
+/** Gerente: opera o caixa, autoriza descontos/cancelamentos e vê relatórios. */
+const MANAGER: Permission[] = [
+  ...CASHIER,
+  Permission.POS_DISCOUNT,
+  Permission.POS_CANCEL,
+  Permission.CASH_MOVEMENT,
+  Permission.SALES_READ,
+  Permission.REPORT_READ,
+  Permission.MOVEMENT_READ,
+  Permission.PURCHASE_READ,
+];
+
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   CASHIER,
   STOCKIST,
+  MANAGER,
   ADMIN: Object.values(Permission),
 };
 
 export const hasPermission = (role: Role, permission: Permission) =>
   ROLE_PERMISSIONS[role].includes(permission);
+
+/** Permissões que um supervisor pode liberar pontualmente no caixa com o próprio PIN. */
+export const AUTHORIZABLE_PERMISSIONS = [
+  Permission.POS_DISCOUNT,
+  Permission.POS_CANCEL,
+  Permission.CASH_MOVEMENT,
+] as const;
+export type AuthorizablePermission = (typeof AUTHORIZABLE_PERMISSIONS)[number];

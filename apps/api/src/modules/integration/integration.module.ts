@@ -2,8 +2,8 @@ import { Body, Controller, Get, Injectable, Module, Param, Post, UseGuards } fro
 import { MovementSource, MovementType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsNumber, IsString, Length, Max, Min, ValidateNested } from 'class-validator';
-import { createHash } from 'node:crypto';
 import { Public } from '../../common/auth/decorators';
+import { deterministicUuid } from '../../common/ids';
 import { ProductsModule } from '../products/products.module';
 import { ProductsService } from '../products/products.service';
 import { StockModule } from '../stock/stock.module';
@@ -44,12 +44,6 @@ class RegisterSaleDto {
   @ArrayMaxSize(200)
   items: SaleItemDto[];
 }
-
-/** UUID determinístico a partir do id da venda no PDV — garante idempotência. */
-const deterministicUuid = (seed: string) => {
-  const hex = createHash('sha256').update(seed).digest('hex');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
-};
 
 @Injectable()
 class PdvIntegrationService {

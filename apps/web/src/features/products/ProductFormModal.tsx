@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input, Select } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { errorMessage, isCanceled } from '@/lib/api';
-import { formatNumber } from '@/lib/format';
+import { formatDecimal, formatMoney, formatNumber, parseMoney } from '@/lib/format';
 import { UNIT_LABELS, UNIT_SHORT } from '@/lib/labels';
 import type { Product, Unit } from '@/lib/types';
 import { previewIndicators, useSaveProduct } from './api';
@@ -21,6 +21,12 @@ const quantity = (message: string) =>
     emptyToUndefined,
     z.coerce.number({ invalid_type_error: message }).min(0, 'Não pode ser negativo').max(1_000_000, 'Valor muito alto'),
   );
+
+/** Preço em reais: aceita "12,90", "1.234,56" ou "12.90". Vazio = não informado. */
+const money = z.preprocess(
+  (value) => (typeof value === 'string' ? (value.trim() === '' ? undefined : parseMoney(value)) : value),
+  z.number({ invalid_type_error: 'Valor inválido' }).min(0, 'Não pode ser negativo').max(1_000_000, 'Valor muito alto').optional(),
+);
 
 const schema = z
   .object({
@@ -43,6 +49,8 @@ const schema = z
       z.coerce.number({ invalid_type_error: 'Informe o prazo' }).int('Use dias inteiros').min(0).max(365),
     ),
     initialStock: z.preprocess(emptyToUndefined, z.coerce.number().min(0, 'Não pode ser negativo').optional()),
+    costPrice: money,
+    salePrice: money,
   })
   .refine((data) => data.maxDailyConsumption >= data.avgDailyConsumption, {
     path: ['maxDailyConsumption'],
@@ -62,6 +70,8 @@ const EMPTY: FormInput = {
   maxDailyConsumption: '' as unknown as number,
   leadTimeDays: '' as unknown as number,
   initialStock: '' as unknown as number,
+  costPrice: '' as unknown as number,
+  salePrice: '' as unknown as number,
 };
 
 interface ProductFormModalProps {
@@ -93,12 +103,17 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
             avgDailyConsumption: product.avgDailyConsumption,
             maxDailyConsumption: product.maxDailyConsumption,
             leadTimeDays: product.leadTimeDays,
+            costPrice: product.costPrice ? (formatDecimal(product.costPrice) as unknown as number) : ('' as unknown as number),
+            salePrice: product.salePrice ? (formatDecimal(product.salePrice) as unknown as number) : ('' as unknown as number),
           }
         : EMPTY,
     );
   }, [open, product, reset]);
 
-  const [avg, max, lead, unit] = watch(['avgDailyConsumption', 'maxDailyConsumption', 'leadTimeDays', 'unit']);
+  const [avg, max, lead, unit, cost, price] = watch(['avgDailyConsumption', 'maxDailyConsumption', 'leadTimeDays', 'unit', 'costPrice', 'salePrice']);
+  const costValue = parseMoney(String(cost ?? ''));
+  const priceValue = parseMoney(String(price ?? ''));
+  const margin = costValue > 0 && priceValue > 0 ? ((priceValue - costValue) / priceValue) * 100 : null;
   const preview = previewIndicators(Number(avg) || 0, Number(max) || 0, Number(lead) || 0);
 
   const onSubmit = handleSubmit(async (values) => {
@@ -157,6 +172,25 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
               </Select>
             )}
           </Field>
+        </fieldset>
+
+        <fieldset className="grid gap-4 sm:grid-cols-3">
+          <legend className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Preços</legend>
+          <Field label="Preço de venda (R$)" error={errors.salePrice?.message} hint="Cobrado no caixa. Em branco = não vendido no caixa.">
+            {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.salePrice} {...register('salePrice')} />}
+          </Field>
+          <Field label="Preço de custo (R$)" error={errors.costPrice?.message} hint="Usado na margem do relatório de vendas">
+            {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.costPrice} {...register('costPrice')} />}
+          </Field>
+          <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <span className="text-xs text-slate-500">Margem sobre a venda</span>
+            <span className="font-semibold text-slate-900">
+              {margin === null ? '—' : `${formatNumber(Math.round(margin * 10) / 10)}%`}
+              {margin !== null && priceValue > 0 && (
+                <span className="ml-1 text-xs font-normal text-slate-500">({formatMoney(priceValue - costValue)} por {UNIT_SHORT[unit as Unit]})</span>
+              )}
+            </span>
+          </div>
         </fieldset>
 
         <fieldset className="grid gap-4 sm:grid-cols-3">

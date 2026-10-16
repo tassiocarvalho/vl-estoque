@@ -5,7 +5,34 @@ const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }
 const dateFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' });
 const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
+const moneyFormat = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const decimalFormat = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export const formatNumber = (value: number) => numberFormat.format(value);
+
+/** R$ 1.234,56 */
+export const formatMoney = (value: number) => moneyFormat.format(value);
+
+/** 1.234,56 (sem o símbolo da moeda) */
+export const formatDecimal = (value: number) => decimalFormat.format(value);
+
+/**
+ * Lê um valor digitado no padrão brasileiro: "1.234,56", "1234,5", "12.5" ou "R$ 10".
+ * Devolve NaN se não for um número.
+ */
+export function parseMoney(text: string): number {
+  let clean = text.replace(/[^\d,.-]/g, '');
+  if (clean.includes(',')) clean = clean.replace(/\./g, '').replace(',', '.');
+  if (clean === '' || clean === '-') return Number.NaN;
+  return Math.round(Number(clean) * 100) / 100;
+}
+
+/** Lê uma quantidade (até 3 casas): "0,755" ou "2". */
+export function parseQuantity(text: string): number {
+  const clean = text.replace(/[^\d,.]/g, '').replace(',', '.');
+  if (clean === '') return Number.NaN;
+  return Math.round(Number(clean) * 1000) / 1000;
+}
 
 export const formatQuantity = (value: number, unit: Unit) => `${numberFormat.format(value)} ${UNIT_SHORT[unit]}`;
 

@@ -5,7 +5,10 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   ClipboardList,
+  Monitor,
   PackageCheck,
+  Receipt,
+  TrendingUp,
   PackageX,
   ShoppingCart,
 } from 'lucide-react';
@@ -15,12 +18,46 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, EmptyState, ErrorState, LoadingState, StatCard } from '@/components/ui/Display';
 import { http } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { formatDateTime, formatQuantity } from '@/lib/format';
+import { formatDateTime, formatMoney, formatNumber, formatQuantity } from '@/lib/format';
 import { MOVEMENT_LABELS } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import type { Dashboard, Movement } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
+import { useSalesReport } from '../pos/api';
 import { useMovements } from '../stock/api';
+
+/** Vendas de hoje (para quem tem acesso aos relatórios de vendas). */
+function TodaySales() {
+  const navigate = useNavigate();
+  const { data } = useSalesReport({});
+  if (!data) return null;
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <StatCard
+        label="Vendido hoje"
+        value={formatMoney(data.totals.net)}
+        icon={<TrendingUp className="size-5" />}
+        tone="green"
+        hint={`${data.totals.salesCount} venda(s)`}
+        onClick={() => navigate('/vendas')}
+      />
+      <StatCard
+        label="Ticket médio"
+        value={formatMoney(data.totals.averageTicket)}
+        icon={<Receipt className="size-5" />}
+        tone="blue"
+        onClick={() => navigate('/vendas')}
+      />
+      <StatCard
+        label="Vendas canceladas hoje"
+        value={formatNumber(data.totals.canceledCount)}
+        icon={<AlertTriangle className="size-5" />}
+        tone={data.totals.canceledCount > 0 ? 'amber' : 'neutral'}
+        onClick={() => navigate('/vendas')}
+      />
+    </div>
+  );
+}
 
 /** Versão compacta do histórico, para a coluna estreita do painel. */
 function RecentMovements({ movements }: { movements: Movement[] }) {
@@ -89,6 +126,11 @@ export function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {can(P.POS_SELL) && (
+            <Button variant="outline" icon={<Monitor className="size-4" />} onClick={() => navigate('/caixa')}>
+              Frente de caixa
+            </Button>
+          )}
           {can(P.STOCK_IN) && (
             <Button variant="outline" icon={<ArrowDownToLine className="size-4" />} onClick={() => navigate('/entrada')}>
               Entrada
@@ -101,6 +143,8 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
+      {can(P.SALES_READ) && <TodaySales />}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

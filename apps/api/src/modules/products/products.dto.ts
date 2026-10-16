@@ -25,6 +25,7 @@ const emptyToNull = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() || null : value;
 
 const QUANTITY = { maxDecimalPlaces: 3 };
+const MONEY = { maxDecimalPlaces: 2 };
 
 export class CreateProductDto {
   @Transform(trim)
@@ -61,6 +62,19 @@ export class CreateProductDto {
   @Min(0)
   @Max(365)
   leadTimeDays: number;
+
+  @IsOptional()
+  @IsNumber(MONEY, { message: 'Preço de custo inválido' })
+  @Min(0)
+  @Max(1_000_000)
+  costPrice?: number;
+
+  /** Preço cobrado no caixa. */
+  @IsOptional()
+  @IsNumber(MONEY, { message: 'Preço de venda inválido' })
+  @Min(0)
+  @Max(1_000_000)
+  salePrice?: number;
 
   /** Saldo inicial ao cadastrar (gera uma movimentação de "estoque inicial"). */
   @IsOptional()

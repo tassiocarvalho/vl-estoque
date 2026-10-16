@@ -6,6 +6,8 @@ import { Toaster } from 'sonner';
 import { registerSW } from 'virtual:pwa-register';
 import { AuthProvider } from './features/auth/AuthProvider';
 import { PinProvider } from './features/auth/PinProvider';
+import { SupervisorAuthProvider } from './features/auth/SupervisorAuthProvider';
+import { BrandingProvider, useBranding } from './features/branding/BrandingProvider';
 import { OfflineProvider } from './features/offline/OfflineProvider';
 import { ApiError } from './lib/api';
 import { router } from './router';
@@ -24,17 +26,26 @@ const queryClient = new QueryClient({
   },
 });
 
+function ThemedToaster() {
+  const { theme } = useBranding();
+  return <Toaster richColors position="top-right" closeButton theme={theme} />;
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OfflineProvider>
-          <PinProvider>
-            <RouterProvider router={router} />
-            <Toaster richColors position="top-right" closeButton />
-          </PinProvider>
-        </OfflineProvider>
-      </AuthProvider>
+      <BrandingProvider>
+        <AuthProvider>
+          <OfflineProvider>
+            <PinProvider>
+              <SupervisorAuthProvider>
+                <RouterProvider router={router} />
+                <ThemedToaster />
+              </SupervisorAuthProvider>
+            </PinProvider>
+          </OfflineProvider>
+        </AuthProvider>
+      </BrandingProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

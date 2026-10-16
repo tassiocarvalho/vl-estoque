@@ -33,6 +33,8 @@ export function toProductView(product: ProductWithCategory) {
     maxDailyConsumption: toNumber(product.maxDailyConsumption),
     leadTimeDays: product.leadTimeDays,
     currentStock,
+    costPrice: toNumber(product.costPrice),
+    salePrice: toNumber(product.salePrice),
     ...indicators,
     status: classifyStock(currentStock, indicators),
     deletedAt: product.deletedAt,

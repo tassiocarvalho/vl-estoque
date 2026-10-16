@@ -10,9 +10,10 @@ datasource db {
 // ─── Usuários e acesso ────────────────────────────────────────────────────────
 
 enum Role {
-  ADMIN // Administrador (dono/gerente)
+  ADMIN // Administrador (dono)
+  MANAGER // Gerente: relatórios e autorização de descontos/cancelamentos no caixa
   STOCKIST // Estoquista
-  CASHIER // Caixa
+  CASHIER // Operador de caixa
 }
 
 model User {
@@ -35,6 +36,14 @@ model User {
   movements        StockMovement[]
   purchaseRequests PurchaseRequest[]
   auditLogs        AuditLog[]
+
+  cashSessionsOpened CashSession[]  @relation("CashSessionOpenedBy")
+  cashSessionsClosed CashSession[]  @relation("CashSessionClosedBy")
+  cashMovements      CashMovement[] @relation("CashMovementUser")
+  cashMovementsAuth  CashMovement[] @relation("CashMovementAuthorizer")
+  sales              Sale[]         @relation("SaleOperator")
+  salesAuthorized    Sale[]         @relation("SaleAuthorizer")
+  salesCanceled      Sale[]         @relation("SaleCanceledBy")
 
   @@map("users")
 }
@@ -84,6 +93,9 @@ model Product {
   reorderPoint        Decimal   @db.Decimal(12, 3)
   /// Saldo atual (cache). A fonte da verdade é a soma das movimentações.
   currentStock        Decimal   @default(0) @db.Decimal(12, 3)
+  /// Preços em reais (2 casas). O preço de venda é o usado no caixa.
+  costPrice           Decimal   @default(0) @db.Decimal(12, 2)
+  salePrice           Decimal   @default(0) @db.Decimal(12, 2)
   /// Preenchido quando o produto vai para a lixeira.
   deletedAt           DateTime?
   createdAt           DateTime  @default(now())
@@ -91,6 +103,7 @@ model Product {
 
   movements        StockMovement[]
   purchaseRequests PurchaseRequest[]
+  saleItems        SaleItem[]
 
   @@index([deletedAt])
   @@index([name])
@@ -104,6 +117,7 @@ enum MovementType {
   IN_PURCHASE // Entrada: pedido recebido
   IN_RETURN // Entrada: retorno ao estoque
   IN_ADJUSTMENT // Entrada: ajuste / estoque inicial
+  IN_SALE_CANCEL // Entrada: estorno de venda cancelada no caixa
   OUT_SALE // Saída: venda
   OUT_LOSS // Saída: perda, quebra ou vencimento
   OUT_ADJUSTMENT // Saída: ajuste de inventário
@@ -162,6 +176,160 @@ model PurchaseRequest {
   @@index([status])
   @@index([createdAt])
   @@map("purchase_requests")
+}
+
+// ─── Frente de caixa (PDV não fiscal) ─────────────────────────────────────────
+
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+}
+
+/// Turno de um caixa (terminal): da abertura com troco inicial até o fechamento com a contagem.
+model CashSession {
+  id             String            @id @default(uuid()) @db.Uuid
+  /// Nome do terminal (ex.: "Caixa 01"). Só pode haver um turno aberto por terminal.
+  terminal       String
+  status         CashSessionStatus @default(OPEN)
+  openingAmount  Decimal           @db.Decimal(12, 2)
+  openedById     String            @db.Uuid
+  openedBy       User              @relation("CashSessionOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  openedAt       DateTime          @default(now())
+  /// Preenchidos no fechamento (valores congelados para o relatório).
+  closedById     String?           @db.Uuid
+  closedBy       User?             @relation("CashSessionClosedBy", fields: [closedById], references: [id], onDelete: Restrict)
+  closedAt       DateTime?
+  expectedCash   Decimal?          @db.Decimal(12, 2)
+  countedCash    Decimal?          @db.Decimal(12, 2)
+  difference     Decimal?          @db.Decimal(12, 2)
+  closingSummary Json?
+  closingNote    String?
+
+  movements CashMovement[]
+  sales     Sale[]
+
+  @@index([terminal, status])
+  @@index([openedAt])
+  @@map("cash_sessions")
+}
+
+enum CashMovementType {
+  SUPPLY // Suprimento: entrada manual de dinheiro
+  WITHDRAWAL // Sangria: retirada de dinheiro
+}
+
+model CashMovement {
+  id             String           @id @default(uuid()) @db.Uuid
+  sessionId      String           @db.Uuid
+  session        CashSession      @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  type           CashMovementType
+  amount         Decimal          @db.Decimal(12, 2)
+  reason         String
+  userId         String           @db.Uuid
+  user           User             @relation("CashMovementUser", fields: [userId], references: [id], onDelete: Restrict)
+  /// Supervisor que autorizou (quando o operador não tinha permissão).
+  authorizedById String?          @db.Uuid
+  authorizedBy   User?            @relation("CashMovementAuthorizer", fields: [authorizedById], references: [id], onDelete: Restrict)
+  createdAt      DateTime         @default(now())
+
+  @@index([sessionId])
+  @@map("cash_movements")
+}
+
+enum SaleStatus {
+  COMPLETED
+  CANCELED
+}
+
+enum DiscountType {
+  AMOUNT // Valor fixo em R$
+  PERCENT // Percentual
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+}
+
+/// Venda não fiscal. O id é gerado no caixa: o reenvio offline não duplica a venda.
+model Sale {
+  id                  String        @id @db.Uuid
+  /// Número sequencial exibido no comprovante.
+  number              Int           @unique @default(autoincrement())
+  sessionId           String        @db.Uuid
+  session             CashSession   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  operatorId          String        @db.Uuid
+  operator            User          @relation("SaleOperator", fields: [operatorId], references: [id], onDelete: Restrict)
+  status              SaleStatus    @default(COMPLETED)
+  /// Soma dos itens antes de qualquer desconto.
+  grossTotal          Decimal       @db.Decimal(12, 2)
+  itemsDiscount       Decimal       @db.Decimal(12, 2)
+  orderDiscountType   DiscountType?
+  orderDiscountValue  Decimal?      @db.Decimal(12, 2)
+  orderDiscount       Decimal       @db.Decimal(12, 2)
+  total               Decimal       @db.Decimal(12, 2)
+  /// Soma do que o cliente entregou e o troco devolvido (só em dinheiro).
+  paidTotal           Decimal       @db.Decimal(12, 2)
+  change              Decimal       @db.Decimal(12, 2)
+  /// Supervisor que autorizou descontos acima do limite do operador.
+  discountAuthorizedById String?    @db.Uuid
+  discountAuthorizedBy   User?      @relation("SaleAuthorizer", fields: [discountAuthorizedById], references: [id], onDelete: Restrict)
+  /// Itens retirados do cupom antes de finalizar (rastro para a auditoria).
+  removedItems        Json?
+  /// Registrada sem internet e sincronizada depois.
+  offline             Boolean       @default(false)
+  occurredAt          DateTime
+  createdAt           DateTime      @default(now())
+  canceledAt          DateTime?
+  canceledById        String?       @db.Uuid
+  canceledBy          User?         @relation("SaleCanceledBy", fields: [canceledById], references: [id], onDelete: Restrict)
+  cancelReason        String?
+
+  items    SaleItem[]
+  payments SalePayment[]
+
+  @@index([sessionId])
+  @@index([occurredAt])
+  @@index([status, occurredAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id             String        @id @default(uuid()) @db.Uuid
+  saleId         String        @db.Uuid
+  sale           Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  position       Int
+  productId      String        @db.Uuid
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  /// Cópia dos dados no momento da venda (o comprovante não muda se o cadastro mudar).
+  productName    String
+  sku            String
+  unit           Unit
+  quantity       Decimal       @db.Decimal(12, 3)
+  unitPrice      Decimal       @db.Decimal(12, 2)
+  unitCost       Decimal       @db.Decimal(12, 2)
+  discountType   DiscountType?
+  discountValue  Decimal?      @db.Decimal(12, 2)
+  discount       Decimal       @db.Decimal(12, 2)
+  total          Decimal       @db.Decimal(12, 2)
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+model SalePayment {
+  id      String        @id @default(uuid()) @db.Uuid
+  saleId  String        @db.Uuid
+  sale    Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  method  PaymentMethod
+  /// Valor entregue pelo cliente nesta forma de pagamento.
+  amount  Decimal       @db.Decimal(12, 2)
+
+  @@index([saleId])
+  @@map("sale_payments")
 }
 
 // ─── Configuração e auditoria ─────────────────────────────────────────────────

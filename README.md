@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="apps/web/public/icon.svg" width="88" alt="V&L Estoque" />
+<img src="apps/web/public/icon.svg" width="88" alt="SuaLojaAqui" />
 
-# V&L Estoque
+# SuaLojaAqui
 
-**Sistema de gestão de estoque para a V&L Mercadinho e Panificadora**
+**Frente de caixa (PDV não fiscal) e gestão de estoque — white-label**
 
-Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relatórios · Funciona sem internet
+Caixa 100% pelo teclado · Vende sem internet · Comprovante térmico, A4 e PDF · Estoque com alertas de reposição
 
 ![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
@@ -17,9 +17,7 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?logo=pwa&logoColor=white)
 
-<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.1.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
-
-<img src="docs/screenshots/painel.png" width="900" alt="Painel do sistema" />
+<img src="docs/screenshots/pdv-caixa.png" width="900" alt="Frente de caixa" />
 
 </div>
 
@@ -30,40 +28,49 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 1. [Visão geral](#-visão-geral)
 2. [Funcionalidades](#-funcionalidades)
 3. [Telas](#-telas)
-4. [Casos de uso](#-casos-de-uso)
-5. [Arquitetura](#-arquitetura)
-6. [Modelo de dados](#-modelo-de-dados)
-7. [Diagrama de classes](#-diagrama-de-classes)
-8. [Fluxos principais (sequência)](#-fluxos-principais)
-9. [Estados](#-diagramas-de-estado)
-10. [Regras de negócio e fórmulas](#-regras-de-negócio)
-11. [Perfis e permissões](#-perfis-e-permissões)
-12. [Segurança](#-segurança)
-13. [API](#-api)
-14. [Como rodar](#-como-rodar)
-15. [Estrutura de pastas](#-estrutura-de-pastas)
-16. [Pendências com o cliente](#-pendências-com-o-cliente)
+4. [Frente de caixa: atalhos de teclado](#️-frente-de-caixa-atalhos-de-teclado)
+5. [White-label: como personalizar para um cliente](#-white-label-como-personalizar-para-um-cliente)
+6. [Impressão](#️-impressão)
+7. [Casos de uso](#-casos-de-uso)
+8. [Arquitetura](#️-arquitetura)
+9. [Modelo de dados](#️-modelo-de-dados)
+10. [Diagrama de classes](#-diagrama-de-classes)
+11. [Fluxos principais (sequência)](#-fluxos-principais)
+12. [Estados](#-diagramas-de-estado)
+13. [Regras de negócio e fórmulas](#-regras-de-negócio)
+14. [Perfis e permissões](#-perfis-e-permissões)
+15. [Segurança](#-segurança)
+16. [API](#-api)
+17. [Como rodar](#-como-rodar)
+18. [Testes](#-testes)
+19. [Estrutura de pastas](#️-estrutura-de-pastas)
+20. [Próximas etapas](#-próximas-etapas)
 
 ---
 
 ## 🎯 Visão geral
 
-O sistema substitui o controle manual de estoque do mercadinho e da panificadora. Cada mercadoria que **entra** (pedido recebido, retorno) ou **sai** (venda, perda, ajuste) é registrada pela **bipagem do código de barras**. O sistema mantém o saldo atualizado, calcula os indicadores de reposição e **avisa a gestão quando é hora de pedir**.
+O SuaLojaAqui une uma **frente de caixa não fiscal** a um **controle de estoque com reposição automática**. O caixa vende pelo leitor de código de barras, aceita várias formas de pagamento na mesma venda, calcula o troco e imprime o comprovante. Cada venda dá baixa no estoque, e o sistema avisa a gestão quando é hora de comprar.
 
-| Requisito do documento | Como foi atendido |
+É **white-label**: nome, logotipo, cores, tema e textos dos comprovantes mudam nas configurações, sem programar. "SuaLojaAqui" é apenas o nome padrão.
+
+> **Não fiscal:** esta versão não emite NFC-e, SAT nem NF-e e não fala com a SEFAZ. Todo comprovante diz **"Documento Não Fiscal — Sem Valor Fiscal"**.
+
+📄 O documento de requisitos, com a rastreabilidade de cada requisito até o código, está em **[docs/DRS-PDV.md](docs/DRS-PDV.md)**.
+
+| Requisito do DRS | Como foi atendido |
 |---|---|
-| Cadastro de mercadorias (nome, SKU, EAN, categoria, unidade, consumo e prazo) | Cadastro completo, com prévia ao vivo dos indicadores |
-| Edição e exclusão com recuperação por 15 dias | Lixeira com prazo configurável e limpeza automática diária |
-| Entrada de itens já cadastrados por SKU ou bipagem | Tela de entrada focada no leitor de código de barras |
-| Saldo total e por item | Lista de produtos, busca por nome, SKU ou EAN, e painel |
-| Alerta de estoque de segurança e solicitação de pedido | Solicitação automática ao atingir o Ponto de Pedido |
-| Cálculo de PP, EM e ES | Domínio isolado e testado (`replenishment.ts`) |
-| Relatórios diários, semanais e mensais (estoque parado, ruptura) | Relatórios por período, com exportação para Excel e impressão |
-| Integração com o sistema de caixa | API de integração com chave (consulta de estoque e baixa de vendas) |
-| Senha para operações, controle de acesso | Usuários com perfis, PIN pessoal e auditoria |
-| Nuvem, sem perda de dados com queda de internet ou energia | Banco transacional, fila offline com sincronização automática |
-| Rápido em PC básico com Windows | Carregamento sob demanda e buscas indexadas |
-| Acesso por vários dispositivos, offline | PWA responsiva (PC, tablet e celular), instalável |
+| RF01 Abertura e fechamento de caixa | Troco inicial, totais por forma de pagamento, dinheiro esperado × contado e falta/sobra |
+| RF02 Operação de venda | Bipagem, SKU ou nome, multiplicador `3*código` e descontos em R$ ou % por item e no total |
+| RF03 Pagamento | Dinheiro + PIX + cartões na mesma venda, com troco automático (só do dinheiro) |
+| RF04 Sangria e suprimento | Com justificativa obrigatória e comprovante |
+| RF05–RF07 Estoque | Preços de custo e venda, baixa automática, estorno no cancelamento e ajuste só do administrador |
+| RF08–RF09 Impressão | Térmica de 80/58 mm (navegador ou ESC/POS pela rede), A4, PDF e reimpressão em 2ª via |
+| RF10–RF11 Acesso | Administrador, Gerente e Operador, PIN rápido para troca de operador e auditoria das ações sensíveis |
+| RNF01 Menos de 100 ms por item | O item entra no cupom na hora. A busca por código é exata e indexada |
+| RNF02 Não fiscal | Sem integração fiscal e com a menção obrigatória em todos os comprovantes |
+| RNF03 Impressoras | Epson, Elgin, Bematech, Daruma e outras (driver do Windows ou ESC/POS pela rede) |
+| Offline-first | O caixa vende sem internet e sincroniza sozinho, sem duplicar |
 
 ---
 
@@ -71,35 +78,104 @@ O sistema substitui o controle manual de estoque do mercadinho e da panificadora
 
 | Módulo | O que faz |
 |---|---|
-| 📦 **Produtos** | Cadastro, edição, busca, filtros por situação e categoria, histórico por produto |
-| 🗂️ **Categorias** | Categorias e subcategorias (vêm prontas para mercadinho e padaria) |
-| ⬇️ **Entradas** | Pedido recebido, retorno ao estoque e ajuste, pela bipagem |
-| ⬆️ **Saídas** | Venda, perda/quebra/vencimento e ajuste, com **registro rápido** (1 bip = 1 unidade) |
-| 🔔 **Reposição** | EM, ES e PP calculados automaticamente, com solicitação de pedido gerada sozinha |
-| 📋 **Pedidos** | Fluxo Pendente → Pedido feito → Recebido (ou Cancelado), com impressão da lista |
-| 📊 **Relatórios** | Por período: movimentação por produto, estoque parado, rupturas e solicitações. Exporta CSV |
-| 🗑️ **Lixeira** | Recupera produtos excluídos dentro do prazo, depois apaga automaticamente |
-| 👥 **Usuários** | Administrador, Estoquista e Caixa, com senha provisória, PIN e bloqueio |
-| 🛡️ **Auditoria** | Quem fez o quê e quando, inclusive tentativas de login erradas |
-| ⚙️ **Configurações** | Regras ajustáveis sem programação |
-| 📴 **Offline** | Registra sem internet e sincroniza quando a conexão volta |
-| 🔌 **Integração PDV** | O caixa consulta o estoque e envia as vendas automaticamente |
+| 🖥️ **Frente de caixa** | Tela cheia operada pelo teclado e pronta para touchscreen: busca, cupom, descontos, pagamento múltiplo, troco e orçamento |
+| 💵 **Caixa** | Abertura com troco inicial, sangria, suprimento, leitura parcial e fechamento com conferência |
+| 🛡️ **Autorização do supervisor** | Desconto acima do limite, cancelamento de venda e sangria pedem usuário + PIN de um gerente |
+| 📴 **Venda offline** | Sem internet o caixa continua vendendo, e as vendas sobem sozinhas quando a conexão volta |
+| 🧾 **Comprovantes** | Venda, orçamento, sangria e fechamento: bobina de 80/58 mm, A4 ou PDF, com reimpressão em 2ª via |
+| 📈 **Vendas** | Relatório por período: total, ticket médio, descontos, margem bruta, formas de pagamento, operadores e produtos mais vendidos. Exporta CSV |
+| 🎨 **White-label** | Nome, logotipo, cor, tema claro/escuro e textos dos comprovantes, tudo nas configurações |
+| 📦 **Produtos** | Cadastro com preço de custo e de venda, busca, filtros por situação e categoria e histórico |
+| ⬇️⬆️ **Entradas e saídas** | Pedido recebido, retorno, perdas e ajustes (ajuste só do administrador) |
+| 🔔 **Reposição** | EM, ES e PP calculados, com solicitação de pedido automática |
+| 📋 **Pedidos e relatórios de estoque** | Fluxo Pendente → Pedido feito → Recebido, estoque parado e rupturas |
+| 👥 **Usuários** | Administrador, Gerente, Estoquista e Operador de caixa, com senha, PIN e bloqueio |
+| 🛡️ **Auditoria** | Quem fez o quê e quando, inclusive itens removidos do cupom e abertura de gaveta |
 
 ---
 
 ## 🖼️ Telas
 
-| Login | Produtos |
+| Frente de caixa | Pagamento (dinheiro + PIX, com troco) |
 |:-:|:-:|
+| <img src="docs/screenshots/pdv-caixa.png" width="440" /> | <img src="docs/screenshots/pdv-pagamento.png" width="440" /> |
+| **Venda concluída** | **Fechamento de caixa** |
+| <img src="docs/screenshots/pdv-venda-concluida.png" width="440" /> | <img src="docs/screenshots/pdv-fechamento.png" width="440" /> |
+| **Tema escuro** | **Comprovante de 80 mm** |
+| <img src="docs/screenshots/pdv-tema-escuro.png" width="440" /> | <img src="docs/screenshots/pdv-comprovante-80mm.png" width="200" /> |
+| **Relatório de vendas** | **Caixas (conferência por turno)** |
+| <img src="docs/screenshots/vendas.png" width="440" /> | <img src="docs/screenshots/caixas.png" width="440" /> |
+| **Painel** | **Configurações (white-label, impressão e caixa)** |
+| <img src="docs/screenshots/painel.png" width="440" /> | <img src="docs/screenshots/configuracoes.png" width="440" /> |
+| **Login (senha ou PIN rápido)** | **Produtos** |
 | <img src="docs/screenshots/login.png" width="440" /> | <img src="docs/screenshots/produtos.png" width="440" /> |
-| **Registrar saída (bipagem)** | **Cadastro com indicadores calculados** |
-| <img src="docs/screenshots/saida.png" width="440" /> | <img src="docs/screenshots/novo-produto.png" width="440" /> |
-| **Detalhe do produto** | **Relatórios** |
-| <img src="docs/screenshots/produto-detalhe.png" width="440" /> | <img src="docs/screenshots/relatorios.png" width="440" /> |
-| **Solicitações de pedido** | **Modo offline** |
-| <img src="docs/screenshots/pedidos.png" width="440" /> | <img src="docs/screenshots/offline.png" width="440" /> |
-| **Configurações** | **Celular** |
-| <img src="docs/screenshots/configuracoes.png" width="440" /> | <img src="docs/screenshots/celular-painel.png" width="160" /> &nbsp; <img src="docs/screenshots/celular-menu.png" width="160" /> |
+| **Cadastro com preços e indicadores** | **Detalhe do produto** |
+| <img src="docs/screenshots/novo-produto.png" width="440" /> | <img src="docs/screenshots/produto-detalhe.png" width="440" /> |
+| **Registrar saída (bipagem)** | **Modo offline** |
+| <img src="docs/screenshots/saida.png" width="440" /> | <img src="docs/screenshots/offline.png" width="440" /> |
+| **Relatórios de estoque** | **Solicitações de pedido** |
+| <img src="docs/screenshots/relatorios.png" width="440" /> | <img src="docs/screenshots/pedidos.png" width="440" /> |
+| **Celular** | |
+| <img src="docs/screenshots/celular-painel.png" width="160" /> &nbsp; <img src="docs/screenshots/celular-menu.png" width="160" /> | |
+
+---
+
+## ⌨️ Frente de caixa: atalhos de teclado
+
+O caixa (`/caixa`) funciona **inteiro pelo teclado**. O leitor de código de barras "digita" o código e envia Enter. Os mesmos comandos aparecem como botões para telas touch.
+
+| Tecla | Ação |
+|:-:|---|
+| **F1** | Buscar produto (código de barras, SKU ou parte do nome). Use `3*código` para lançar 3 unidades |
+| **F2** | Alterar a quantidade do item selecionado (aceita peso: `0,455`) |
+| **F3** | Desconto no item (R$ ou %) |
+| **F4** | Desconto no total da venda |
+| **F5** | Finalizar venda (abre o pagamento). No pagamento, **confirma** |
+| **F6** | Sangria / suprimento |
+| **F7** | Vendas do caixa (reimprimir 2ª via ou cancelar) |
+| **F8** | Orçamento em A4 ou PDF (não é venda e não baixa estoque) |
+| **F9** | Trocar operador (usuário + PIN) |
+| **F10** | Fechar caixa |
+| **Del** | Remover o item selecionado |
+| **Esc** | Cancelar a venda inteira (ou fechar a janela aberta) |
+| **↑ ↓** | Selecionar item do cupom · **+ / −** alteram a quantidade |
+| *No pagamento* | **F1** Dinheiro · **F2** PIX · **F3** Crédito · **F4** Débito · **Enter** lança o valor |
+
+> As teclas F nunca acionam o navegador dentro do caixa (o F5 não recarrega a página). A venda em andamento fica salva no computador: se a página fechar ou o PC travar, o cupom continua lá.
+
+---
+
+## 🎨 White-label: como personalizar para um cliente
+
+Tudo fica em **Configurações → Identidade da loja**:
+
+| Item | Onde aparece |
+|---|---|
+| Nome e slogan | Menu, login, título da aba, rodapé do caixa e comprovantes |
+| Logotipo (PNG, JPEG, WebP ou SVG até 150 KB) | Menu, login, ícone da aba e cabeçalho do comprovante |
+| Cor principal | O sistema inteiro: os tons claros e escuros são derivados dessa cor |
+| Tema padrão (claro, escuro ou do sistema) | Cada computador ainda pode alternar pelo botão ☀️/🌙 |
+| CNPJ/CPF, endereço, telefone e cabeçalho extra | Cabeçalho dos comprovantes |
+| Mensagem de rodapé | Rodapé dos comprovantes ("Obrigado pela preferência!") |
+
+A marca é pública (`GET /api/settings/branding`), então a tela de login já aparece com a cara do cliente. Ela também fica salva no aparelho e abre certa mesmo sem internet.
+
+Para trocar o **padrão de fábrica** de uma nova instalação, edite `DEFAULT_SETTINGS.store` em [`settings.types.ts`](apps/api/src/modules/settings/settings.types.ts) e `DEFAULT_BRANDING` em [`brand.ts`](apps/web/src/lib/brand.ts).
+
+---
+
+## 🖨️ Impressão
+
+| Conexão (Configurações → Impressão) | Para quê | Como funciona |
+|---|---|---|
+| **Impressora do Windows** (padrão) | Térmicas **USB ou serial** (Epson, Elgin, Bematech, Daruma...), impressoras A4 e "Salvar como PDF" | Impressão pelo navegador com o driver do fabricante, no papel configurado (80 mm, 58 mm ou A4) |
+| **Térmica de rede (ESC/POS)** | Térmicas com placa de rede | A API envia ESC/POS direto para `IP:9100`, sem janela de impressão. Acentos em PC860, corte de papel e **abertura de gaveta** nas vendas em dinheiro |
+
+- **Imprimir sem a janela de confirmação** (térmica USB): abra o navegador com `--kiosk-printing`. Exemplo de atalho: `msedge.exe --kiosk-printing --app=http://localhost:3000/caixa`.
+- **Gaveta de dinheiro na USB**: ative a abertura da gaveta no driver da impressora.
+- **PDF**: comprovante, orçamento e fechamento têm o botão **PDF**, que gera o arquivo (A4 ou no formato da bobina) até offline.
+- Se a impressora de rede não responder, o sistema avisa e imprime pelo navegador.
+- **Configurações → Impressão → Imprimir página de teste** confere a acentuação e o layout.
 
 ---
 
@@ -107,118 +183,107 @@ O sistema substitui o controle manual de estoque do mercadinho e da panificadora
 
 ```mermaid
 flowchart LR
-    CX(("👤<br/>Caixa"))
+    OP(("👤<br/>Operador<br/>de caixa"))
+    GER(("👤<br/>Gerente"))
     EST(("👤<br/>Estoquista"))
     ADM(("👤<br/>Administrador"))
-    PDV(("🖥️<br/>Sistema de<br/>caixa (PDV)"))
     CRON(("⏰<br/>Agendador"))
 
-    subgraph SIS["🏪 Sistema V&L Estoque"]
+    subgraph SIS["🏪 SuaLojaAqui"]
         direction TB
-        UC01(["Fazer login"])
-        UC02(["Consultar produtos e saldo"])
-        UC03(["Registrar saída / venda"])
-        UC04(["Registrar entrada"])
-        UC05(["Cadastrar / editar produto"])
-        UC06(["Gerenciar categorias"])
-        UC07(["Consultar movimentações"])
-        UC08(["Gerenciar solicitações de pedido"])
-        UC09(["Emitir relatórios"])
-        UC10(["Excluir produto"])
-        UC11(["Restaurar da lixeira"])
-        UC12(["Gerenciar usuários"])
-        UC13(["Alterar configurações"])
-        UC14(["Consultar auditoria"])
-        UC15(["Gerar solicitação de pedido automática"])
-        UC16(["Confirmar com PIN"])
-        UC17(["Limpar lixeira expirada"])
-        UC18(["Consultar disponibilidade"])
-        UC19(["Enviar venda"])
+        P1(["Abrir / fechar caixa"])
+        P2(["Registrar venda"])
+        P3(["Receber pagamento (vários meios)"])
+        P4(["Imprimir / reimprimir comprovante"])
+        P5(["Trocar operador (PIN)"])
+        P6(["Dar desconto"])
+        P7(["Sangria / suprimento"])
+        P8(["Cancelar venda"])
+        P9(["Autorizar ação (supervisor)"])
+        P10(["Relatório de vendas e caixas"])
+        E1(["Registrar entrada / saída"])
+        E2(["Cadastrar produto e preços"])
+        E3(["Pedidos e relatórios de estoque"])
+        A1(["Usuários, configurações, marca"])
+        A2(["Ajuste de estoque"])
+        A3(["Auditoria"])
+        S1(["Solicitação de pedido automática"])
+        S2(["Limpar lixeira expirada"])
     end
 
-    CX --- UC01 & UC02 & UC03
-    EST --- UC04 & UC05 & UC06 & UC07 & UC08 & UC09
-    ADM --- UC10 & UC11 & UC12 & UC13 & UC14
-    PDV --- UC18 & UC19
-    CRON --- UC17
+    OP --- P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8
+    GER --- P9 & P10
+    EST --- E1 & E2 & E3
+    ADM --- A1 & A2 & A3
+    CRON --- S2
 
-    EST -.->|herda| CX
+    GER -.->|herda| OP
+    ADM -.->|herda| GER
     ADM -.->|herda| EST
 
-    UC03 -.->|"«include»"| UC16
-    UC04 -.->|"«include»"| UC16
-    UC10 -.->|"«include»"| UC16
-    UC03 -.->|"«extend» saldo ≤ PP"| UC15
-    UC19 -.->|"«include»"| UC03
+    P2 -.->|"«include» baixa no estoque"| E1
+    P2 -.->|"«extend» saldo ≤ PP"| S1
+    P6 -.->|"«extend» acima do limite"| P9
+    P7 -.->|"«extend» sem permissão"| P9
+    P8 -.->|"«extend» sem permissão"| P9
 
-    classDef actor fill:#18664f,stroke:#134337,color:#fff
-    classDef uc fill:#effaf5,stroke:#2a9d76,color:#134337
-    class CX,EST,ADM,PDV,CRON actor
-    class UC01,UC02,UC03,UC04,UC05,UC06,UC07,UC08,UC09,UC10,UC11,UC12,UC13,UC14,UC15,UC16,UC17,UC18,UC19 uc
+    classDef actor fill:#0f766e,stroke:#0b4f49,color:#fff
+    classDef uc fill:#ecfdf8,stroke:#0f766e,color:#0b4f49
+    class OP,GER,EST,ADM,CRON actor
+    class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,E1,E2,E3,A1,A2,A3,S1,S2 uc
 ```
-
-### Descrição dos casos de uso principais
-
-| ID | Caso de uso | Ator | Fluxo principal | Regras |
-|---|---|---|---|---|
-| UC03 | **Registrar saída** | Caixa+ | 1. Bipa o produto · 2. Informa a quantidade · 3. Confirma com PIN · 4. O sistema baixa o saldo | Bloqueia saldo insuficiente (configurável). Sem internet, guarda na fila |
-| UC04 | **Registrar entrada** | Estoquista+ | 1. Bipa · 2. Escolhe o tipo (pedido ou retorno) · 3. Quantidade · 4. PIN | Soma ao saldo e grava no histórico |
-| UC05 | **Cadastrar produto** | Estoquista+ | 1. Preenche os dados · 2. Vê EM, ES e PP calculados · 3. PIN | SKU e EAN únicos, consumo máximo ≥ médio |
-| UC15 | **Solicitação automática** | Sistema | Após uma saída, se saldo ≤ PP e não há pedido em aberto, cria a solicitação | Quantidade sugerida pela fórmula de cobertura |
-| UC10 | **Excluir produto** | Admin | 1. Confirma · 2. PIN · 3. O produto vai para a lixeira | Recuperável por N dias (padrão 15) |
-| UC17 | **Limpar lixeira** | Agendador | Todo dia às 3h, apaga definitivamente o que expirou | Apaga também o histórico do produto |
-| UC12 | **Gerenciar usuários** | Admin | Cria com senha provisória, edita, desativa, redefine senha ou PIN | Sempre ao menos 1 admin ativo |
-| UC19 | **Enviar venda (PDV)** | PDV | Envia o cupom com os itens, e o sistema dá baixa | Idempotente pelo `externalId` |
 
 ---
 
 ## 🏗️ Arquitetura
 
-**Monólito modular** com domínio isolado. É simples de operar num PC do mercadinho e cada módulo pode evoluir sem afetar os outros.
+**Monólito modular** com domínio isolado. É simples de operar num PC da loja, e cada módulo evolui sem afetar os outros.
 
 ```mermaid
 flowchart TB
-    subgraph CLIENTE["💻 Navegador — PC, tablet ou celular"]
+    subgraph CLIENTE["💻 Navegador — PC do caixa, tablet ou celular"]
         direction LR
-        UI["React 19 + Tailwind<br/>(telas)"]
-        RQ["TanStack Query<br/>(cache de dados)"]
-        SW["Service Worker<br/>(PWA, app offline)"]
-        IDB[("IndexedDB<br/>fila offline<br/>+ catálogo")]
-        UI --> RQ
+        UI["React 19 + Tailwind<br/>(telas, tema white-label)"]
+        CART["Carrinho (reducer puro)<br/>+ cálculo espelhado"]
+        RQ["TanStack Query"]
+        SW["Service Worker (PWA)"]
+        IDB[("IndexedDB<br/>vendas e movimentos offline<br/>+ catálogo com preços")]
+        PRN["Comprovantes<br/>HTML 80/58 mm · A4 · PDF"]
+        UI --> CART
+        UI --> RQ --> SW
         UI --> IDB
-        RQ --> SW
+        UI --> PRN
     end
 
     subgraph SERVIDOR["🖥️ Servidor — Node.js + NestJS"]
         direction TB
-        SEC["🛡️ Segurança<br/>Helmet · Rate limit · Anti-CSRF<br/>AuthGuard · PermissionsGuard · PinGuard"]
+        SEC["🛡️ Helmet · Rate limit · Anti-CSRF<br/>AuthGuard · PermissionsGuard · PinGuard"]
         subgraph MOD["Módulos"]
             direction LR
-            M1[auth]
-            M2[users]
-            M3[products<br/>+ domain]
-            M4[stock]
-            M5[purchase-<br/>requests]
-            M6[reports]
-            M7[settings]
-            M8[audit]
-            M9[integration<br/>PDV]
+            M0[pos<br/>caixa + vendas<br/>+ domain]
+            M1[printing<br/>ESC/POS]
+            M2[products<br/>+ domain]
+            M3[stock]
+            M4[auth · users]
+            M5[settings<br/>white-label]
+            M6[reports · purchase-<br/>requests · audit]
+            M7[integration<br/>PDV externo]
         end
         ORM["Prisma ORM"]
         SEC --> MOD --> ORM
     end
 
     DB[("🐘 PostgreSQL")]
-    PDV["🧾 Sistema de caixa (PDV)"]
+    TERM["🧾 Térmica de rede<br/>(TCP 9100)"]
 
     SW -->|"HTTPS / JSON + cookie httpOnly"| SEC
-    PDV -->|"X-API-Key"| M9
+    M1 -->|ESC/POS| TERM
     ORM --> DB
 
-    classDef box fill:#effaf5,stroke:#2a9d76,color:#134337
-    classDef dark fill:#18664f,stroke:#134337,color:#fff
-    class UI,RQ,SW,M1,M2,M3,M4,M5,M6,M7,M8,M9,ORM box
-    class SEC,DB,PDV dark
+    classDef box fill:#ecfdf8,stroke:#0f766e,color:#0b4f49
+    classDef dark fill:#0f766e,stroke:#0b4f49,color:#fff
+    class UI,CART,RQ,SW,PRN,M0,M1,M2,M3,M4,M5,M6,M7,ORM box
+    class SEC,DB,TERM dark
 ```
 
 ### Camadas de cada módulo
@@ -228,21 +293,24 @@ flowchart LR
     HTTP["🌐 Controller<br/>(rotas + DTOs validados)"] --> APP["⚙️ Service<br/>(casos de uso, transações)"]
     APP --> DOM["🧠 Domain<br/>(regras puras, testadas)"]
     APP --> INFRA["💾 Prisma<br/>(banco)"]
-    EXT["🔌 Adaptadores<br/>(PDV)"] --> APP
+    EXT["🔌 Adaptadores<br/>(impressora, PDV externo)"] --> APP
 
-    classDef c fill:#effaf5,stroke:#2a9d76,color:#134337
+    classDef c fill:#ecfdf8,stroke:#0f766e,color:#0b4f49
     class HTTP,APP,DOM,INFRA,EXT c
 ```
 
 | Decisão | Motivo |
 |---|---|
-| **Livro de movimentações imutável** | Cada entrada e saída é um registro com o saldo resultante. O histórico dos relatórios sai pronto e permite auditar |
-| **Atualização de saldo com trava de linha** | Duas vendas simultâneas nunca deixam o saldo errado |
-| **ID gerado no aparelho (idempotência)** | A sincronização offline e o reenvio do PDV não duplicam registros |
-| **Domínio puro** (`replenishment.ts`) | Mudar uma fórmula é mudar uma função testada, sem tocar em banco ou tela |
-| **Regras em Configurações** | Lixeira, cobertura do pedido, estoque negativo e PIN são ajustáveis sem reprogramar |
-| **Integração como adaptador** | Trocar de sistema de caixa afeta só o módulo `integration` |
-| **PostgreSQL embutido** | Roda num PC Windows sem instalar banco, e migra para a nuvem só trocando a `DATABASE_URL` |
+| **Dinheiro em centavos inteiros** | R$ 0,10 + R$ 0,20 dá exatamente R$ 0,30. Nada de erro de ponto flutuante no caixa |
+| **Mesmo cálculo no navegador e no servidor** | O caixa precisa calcular offline. Um teste de paridade com 2.000 vendas aleatórias garante resultados idênticos |
+| **Venda e baixa de estoque na mesma transação** | Ou grava a venda com todas as baixas, ou não grava nada |
+| **ID da venda gerado no caixa (idempotência)** | A sincronização offline e um duplo clique não duplicam vendas nem baixas |
+| **Um caixa aberto por terminal (índice único no banco)** | Nem dois cliques simultâneos abrem dois turnos no mesmo terminal |
+| **Autorização do supervisor por token** | O gerente libera uma ação com o PIN sem trocar de sessão. O token vale só para aquele operador e aquela ação (e para aquela venda, no desconto) |
+| **Livro de movimentações imutável** | Cada entrada e saída é um registro com o saldo resultante, auditável |
+| **Domínio puro** (`sale-calculator`, `cash-summary`, `escpos`, `replenishment`) | Mudar uma regra é mudar uma função testada, sem tocar em banco ou tela |
+| **White-label por configuração** | Um único código atende vários clientes: só muda o cadastro da marca |
+| **Impressão como adaptador** | Trocar de impressora (ou, no futuro, emitir NFC-e) afeta só o módulo de impressão/fiscal |
 
 ---
 
@@ -250,103 +318,96 @@ flowchart LR
 
 ```mermaid
 erDiagram
-    USERS ||--o{ STOCK_MOVEMENTS : "registra"
-    USERS ||--o{ PURCHASE_REQUESTS : "cria"
-    USERS ||--o{ AUDIT_LOGS : "gera"
-    CATEGORIES ||--o{ CATEGORIES : "subcategoria de"
-    CATEGORIES ||--o{ PRODUCTS : "classifica"
+    USERS ||--o{ CASH_SESSIONS : "abre / fecha"
+    USERS ||--o{ SALES : "vende"
+    USERS ||--o{ CASH_MOVEMENTS : "registra"
+    CASH_SESSIONS ||--o{ SALES : "contém"
+    CASH_SESSIONS ||--o{ CASH_MOVEMENTS : "sangrias e suprimentos"
+    SALES ||--|{ SALE_ITEMS : "itens"
+    SALES ||--|{ SALE_PAYMENTS : "pagamentos"
+    PRODUCTS ||--o{ SALE_ITEMS : "vendido em"
     PRODUCTS ||--o{ STOCK_MOVEMENTS : "possui"
+    CATEGORIES ||--o{ PRODUCTS : "classifica"
+    USERS ||--o{ STOCK_MOVEMENTS : "registra"
     PRODUCTS ||--o{ PURCHASE_REQUESTS : "gera"
 
-    USERS {
+    CASH_SESSIONS {
         uuid id PK
-        string name
-        string username UK
-        string passwordHash "Argon2id"
-        string pinHash "Argon2id, opcional"
-        enum role "ADMIN, STOCKIST, CASHIER"
-        boolean active
-        boolean mustChangePassword
-        int failedLoginAttempts
-        datetime lockedUntil
-        int tokenVersion "revoga sessões"
-        datetime lastLoginAt
+        string terminal "único aberto por terminal"
+        enum status "OPEN, CLOSED"
+        decimal openingAmount "troco inicial"
+        decimal expectedCash
+        decimal countedCash
+        decimal difference "falta (−) / sobra (+)"
+        json closingSummary "resumo congelado"
     }
 
-    CATEGORIES {
+    CASH_MOVEMENTS {
         uuid id PK
-        string name
-        uuid parentId FK "nulo = categoria"
+        enum type "SUPPLY, WITHDRAWAL"
+        decimal amount
+        string reason "obrigatória"
+        uuid authorizedById FK "supervisor"
+    }
+
+    SALES {
+        uuid id PK "gerado no caixa"
+        int number UK "nº do comprovante"
+        enum status "COMPLETED, CANCELED"
+        decimal grossTotal
+        decimal itemsDiscount
+        decimal orderDiscount
+        decimal total
+        decimal paidTotal
+        decimal change "troco"
+        uuid discountAuthorizedById FK
+        json removedItems "itens retirados do cupom"
+        boolean offline
+        datetime occurredAt
+    }
+
+    SALE_ITEMS {
+        uuid id PK
+        string productName "cópia no momento da venda"
+        decimal quantity
+        decimal unitPrice
+        decimal unitCost "para a margem"
+        decimal discount
+        decimal total
+    }
+
+    SALE_PAYMENTS {
+        uuid id PK
+        enum method "CASH, PIX, CREDIT_CARD, DEBIT_CARD"
+        decimal amount
     }
 
     PRODUCTS {
         uuid id PK
-        string name
         string sku UK
-        string barcode UK "EAN/GTIN"
-        uuid categoryId FK
-        enum unit "UN, KG, L, CX..."
-        decimal avgDailyConsumption
-        decimal maxDailyConsumption
-        int leadTimeDays
-        decimal minimumStock "EM"
-        decimal safetyStock "ES"
+        string barcode UK
+        decimal costPrice
+        decimal salePrice
+        decimal currentStock
         decimal reorderPoint "PP"
-        decimal currentStock "saldo"
-        datetime deletedAt "lixeira"
     }
 
-    STOCK_MOVEMENTS {
-        uuid id PK "gerado no aparelho"
-        uuid productId FK
-        enum type "IN_PURCHASE, OUT_SALE..."
-        decimal quantity
-        decimal balanceAfter
-        enum source "APP, PDV"
-        uuid userId FK
-        string note
-        datetime occurredAt
-    }
-
-    PURCHASE_REQUESTS {
+    USERS {
         uuid id PK
-        uuid productId FK
-        enum status "PENDING, ORDERED, RECEIVED, CANCELED"
-        decimal suggestedQuantity
-        decimal stockAtRequest
-        decimal reorderPoint
-        uuid createdById FK "nulo = automática"
-        datetime closedAt
-    }
-
-    SETTINGS {
-        string key PK
-        json value
-    }
-
-    AUDIT_LOGS {
-        uuid id PK
-        uuid userId FK
-        string action
-        string entity
-        string entityId
-        json details
-        string ip
-        datetime createdAt
+        enum role "ADMIN, MANAGER, STOCKIST, CASHIER"
+        string pinHash "Argon2id"
     }
 ```
 
-### Dicionário resumido
-
 | Tabela | Finalidade | Observações |
 |---|---|---|
-| `users` | Funcionários com acesso | Nunca são apagados, só desativados (o histórico é preservado) |
-| `categories` | Categoria e subcategoria (2 níveis) | Não remove se tiver produtos ou subcategorias |
-| `products` | Catálogo e saldo atual | EM, ES e PP gravados para filtros rápidos |
-| `stock_movements` | Livro de entradas e saídas | Imutável, com índice por produto e data |
-| `purchase_requests` | Solicitações de pedido | Uma em aberto por produto |
-| `settings` | Parâmetros do sistema | JSON flexível, sem migration para novas regras |
-| `audit_logs` | Rastro de ações | Logins, falhas, cadastros, exclusões |
+| `cash_sessions` | Turnos de caixa por terminal | Resumo e diferença congelados no fechamento |
+| `cash_movements` | Sangrias e suprimentos | Justificativa obrigatória e supervisor que autorizou |
+| `sales` · `sale_items` · `sale_payments` | Vendas não fiscais | Itens guardam nome, preço e custo do momento da venda |
+| `products` | Catálogo, preços e saldo | Produto com vendas nunca é apagado da lixeira |
+| `stock_movements` | Livro de entradas e saídas | Venda: `OUT_SALE`. Cancelamento: `IN_SALE_CANCEL` |
+| `users` · `audit_logs` · `settings` | Acesso, rastro e configurações | `settings` guarda a marca, a impressão e as regras do caixa |
+| `categories` · `purchase_requests` | Estoque | Iguais à versão anterior |
 
 ---
 
@@ -356,270 +417,212 @@ erDiagram
 classDiagram
     direction LR
 
-    class Replenishment {
+    class SaleCalculator {
         <<domain>>
-        +calculateIndicators(profile) Indicators
-        +classifyStock(stock, indicators) StockStatus
-        +needsReorder(stock, indicators) boolean
-        +suggestOrderQuantity(stock, profile, coverageDays) number
+        +calculateSale(items, orderDiscount) SaleTotals
+        +discountCents(base, discount) number
+        +settlePayments(total, payments) Settlement
     }
-    class ConsumptionProfile {
-        <<value object>>
-        +avgDailyConsumption: number
-        +maxDailyConsumption: number
-        +leadTimeDays: number
+    class CashSummary {
+        <<domain>>
+        +summarizeCashSession(opening, sales, movements) CashSummary
+        +cashDifference(counted, expected) number
     }
-    class Indicators {
-        <<value object>>
-        +minimumStock: number
-        +safetyStock: number
-        +reorderPoint: number
+    class EscPosBuilder {
+        <<domain>>
+        +text() line() pair() wrapped()
+        +bold() large() align()
+        +openDrawer() cut() build() Buffer
     }
-    class StockStatus {
-        <<enumeration>>
-        OUT_OF_STOCK
-        CRITICAL
-        REORDER
-        OK
+    class SalesService {
+        +create(dto, operator, token) Sale
+        +cancel(id, reason, operator, token) Sale
+        +list(filters) Paginated~Sale~
     }
-
-    class ProductsService {
-        +list(filters) Paginated~ProductView~
-        +lookup(code) ProductView
-        +create(dto, actor) ProductView
-        +update(id, dto, actor) ProductView
-        +moveToTrash(id, actor)
+    class CashService {
+        +open(terminal, openingAmount)
+        +addMovement(sessionId, type, amount, reason, token)
+        +close(sessionId, countedCash)
+        +report(sessionId)
     }
-    class TrashService {
-        +list()
-        +restore(id, actor)
-        +purge(id, actor)
-        +purgeExpired() void
+    class SupervisorAuthorizationService {
+        +authorize(operator, username, pin, permission, scope) token
+        +resolve(operator, permission, token) supervisorId
+    }
+    class SalesReportService {
+        +report(period)
+    }
+    class PrintingService {
+        <<adapter>>
+        +send(bytes) TCP 9100
     }
     class StockService {
-        +register(command) MovementResult
-        +list(filters) Paginated~Movement~
-        -applyBalanceChange(tx, command)
-        -createPurchaseRequestIfNeeded(tx, product)
-    }
-    class PurchaseRequestsService {
-        +list(status)
-        +create(dto, actor)
-        +updateStatus(id, status, actor)
-    }
-    class ReportsService {
-        +dashboard()
-        +movements(period)
-    }
-    class AuthService {
-        +login(credentials, ip)
-        +logout(userId)
-        +changePassword(userId, dto)
-        +setPin(userId, dto)
-    }
-    class UsersService {
-        +list()
-        +create(dto, actor)
-        +update(id, dto, actor)
-        +resetPassword(id, password, actor)
-        +resetPin(id, pin, actor)
-    }
-    class SettingsService {
-        +get() SystemSettings
-        +update(patch) SystemSettings
-    }
-    class AuditService {
-        +log(entry)
-        +list(page)
-    }
-    class PdvIntegrationService {
-        <<adapter>>
-        +availability(code)
-        +registerSale(sale)
-    }
-    class PinGuard {
-        <<guard>>
-        +canActivate(ctx) boolean
+        +register(command)
+        +registerInTransaction(tx, command)
     }
 
-    Replenishment ..> ConsumptionProfile
-    Replenishment ..> Indicators
-    Replenishment ..> StockStatus
-    ProductsService ..> Replenishment
-    StockService ..> Replenishment
-    StockService ..> SettingsService
-    TrashService ..> SettingsService
-    PinGuard ..> SettingsService
-    PdvIntegrationService --> ProductsService
-    PdvIntegrationService --> StockService
-    ProductsService --> AuditService
-    UsersService --> AuditService
-    AuthService --> AuditService
-    PurchaseRequestsService --> AuditService
+    SalesService ..> SaleCalculator
+    SalesService --> StockService : baixa / estorno
+    SalesService --> SupervisorAuthorizationService
+    CashService ..> CashSummary
+    CashService --> SupervisorAuthorizationService
+    PrintingService ..> EscPosBuilder
 ```
 
 ---
 
 ## 🔄 Fluxos principais
 
-### Registrar uma venda (com alerta de reposição)
+### Venda no caixa
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor C as 👤 Caixa
-    participant W as 🌐 Navegador
-    participant G as 🛡️ Guards
-    participant S as ⚙️ StockService
+    actor O as 👤 Operador
+    participant C as 🖥️ Caixa (navegador)
+    participant API as ⚙️ SalesService
     participant D as 🧠 Domínio
     participant DB as 🐘 PostgreSQL
 
-    C->>W: Bipa o código de barras
-    W->>G: GET /products/lookup?code=789...
-    G-->>W: Produto, saldo e situação
-    C->>W: Quantidade + "Registrar saída"
-    W->>G: POST /stock/exits {id, productId, qty}
-    G-->>W: 428 PIN obrigatório
-    W->>C: Diálogo de PIN
-    C->>W: Digita o PIN
-    W->>G: POST /stock/exits + X-Operation-Pin
-    G->>G: Sessão ✔ Perfil ✔ PIN ✔
-    G->>S: register(command)
-    S->>DB: BEGIN
-    S->>DB: UPDATE saldo = saldo − qty WHERE saldo ≥ qty
-    S->>DB: INSERT movimentação (saldo após)
-    S->>D: needsReorder(saldo, PP)?
-    alt saldo ≤ PP e sem pedido em aberto
-        S->>D: suggestOrderQuantity()
-        S->>DB: INSERT solicitação de pedido
+    O->>C: Bipa os produtos (preço do cadastro)
+    C->>C: Calcula o total em centavos (mesmo algoritmo do servidor)
+    O->>C: F5 · Dinheiro R$ 50 + PIX R$ 20
+    C->>API: POST /sales {id gerado no caixa, itens, pagamentos}
+    API->>D: calculateSale() + settlePayments()
+    alt desconto acima do limite e sem permissão
+        API-->>C: 403 AUTHORIZATION_REQUIRED
+        C->>O: Diálogo "Autorização do supervisor"
+        O->>C: Gerente digita usuário + PIN
+        C->>API: POST /pos/authorize → token (preso à venda)
+        C->>API: POST /sales + X-Supervisor-Token
     end
-    S->>DB: COMMIT
-    S-->>W: movimentação + alerta
-    W-->>C: ✅ Venda registrada · ⚠️ "Solicitação enviada à gestão"
+    API->>DB: BEGIN · cria venda, itens e pagamentos
+    API->>DB: baixa de estoque de cada item (OUT_SALE)
+    API->>DB: COMMIT
+    API-->>C: venda nº 000123
+    C->>O: Troco R$ 17,78 · imprime o comprovante
 ```
 
-### Venda sem internet (sincronização offline)
+### Venda sem internet
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor C as 👤 Caixa
-    participant W as 🌐 App (PWA)
+    actor O as 👤 Operador
+    participant C as 🖥️ Caixa
     participant Q as 💾 IndexedDB
     participant API as ⚙️ API
 
-    Note over W: Internet cai
-    C->>W: Bipa o produto
-    W->>Q: Busca no catálogo local
-    C->>W: Registrar saída
-    W-xAPI: POST /stock/exits (falha de rede)
-    W->>Q: Guarda na fila (id UUID)
-    W-->>C: "Salvo no dispositivo"
-    Note over W: Internet volta (evento "online" ou a cada 30s)
-    loop para cada item da fila
-        W->>API: POST /stock/exits (mesmo id)
-        alt sucesso ou já registrado
-            API-->>W: 201 (idempotente)
-            W->>Q: Remove da fila
-        else erro de regra (ex.: saldo insuficiente)
-            W->>Q: Marca com erro para o usuário decidir
-        end
+    Note over C: Internet cai
+    O->>C: Bipa (catálogo do aparelho) e recebe o pagamento
+    C-xAPI: POST /sales (falha de rede)
+    C->>Q: Guarda a venda (mesmo id)
+    C->>O: "Venda salva neste computador" · comprovante impresso
+    Note over C: Internet volta (evento "online" ou a cada 30 s)
+    C->>API: POST /sales {offline: true}
+    alt já registrada antes
+        API-->>C: devolve a mesma venda (idempotente)
+    else nova
+        API-->>C: 201 · venda nº 000124 (baixa no estoque)
     end
-    W-->>C: "Movimentações offline enviadas"
+    C->>Q: Remove da fila
 ```
 
-### Login e sessão
+### Fechamento de caixa
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as 👤 Usuário
-    participant W as 🌐 Navegador
-    participant A as 🔐 AuthService
-    participant DB as 🐘 PostgreSQL
+    actor O as 👤 Operador
+    participant C as 🖥️ Caixa
+    participant API as ⚙️ CashService
+    participant D as 🧠 cash-summary
 
-    U->>W: usuário + senha
-    W->>A: POST /auth/login
-    A->>DB: busca usuário
-    alt bloqueado (5 erros) ou inativo
-        A-->>W: 429 / 401
-    else senha errada
-        A->>DB: tentativas + 1 (bloqueia em 5)
-        A-->>W: 401 "Usuário ou senha inválidos"
-    else senha correta
-        A->>DB: zera tentativas, registra auditoria
-        A-->>W: Cookie de sessão httpOnly e SameSite=Strict (JWT + tokenVersion)
-        opt senha provisória
-            W-->>U: Tela "Crie sua senha pessoal"
-        end
-    end
+    O->>C: F10
+    C->>C: Bloqueia se houver venda offline não enviada
+    C->>API: GET /cash/sessions/:id
+    API->>D: troco inicial + suprimentos − sangrias + dinheiro − troco
+    API-->>C: Resumo por forma de pagamento e dinheiro esperado
+    O->>C: Informa o dinheiro contado
+    C->>API: POST /cash/:id/close {countedCash}
+    API-->>C: Diferença (falta/sobra) congelada no turno
+    C->>O: Imprime o relatório de fechamento (com assinatura)
 ```
 
 ---
 
 ## 🚦 Diagramas de estado
 
-### Solicitação de pedido
+### Caixa e venda
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Caixa aberto" as Aberto
+    state "Caixa fechado" as Fechado
+    [*] --> Aberto: abertura (troco inicial)
+    Aberto --> Aberto: vendas · sangrias · suprimentos
+    Aberto --> Fechado: fechamento (contagem)
+    Fechado --> [*]
+```
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Cupom em andamento" as Cupom
+    [*] --> Cupom: primeiro item
+    Cupom --> Cupom: itens · quantidade · descontos
+    Cupom --> [*]: Esc (cancelado, auditado)
+    Cupom --> Concluída: pagamento confirmado
+    Concluída --> Cancelada: cancelamento com motivo (estorna o estoque)
+    Concluída --> [*]
+    Cancelada --> [*]
+```
+
+> Só é possível cancelar vendas do caixa **aberto**: depois do fechamento, os valores do turno ficam congelados.
+
+### Solicitação de pedido e produto
 
 ```mermaid
 stateDiagram-v2
     direction LR
     state "Pedido feito" as PedidoFeito
     [*] --> Pendente: saldo ≤ PP ou manual
-    Pendente --> PedidoFeito: gestão faz o pedido
+    Pendente --> PedidoFeito
     Pendente --> Cancelado
-    PedidoFeito --> Recebido: mercadoria chegou
+    PedidoFeito --> Recebido
     PedidoFeito --> Cancelado
     Recebido --> [*]
     Cancelado --> [*]
-```
-
-### Ciclo de vida do produto e situação do estoque
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> Ativo: cadastro
-    Ativo --> Lixeira: excluir (PIN)
-    Lixeira --> Ativo: restaurar (até N dias)
-    Lixeira --> Apagado: prazo expirou ou exclusão definitiva
-    Apagado --> [*]
-
-    state Ativo {
-        direction LR
-        state "Crítico" as Critico
-        state "Sem estoque" as SemEstoque
-        Normal --> Repor: saldo ≤ PP
-        Repor --> Critico: saldo ≤ ES
-        Critico --> SemEstoque: saldo ≤ 0
-        SemEstoque --> Normal: entrada
-        Critico --> Normal: entrada
-        Repor --> Normal: entrada
-    }
 ```
 
 ---
 
 ## 📐 Regras de negócio
 
-### Fórmulas (conforme o documento de requisitos)
+### Caixa
+
+| Regra | Detalhe |
+|---|---|
+| Total do item | `preço × quantidade − desconto do item` (arredondado ao centavo) |
+| Total da venda | `Σ itens − desconto no total` (o desconto no total incide sobre os itens já com desconto) |
+| Desconto | Em R$ ou %, nunca maior que o valor. Acima do **limite do operador** (Configurações → Frente de caixa, padrão 0%) exige o gerente |
+| Troco | `pago − total`, e só pode sair do **dinheiro** (PIX e cartão não passam do valor que falta) |
+| Dinheiro esperado | `troco inicial + suprimentos − sangrias + dinheiro recebido − troco devolvido` |
+| Diferença de caixa | `contado − esperado` (negativo é falta, positivo é sobra) |
+| Sangria | Justificativa obrigatória e não pode passar do dinheiro esperado na gaveta |
+| Preço | Online, o preço tem que ser o do cadastro (se mudou, o caixa pede para bipar de novo). Offline, vale o preço salvo no aparelho e a diferença vai para a auditoria |
+| Estoque | Por padrão o caixa vende mesmo com saldo zerado (o produto está na mão do cliente) e avisa. Há a opção de bloquear |
+| Vendas offline | Nunca são barradas por saldo e precisam ser enviadas antes do fechamento |
+
+### Reposição (fórmulas do estoque)
 
 | Indicador | Sigla | Fórmula |
 |---|:-:|---|
 | Estoque Mínimo | **EM** | `Consumo Médio Diário × Tempo de Reposição` |
 | Estoque de Segurança | **ES** | `(Consumo Máximo Diário − Consumo Médio Diário) × Tempo de Reposição` |
 | Ponto de Pedido | **PP** | `(Consumo Médio Diário × Tempo de Reposição) + ES` |
-| Quantidade sugerida* | — | `ES + Consumo Médio × (Tempo de Reposição + Dias de Cobertura) − Saldo` |
-
-\* O documento não define a quantidade do pedido. Esta é uma premissa, com "dias de cobertura" configurável (padrão **7**).
-
-**Exemplo — Pão de forma:** média 20/dia, máximo 30/dia, entrega em 3 dias.
-
-| EM | ES | PP | Saldo 85 → sugerido |
-|:-:|:-:|:-:|:-:|
-| 20 × 3 = **60** | (30 − 20) × 3 = **30** | 60 + 30 = **90** | 30 + 20 × (3 + 7) − 85 = **145** |
-
-### Situação do produto
+| Quantidade sugerida | — | `ES + Consumo Médio × (Tempo de Reposição + Dias de Cobertura) − Saldo` |
 
 | Situação | Condição | Cor |
 |---|---|:-:|
@@ -630,26 +633,35 @@ stateDiagram-v2
 
 ### Configurações ajustáveis
 
-| Parâmetro | Padrão | Efeito |
-|---|:-:|---|
-| Dias na lixeira | 15 | Prazo para recuperar um produto excluído |
-| Dias de cobertura do pedido | 7 | Usado na quantidade sugerida |
-| Permitir estoque negativo | Não | Bloqueia saída maior que o saldo |
-| PIN em saídas, entradas, cadastro e exclusão | Sim | Liga ou desliga a confirmação por PIN em cada operação |
+| Parâmetro | Padrão |
+|---|:-:|
+| Desconto máximo do operador sem autorização | 0% |
+| Bloquear venda de item sem estoque | Não |
+| Papel / conexão da impressora | 80 mm / Windows |
+| Imprimir automaticamente ao finalizar | Não |
+| Abrir gaveta nas vendas em dinheiro (impressora de rede) | Não |
+| Dias na lixeira · cobertura do pedido · estoque negativo em saídas manuais | 15 · 7 · Não |
+| PIN em entradas, saídas, cadastro e exclusão | Sim |
 
 ---
 
 ## 👥 Perfis e permissões
 
-| Ação | 🛡️ Administrador | 📦 Estoquista | 🧾 Caixa |
-|---|:-:|:-:|:-:|
-| Consultar produtos e saldo | ✅ | ✅ | ✅ |
-| Registrar saída (venda, perda) | ✅ | ✅ | ✅ |
-| Registrar entrada | ✅ | ✅ | — |
-| Cadastrar e editar produtos e categorias | ✅ | ✅ | — |
-| Movimentações, pedidos e relatórios | ✅ | ✅ | — |
-| Excluir produto e gerenciar lixeira | ✅ | — | — |
-| Usuários, configurações e auditoria | ✅ | — | — |
+| Ação | 🛡️ Administrador | 👔 Gerente | 📦 Estoquista | 🧾 Operador de caixa |
+|---|:-:|:-:|:-:|:-:|
+| Abrir/fechar caixa e vender | ✅ | ✅ | — | ✅ |
+| Desconto acima do limite | ✅ | ✅ | — | 🔑 com gerente |
+| Cancelar venda finalizada (estorna estoque) | ✅ | ✅ | — | 🔑 com gerente |
+| Sangria e suprimento | ✅ | ✅ | — | 🔑 com gerente |
+| Vendas, caixas e relatórios de vendas | ✅ | ✅ | — | só o turno aberto (reimpressão) |
+| Consultar produtos e saldo | ✅ | ✅ | ✅ | ✅ |
+| Entradas e saídas de estoque | ✅ | — | ✅ | — |
+| **Ajuste manual de estoque** | ✅ | — | — | — |
+| Cadastrar produtos, preços e categorias | ✅ | — | ✅ | — |
+| Movimentações, pedidos e relatórios de estoque | ✅ | ✅ (consulta) | ✅ | — |
+| Usuários, configurações, marca, lixeira e auditoria | ✅ | — | — | — |
+
+🔑 = o operador pede e um gerente autoriza **no próprio caixa** com usuário + PIN, sem trocar de sessão.
 
 > As permissões são verificadas **no servidor** em todas as rotas. Esconder um botão na tela não é a proteção.
 
@@ -659,111 +671,91 @@ stateDiagram-v2
 
 | Ameaça | Proteção |
 |---|---|
-| Vazamento de senhas | Hash **Argon2id** (recomendação OWASP) para senhas e PINs |
-| Roubo de sessão (XSS) | Sessão em cookie **httpOnly** (inacessível ao JavaScript) e **CSP** rígida |
-| CSRF | Cookie **SameSite=Strict** e cabeçalho anti-CSRF obrigatório |
-| Força bruta | Conta bloqueada por 15 min após 5 erros, PIN por 5 min, **rate limit** por IP |
-| Sessão de funcionário desligado | `tokenVersion`: desativar, trocar senha ou sair derruba todas as sessões na hora |
-| Senha padrão / fraca | Senhas aleatórias na instalação, troca obrigatória no 1º acesso, política mínima |
-| Acesso indevido | Perfis (RBAC) + PIN para operações sensíveis |
-| SQL injection | Consultas parametrizadas (Prisma) |
-| Mass assignment | DTOs com *whitelist*: campos extras são rejeitados |
-| Enumeração de usuários | Mensagem genérica e tempo de resposta igualado |
-| Clickjacking, sniffing | Helmet: `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy` |
-| Configuração insegura | A API não sobe sem segredo forte (validação com Zod) |
-| Banco exposto | PostgreSQL só escuta em `127.0.0.1` |
-| Computador compartilhado | O cache offline é apagado no logout |
-| Rastreabilidade | **Auditoria** de logins, falhas, cadastros, exclusões e configurações |
+| Vazamento de senhas | **Argon2id** para senhas e PINs |
+| Roubo de sessão (XSS) | Cookie **httpOnly** e **CSP** rígida |
+| CSRF | **SameSite=Strict** + cabeçalho anti-CSRF obrigatório |
+| Força bruta | Conta bloqueada após 5 erros (senha ou PIN), PIN de supervisor bloqueado por 5 min e **rate limit** por IP |
+| Operador "se autorizando" | Token do supervisor assinado, preso ao operador, à permissão e (no desconto) à venda. O avulso é de **uso único** e dura 2 minutos |
+| Desconto disfarçado de preço | Online, o servidor exige o preço do cadastro. Offline, a divergência é aceita e **auditada** |
+| Venda duplicada | ID gerado no caixa e idempotência no servidor (inclusive em envios simultâneos) |
+| Dois caixas no mesmo terminal | Índice único parcial no banco |
+| Funcionário desligado | `tokenVersion` derruba as sessões na hora |
+| Mass assignment / SQL injection | DTOs com *whitelist* e consultas parametrizadas |
+| Logotipo malicioso | Só imagens (PNG/JPEG/WebP/SVG) via data URL, até 150 KB, exibidas como `<img>` |
+| Rastreabilidade | **Auditoria** de vendas, descontos, itens removidos, cancelamentos, sangrias, gaveta, reimpressões, autorizações, logins e configurações |
 
 ---
 
 ## 🔌 API
 
-Prefixo `/api`. Autenticação por cookie de sessão. A integração com o PDV usa `X-API-Key`.
+Prefixo `/api`. Autenticação por cookie de sessão. Quando a ação exige um supervisor, a API responde `403 AUTHORIZATION_REQUIRED` e o caixa repete a requisição com `X-Supervisor-Token`.
+
+### Frente de caixa
 
 | Método | Rota | Permissão | Descrição |
 |---|---|---|---|
-| `POST` | `/auth/login` | pública | Login (cria o cookie de sessão) |
-| `POST` | `/auth/logout` | logado | Encerra e revoga sessões |
-| `GET` | `/auth/me` | logado | Perfil e permissões |
-| `POST` | `/auth/change-password` · `/auth/pin` | logado | Troca a senha / define o PIN |
-| `GET` | `/products` | product:read | Lista (busca, situação, categoria, paginação) |
-| `GET` | `/products/lookup?code=` | product:read | Busca exata por SKU ou EAN (bipagem) |
-| `POST` `PATCH` | `/products` · `/products/:id` | product:write + PIN | Cadastrar / editar |
-| `DELETE` | `/products/:id` | product:delete + PIN | Enviar para a lixeira |
-| `GET` `POST` `DELETE` | `/trash` · `/trash/:id/restore` · `/trash/:id` | trash:manage | Lixeira |
-| `POST` | `/stock/entries` · `/stock/exits` | stock:in / stock:out + PIN | Registrar movimentação |
-| `GET` | `/stock/movements` | movement:read | Histórico com filtros |
-| `GET` `POST` `PATCH` | `/purchase-requests` · `/:id/status` | purchase:* | Solicitações de pedido |
-| `GET` | `/reports/dashboard` · `/reports/movements` | product:read / report:read | Painel e relatório por período |
-| `GET` `POST` `PATCH` | `/users` · `/users/:id/reset-password` · `/reset-pin` | user:manage | Usuários |
-| `GET` `PATCH` | `/settings` | settings:manage | Configurações |
-| `GET` | `/audit` | audit:read | Auditoria |
-| `GET` | `/integration/pdv/products/:code/availability` | X-API-Key | PDV consulta estoque |
-| `POST` | `/integration/pdv/sales` | X-API-Key | PDV envia venda (idempotente por `externalId`) |
+| `POST` | `/auth/pin-login` | pública | Troca rápida de operador (usuário + PIN) |
+| `POST` | `/pos/authorize` | pos:sell | Supervisor libera uma ação (usuário + PIN) → token |
+| `GET` | `/cash/current?terminal=` | pos:sell | Turno aberto do terminal com o resumo |
+| `POST` | `/cash/open` | pos:sell | Abre o caixa (troco inicial) |
+| `POST` | `/cash/:id/movements` | pos:sell (+ cash:movement ou supervisor) | Sangria / suprimento |
+| `POST` | `/cash/:id/close` | pos:sell | Fecha o caixa (dinheiro contado) |
+| `GET` | `/cash/sessions` · `/cash/sessions/:id` | sales:read · pos:sell | Histórico e relatório do turno |
+| `POST` | `/sales` | pos:sell (+ pos:discount ou supervisor) | Registra a venda (idempotente pelo `id`) |
+| `GET` | `/sales` · `/sales/:id` | pos:sell | Vendas (o operador só vê o turno aberto) |
+| `POST` | `/sales/:id/cancel` | pos:sell (+ pos:cancel ou supervisor) | Cancela e estorna o estoque |
+| `POST` | `/sales/:id/reprint` · `/sales/abandon` | pos:sell | Auditoria de reimpressão e de cupom cancelado |
+| `GET` | `/sales/report?from=&to=` | sales:read | Relatório de vendas do período |
+| `POST` | `/printing/sales/:id` · `/cash-sessions/:id` · `/cash-movements/:id` | pos:sell | Impressão ESC/POS na térmica de rede |
+| `POST` | `/printing/drawer` · `/printing/test` | pos:sell · settings:manage | Abrir gaveta · página de teste |
+| `GET` | `/settings/branding` | pública | Marca da loja (white-label) |
 
 <details>
-<summary><b>Exemplo de integração com o PDV</b></summary>
+<summary><b>Exemplo: registrar uma venda</b></summary>
 
 ```http
-POST /api/integration/pdv/sales
-X-API-Key: <PDV_API_KEY do .env>
+POST /api/sales
 Content-Type: application/json
+X-Requested-With: XMLHttpRequest
 
 {
-  "externalId": "NFCE-000123",
+  "id": "6f1c0e3a-5b8e-4a77-9f37-2b1d1c2e9a10",
+  "sessionId": "b1f0…",
+  "occurredAt": "2026-10-15T14:32:00.000Z",
   "items": [
-    { "code": "7896002301428", "quantity": 2 },
-    { "code": "PAO-FRANCES", "quantity": 0.75 }
+    { "productId": "…", "quantity": 2, "unitPrice": 5.29 },
+    { "productId": "…", "quantity": 0.455, "unitPrice": 16.90, "discount": { "type": "PERCENT", "value": 5 } }
+  ],
+  "orderDiscount": { "type": "AMOUNT", "value": 1 },
+  "payments": [
+    { "method": "PIX", "amount": 10 },
+    { "method": "CASH", "amount": 20 }
   ]
 }
 ```
 
-Reenviar o mesmo `externalId` não duplica a baixa.
+Reenviar o mesmo `id` devolve a mesma venda, sem duplicar.
 
 </details>
+
+### Estoque e administração
+
+| Método | Rota | Permissão | Descrição |
+|---|---|---|---|
+| `POST` `GET` | `/auth/login` · `/auth/logout` · `/auth/me` | — | Sessão |
+| `GET` `POST` `PATCH` `DELETE` | `/products` · `/products/lookup` · `/products/:id` | product:* | Catálogo (com preços) |
+| `POST` | `/stock/entries` · `/stock/exits` | stock:in / stock:out (+ stock:adjust nos ajustes) + PIN | Movimentações |
+| `GET` | `/stock/movements` | movement:read | Histórico |
+| `GET` `POST` `PATCH` | `/purchase-requests` | purchase:* | Solicitações de pedido |
+| `GET` | `/reports/dashboard` · `/reports/movements` | product:read / report:read | Painel e relatório de estoque |
+| `GET` `POST` `PATCH` | `/users` | user:manage | Usuários |
+| `GET` `PATCH` | `/settings` | — / settings:manage | Configurações (marca, impressão, caixa) |
+| `GET` | `/audit` | audit:read | Auditoria |
+| `GET` `POST` | `/integration/pdv/*` | X-API-Key | Integração com um PDV externo (opcional) |
 
 ---
 
 ## 🚀 Como rodar
-
-### Opção 1 · Aplicativo para Windows (recomendado para a loja)
-
-1. Baixe o instalador: **[VL-Estoque-Setup-1.1.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.1.0.exe)**
-2. Execute e siga os passos. Ele cria um atalho **VL Estoque** na área de trabalho.
-3. Na primeira abertura, o app mostra a **senha provisória do `admin`**. Anote-a, porque o sistema pede a troca no primeiro acesso.
-
-O app abre em **janela própria** (sem barra de endereço) e já traz tudo embutido: banco PostgreSQL, API e telas. Não é preciso instalar Node.js nem nada além dele.
-
-| Item | Onde fica |
-|---|---|
-| Dados do estoque | `%LOCALAPPDATA%\VLEstoque\pgdata` (preservados ao desinstalar) |
-| Senhas geradas na instalação | `%LOCALAPPDATA%\VLEstoque\config.json` |
-| Logs | `%LOCALAPPDATA%\VLEstoque\logs` |
-| Backups automáticos | `Meu Drive\VL Estoque - Backups` no Google Drive (ou `%LOCALAPPDATA%\VLEstoque\backups` sem o Drive) |
-| Acesso pelo celular (mesma rede) | `http://IP-DO-COMPUTADOR:3030` |
-
-#### ☁️ Backup no Google Drive
-
-Atende ao requisito de **salvamento em nuvem** sem servidor nem mensalidade:
-
-1. Instale o [Google Drive para computador](https://www.google.com/drive/download/) e entre com a conta Google da loja.
-2. O app encontra a pasta **Meu Drive** sozinho e passa a salvar uma cópia dos dados **ao abrir, a cada 4 horas e ao fechar**. É um arquivo por dia, e ficam guardados os últimos 30 dias.
-3. O Drive sincroniza essas cópias com a nuvem.
-
-**Se o computador der defeito:** instale o Drive e o V&L Estoque no computador novo. Na primeira abertura, o app encontra o backup mais recente e pergunta se deseja **restaurar os dados**.
-
-| Situação | O que acontece |
-|---|---|
-| Drive ainda não instalado | O app avisa e oferece escolher outra pasta sincronizada; enquanto isso, guarda o backup só no computador |
-| Drive fechado ou sem internet | O backup é salvo no computador e o Drive envia quando voltar |
-| Backup de uma versão anterior | Restaura normalmente: os dados entram no formato da versão atual |
-
-> ⚠️ Como o instalador não tem assinatura digital, o Windows pode exibir o aviso “O Windows protegeu o computador”. Clique em **Mais informações → Executar assim mesmo**.
-
-Para gerar um novo instalador: `npm run dist` (saída em `apps/desktop/release/`).
-
-### Opção 2 · Pelo código-fonte
 
 | Item | Versão |
 |---|---|
@@ -771,13 +763,11 @@ Para gerar um novo instalador: `npm run dist` (saída em `apps/desktop/release/`
 | Banco de dados | Nenhuma instalação: o PostgreSQL vem embutido via npm |
 | Sistema | Windows, macOS ou Linux |
 
-### Passo a passo
-
 ```bash
 # 1. Instala, gera senhas aleatórias, cria o banco e o usuário admin
 npm run setup
 
-# 2. (opcional) 22 produtos de exemplo com 30 dias de movimentação
+# 2. (opcional) 22 produtos de exemplo, com preços e 30 dias de movimentação
 npm run db:demo
 
 # 3a. Desenvolvimento: http://localhost:5173
@@ -787,9 +777,14 @@ npm run dev
 npm run build && npm start
 ```
 
-No Windows, para usar no dia a dia, basta dar **dois cliques em `iniciar-sistema.bat`**.
-
 O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps/api/.env` (`ADMIN_INITIAL_PASSWORD`). O sistema obriga a troca no primeiro acesso.
+
+**Primeiros passos na loja:**
+
+1. Em **Configurações → Identidade da loja**, defina nome, logotipo e cor. Em **Impressão**, escolha o papel e a impressora.
+2. Em **Produtos**, cadastre os itens com **preço de venda** (e de custo, para a margem).
+3. Em **Usuários**, crie os operadores de caixa e os gerentes, todos **com PIN**.
+4. No computador do caixa, abra `http://ENDERECO:3000`, entre como operador e **abra o caixa**.
 
 ### Comandos
 
@@ -799,72 +794,86 @@ O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps
 | `npm run dev` | Banco, API e front com recarga automática |
 | `npm run build` · `npm start` | Build e execução em produção |
 | `npm test` | Testes das regras de negócio (Vitest) |
-| `npm run desktop` | Abre o app desktop (Electron) a partir do código |
-| `npm run dist` | Gera o instalador do Windows (`.exe`) |
 | `npm run typecheck` | Verificação de tipos da API e do front |
 | `npm run db:demo -w @vl/api` | Dados de demonstração |
 | `npm run db:stop -w @vl/api` | Desliga o banco embutido |
-| `npm run db:studio -w @vl/api` | Abre o Prisma Studio |
 
 > 💾 Os dados ficam em `%LOCALAPPDATA%\vl-estoque\pgdata`, **fora do OneDrive** de propósito, porque a sincronização de arquivos corrompe bancos de dados. Para publicar na nuvem, troque a `DATABASE_URL`, use **HTTPS** e defina `COOKIE_SECURE=true`.
+
+> 🖥️ **App desktop:** o instalador do Windows (`apps/desktop`) ainda é o da versão anterior, só de estoque. A frente de caixa roda pelo navegador (instalável como PWA). O app desktop do PDV é uma próxima etapa.
+
+---
+
+## 🧪 Testes
+
+| Suíte | O que garante |
+|---|---|
+| `sale-calculator.spec.ts` | Descontos (R$ e %), venda por peso, ausência de erro de ponto flutuante, pagamentos múltiplos e troco só em dinheiro |
+| `sale-calculator.parity.spec.ts` | O cálculo do navegador (vendas offline) é **idêntico** ao do servidor em 2.000 vendas aleatórias |
+| `cash-summary.spec.ts` | Dinheiro esperado, totais por forma de pagamento, vendas canceladas e diferença de caixa |
+| `escpos.spec.ts` | Acentuação PC860, layout da bobina, gaveta e corte de papel |
+| `replenishment.spec.ts` | Fórmulas de reposição (EM, ES, PP e quantidade sugerida) |
+
+```bash
+npm test
+```
 
 ---
 
 ## 🗂️ Estrutura de pastas
 
 ```
-sistema-estoque/
 ├── apps/
-│   ├── api/                         # Back-end (NestJS)
-│   │   ├── prisma/                  # schema, migrations, seed, demo
-│   │   ├── scripts/database.mjs     # PostgreSQL embutido (pg_ctl)
+│   ├── api/                              # Back-end (NestJS)
+│   │   ├── prisma/                       # schema, migrations, seed, demo
 │   │   └── src/
-│   │       ├── common/              # auth, permissões, segurança, erros
-│   │       ├── config/env.ts        # variáveis validadas com Zod
+│   │       ├── common/                   # auth, permissões, segurança, erros, ids
 │   │       └── modules/
-│   │           ├── products/domain/ # 🧠 EM · ES · PP (+ testes)
-│   │           ├── products/        # catálogo + lixeira
-│   │           ├── stock/           # entradas e saídas
-│   │           ├── purchase-requests/
-│   │           ├── reports/
-│   │           ├── auth/ users/ settings/ audit/ categories/
-│   │           └── integration/     # 🔌 adaptador do PDV
-│   ├── web/                         # Front-end (React PWA)
+│   │           ├── pos/                  # 🧾 caixa, vendas, relatório, autorização do supervisor
+│   │           │   └── domain/           # 🧠 cálculo da venda + fechamento de caixa (+ testes)
+│   │           ├── printing/             # 🖨️ ESC/POS (+ testes) e envio para a térmica de rede
+│   │           ├── settings/             # 🎨 white-label, impressão e regras do caixa
+│   │           ├── products/domain/      # 🧠 EM · ES · PP (+ testes)
+│   │           ├── products/ stock/ purchase-requests/ reports/
+│   │           ├── auth/ users/ audit/ categories/
+│   │           └── integration/          # 🔌 PDV externo (opcional)
+│   ├── web/                              # Front-end (React PWA)
 │   │   └── src/
-│   │       ├── components/          # layout + UI reutilizável
-│   │       ├── features/            # uma pasta por funcionalidade
-│   │       └── lib/                 # cliente HTTP, tipos, formatação
-│   └── desktop/                     # 🖥️ App Windows (Electron + instalador NSIS)
-│       ├── src/main.mjs             # liga banco → migrations → API → janela
-│       └── scripts/package.mjs      # gera o VL-Estoque-Setup.exe
-├── docs/screenshots/
-├── scripts/setup.mjs
-└── iniciar-sistema.bat
+│   │       ├── features/pos/             # 🖥️ frente de caixa (carrinho, pagamento, caixa)
+│   │       ├── features/sales/           # 📈 vendas e caixas
+│   │       ├── features/printing/        # 🧾 comprovantes: HTML 80/58 mm, A4 e PDF
+│   │       ├── features/branding/        # 🎨 marca e tema claro/escuro
+│   │       └── features/…                # estoque, usuários, configurações...
+│   └── desktop/                          # App Windows (versão anterior, só estoque)
+├── docs/
+│   ├── DRS-PDV.md                        # Requisitos e rastreabilidade
+│   └── screenshots/
+└── scripts/setup.mjs
 ```
 
 ### Stack
 
 | Camada | Tecnologias |
 |---|---|
-| **Front-end** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · TanStack Query · React Hook Form + Zod · React Router 7 · Lucide |
+| **Front-end** | React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · TanStack Query · React Hook Form + Zod · React Router 7 · Lucide · jsPDF |
 | **PWA / Offline** | vite-plugin-pwa (Workbox) · IndexedDB (idb-keyval) |
 | **Back-end** | Node.js 24 · NestJS 11 · class-validator · @nestjs/schedule |
 | **Banco** | PostgreSQL 18 · Prisma 6 |
 | **Segurança** | Argon2id · JWT (cookie httpOnly) · Helmet · @nestjs/throttler |
-| **Testes** | Vitest (domínio) · testes ponta a ponta da API e da interface |
+| **Testes** | Vitest |
 
 ---
 
-## 📝 Pendências com o cliente
+## 🧭 Próximas etapas
 
-- [ ] Qual é o **sistema de caixa (PDV)** atual e como ele exporta as vendas (API, arquivo, banco)?
-- [ ] Validar a **regra da quantidade sugerida** no pedido.
-- [ ] Manter o **PIN em toda venda**? (padrão do documento, mas pode atrasar o caixa)
-- [ ] **Ficha técnica** da padaria (baixa de insumos ao produzir) entra no escopo?
-- [ ] Hospedagem em nuvem e domínio com HTTPS.
+- [ ] **Módulo fiscal** (NFC-e/SAT) como adaptador separado, mantendo o PDV não fiscal.
+- [ ] **App desktop do PDV** (Electron), com impressão silenciosa sem `--kiosk-printing`.
+- [ ] **TEF** (maquininha integrada) e **PIX dinâmico** com QR Code no caixa.
+- [ ] **Etiquetas de balança** (EAN-13 com prefixo 2, com peso ou preço embutido).
+- [ ] Ficha técnica da padaria (baixa de insumos ao produzir).
 
 ---
 
 <div align="center">
-<sub>Desenvolvido para a V&L Mercadinho e Panificadora · 2026</sub>
+<sub>SuaLojaAqui · PDV não fiscal e gestão de estoque · 2026</sub>
 </div>

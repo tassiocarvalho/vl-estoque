@@ -54,6 +54,9 @@ export class TrashService implements OnApplicationBootstrap {
   /** Exclusão definitiva antecipada (apaga o histórico do produto). */
   async purge(id: string, actor: Actor) {
     const product = await this.findInTrash(id);
+    if (await this.prisma.saleItem.count({ where: { productId: id } })) {
+      throw badRequest('Este produto tem vendas registradas e não pode ser apagado definitivamente (fica na lixeira)');
+    }
     await this.prisma.product.delete({ where: { id } });
     await this.log(actor, 'product.purge', id, product.sku);
   }
@@ -63,8 +66,9 @@ export class TrashService implements OnApplicationBootstrap {
   async purgeExpired() {
     const { trashRetentionDays } = await this.settings.get();
     const limit = new Date(Date.now() - trashRetentionDays * DAY_MS);
+    // Produtos com vendas nunca são apagados: o histórico de vendas é registro financeiro.
     const expired = await this.prisma.product.findMany({
-      where: { deletedAt: { lte: limit } },
+      where: { deletedAt: { lte: limit }, saleItems: { none: {} } },
       select: { id: true, sku: true },
     });
     if (expired.length === 0) return;

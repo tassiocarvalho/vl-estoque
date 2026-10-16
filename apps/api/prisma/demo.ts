@@ -20,33 +20,35 @@ interface DemoProduct {
   avg: number;
   max: number;
   lead: number;
+  /** Preço de venda (R$). O custo de demonstração é 65% do preço. */
+  price: number;
   /** Fator do estoque final em relação ao ponto de pedido (define a situação no painel). */
   target: number;
 }
 
 const PRODUCTS: DemoProduct[] = [
-  { name: 'Pão Francês', sku: 'PAO-FRANCES', category: ['Padaria', 'Pães'], unit: 'KG', avg: 18, max: 25, lead: 1, target: 2.2 },
-  { name: 'Pão de Forma Tradicional 500g', sku: 'PAO-FORMA-500', barcode: '7896002301428', category: ['Padaria', 'Pães'], unit: 'UN', avg: 8, max: 12, lead: 2, target: 0.8 },
-  { name: 'Bolo de Chocolate (fatia)', sku: 'BOLO-CHOC-FT', category: ['Padaria', 'Bolos e Doces'], unit: 'UN', avg: 15, max: 22, lead: 1, target: 1.6 },
-  { name: 'Coxinha de Frango', sku: 'SALG-COXINHA', category: ['Padaria', 'Salgados'], unit: 'UN', avg: 30, max: 45, lead: 1, target: 0 },
-  { name: 'Farinha de Trigo Especial 5kg', sku: 'FAR-TRIGO-5KG', barcode: '7896079900016', category: ['Padaria', 'Insumos de Panificação'], unit: 'PCT', avg: 4, max: 6, lead: 5, target: 0.35 },
-  { name: 'Fermento Biológico Seco 125g', sku: 'FERM-BIO-125', barcode: '7891080123456', category: ['Padaria', 'Insumos de Panificação'], unit: 'UN', avg: 2, max: 3, lead: 7, target: 2.5 },
-  { name: 'Arroz Branco Tipo 1 5kg', sku: 'ARROZ-T1-5KG', barcode: '7896006711117', category: ['Mercearia', 'Grãos e Cereais'], unit: 'PCT', avg: 6, max: 10, lead: 4, target: 1.9 },
-  { name: 'Feijão Carioca 1kg', sku: 'FEIJAO-CAR-1KG', barcode: '7896006751014', category: ['Mercearia', 'Grãos e Cereais'], unit: 'PCT', avg: 9, max: 14, lead: 4, target: 0.95 },
-  { name: 'Macarrão Espaguete 500g', sku: 'MAC-ESPAG-500', barcode: '7896022200015', category: ['Mercearia', 'Massas'], unit: 'PCT', avg: 7, max: 11, lead: 5, target: 2.4 },
-  { name: 'Açúcar Refinado 1kg', sku: 'ACUCAR-REF-1KG', barcode: '7896215300102', category: ['Mercearia', 'Açúcar e Café'], unit: 'PCT', avg: 10, max: 15, lead: 4, target: 1.5 },
-  { name: 'Café Torrado e Moído 500g', sku: 'CAFE-500', barcode: '7896005800157', category: ['Mercearia', 'Açúcar e Café'], unit: 'PCT', avg: 6, max: 9, lead: 5, target: 0.3 },
-  { name: 'Óleo de Soja 900ml', sku: 'OLEO-SOJA-900', barcode: '7891107101621', category: ['Mercearia', 'Temperos e Condimentos'], unit: 'UN', avg: 7, max: 10, lead: 4, target: 2 },
-  { name: 'Leite Integral UHT 1L', sku: 'LEITE-INT-1L', barcode: '7896259410133', category: ['Frios e Laticínios', 'Leites'], unit: 'UN', avg: 24, max: 36, lead: 2, target: 1.3 },
-  { name: 'Queijo Mussarela Fatiado', sku: 'QJ-MUSSARELA', category: ['Frios e Laticínios', 'Queijos'], unit: 'KG', avg: 2.5, max: 4, lead: 3, target: 0.7 },
-  { name: 'Presunto Cozido Fatiado', sku: 'PRESUNTO-COZ', category: ['Frios e Laticínios', 'Embutidos'], unit: 'KG', avg: 2, max: 3, lead: 3, target: 1.8 },
-  { name: 'Refrigerante Cola 2L', sku: 'REFRI-COLA-2L', barcode: '7894900011517', category: ['Bebidas', 'Refrigerantes'], unit: 'UN', avg: 12, max: 20, lead: 3, target: 1.7 },
-  { name: 'Água Mineral sem Gás 500ml', sku: 'AGUA-500', barcode: '7896065200014', category: ['Bebidas', 'Águas'], unit: 'UN', avg: 20, max: 35, lead: 3, target: 3 },
-  { name: 'Suco de Uva Integral 1L', sku: 'SUCO-UVA-1L', barcode: '7896051130011', category: ['Bebidas', 'Sucos'], unit: 'UN', avg: 1, max: 2, lead: 6, target: 4 },
-  { name: 'Detergente Líquido 500ml', sku: 'DETERG-500', barcode: '7891022100235', category: ['Limpeza', 'Casa'], unit: 'UN', avg: 5, max: 8, lead: 6, target: 1.4 },
-  { name: 'Sabão em Pó 1kg', sku: 'SABAO-PO-1KG', barcode: '7891150025240', category: ['Limpeza', 'Roupas'], unit: 'CX', avg: 3, max: 5, lead: 6, target: 0 },
-  { name: 'Creme Dental 90g', sku: 'CREME-DENT-90', barcode: '7891528038810', category: ['Higiene Pessoal', 'Higiene Bucal'], unit: 'UN', avg: 3, max: 5, lead: 7, target: 2.1 },
-  { name: 'Banana Prata', sku: 'BANANA-PRATA', category: ['Hortifrúti', 'Frutas'], unit: 'KG', avg: 6, max: 9, lead: 1, target: 1.2 },
+  { name: 'Pão Francês', sku: 'PAO-FRANCES', price: 16.9, category: ['Padaria', 'Pães'], unit: 'KG', avg: 18, max: 25, lead: 1, target: 2.2 },
+  { name: 'Pão de Forma Tradicional 500g', sku: 'PAO-FORMA-500', price: 8.49, barcode: '7896002301428', category: ['Padaria', 'Pães'], unit: 'UN', avg: 8, max: 12, lead: 2, target: 0.8 },
+  { name: 'Bolo de Chocolate (fatia)', sku: 'BOLO-CHOC-FT', price: 6.5, category: ['Padaria', 'Bolos e Doces'], unit: 'UN', avg: 15, max: 22, lead: 1, target: 1.6 },
+  { name: 'Coxinha de Frango', sku: 'SALG-COXINHA', price: 5.0, category: ['Padaria', 'Salgados'], unit: 'UN', avg: 30, max: 45, lead: 1, target: 0 },
+  { name: 'Farinha de Trigo Especial 5kg', sku: 'FAR-TRIGO-5KG', price: 24.9, barcode: '7896079900016', category: ['Padaria', 'Insumos de Panificação'], unit: 'PCT', avg: 4, max: 6, lead: 5, target: 0.35 },
+  { name: 'Fermento Biológico Seco 125g', sku: 'FERM-BIO-125', price: 9.9, barcode: '7891080123456', category: ['Padaria', 'Insumos de Panificação'], unit: 'UN', avg: 2, max: 3, lead: 7, target: 2.5 },
+  { name: 'Arroz Branco Tipo 1 5kg', sku: 'ARROZ-T1-5KG', price: 27.9, barcode: '7896006711117', category: ['Mercearia', 'Grãos e Cereais'], unit: 'PCT', avg: 6, max: 10, lead: 4, target: 1.9 },
+  { name: 'Feijão Carioca 1kg', sku: 'FEIJAO-CAR-1KG', price: 8.99, barcode: '7896006751014', category: ['Mercearia', 'Grãos e Cereais'], unit: 'PCT', avg: 9, max: 14, lead: 4, target: 0.95 },
+  { name: 'Macarrão Espaguete 500g', sku: 'MAC-ESPAG-500', price: 4.79, barcode: '7896022200015', category: ['Mercearia', 'Massas'], unit: 'PCT', avg: 7, max: 11, lead: 5, target: 2.4 },
+  { name: 'Açúcar Refinado 1kg', sku: 'ACUCAR-REF-1KG', price: 4.99, barcode: '7896215300102', category: ['Mercearia', 'Açúcar e Café'], unit: 'PCT', avg: 10, max: 15, lead: 4, target: 1.5 },
+  { name: 'Café Torrado e Moído 500g', sku: 'CAFE-500', price: 18.9, barcode: '7896005800157', category: ['Mercearia', 'Açúcar e Café'], unit: 'PCT', avg: 6, max: 9, lead: 5, target: 0.3 },
+  { name: 'Óleo de Soja 900ml', sku: 'OLEO-SOJA-900', price: 7.49, barcode: '7891107101621', category: ['Mercearia', 'Temperos e Condimentos'], unit: 'UN', avg: 7, max: 10, lead: 4, target: 2 },
+  { name: 'Leite Integral UHT 1L', sku: 'LEITE-INT-1L', price: 5.29, barcode: '7896259410133', category: ['Frios e Laticínios', 'Leites'], unit: 'UN', avg: 24, max: 36, lead: 2, target: 1.3 },
+  { name: 'Queijo Mussarela Fatiado', sku: 'QJ-MUSSARELA', price: 49.9, category: ['Frios e Laticínios', 'Queijos'], unit: 'KG', avg: 2.5, max: 4, lead: 3, target: 0.7 },
+  { name: 'Presunto Cozido Fatiado', sku: 'PRESUNTO-COZ', price: 34.9, category: ['Frios e Laticínios', 'Embutidos'], unit: 'KG', avg: 2, max: 3, lead: 3, target: 1.8 },
+  { name: 'Refrigerante Cola 2L', sku: 'REFRI-COLA-2L', price: 10.99, barcode: '7894900011517', category: ['Bebidas', 'Refrigerantes'], unit: 'UN', avg: 12, max: 20, lead: 3, target: 1.7 },
+  { name: 'Água Mineral sem Gás 500ml', sku: 'AGUA-500', price: 2.5, barcode: '7896065200014', category: ['Bebidas', 'Águas'], unit: 'UN', avg: 20, max: 35, lead: 3, target: 3 },
+  { name: 'Suco de Uva Integral 1L', sku: 'SUCO-UVA-1L', price: 16.9, barcode: '7896051130011', category: ['Bebidas', 'Sucos'], unit: 'UN', avg: 1, max: 2, lead: 6, target: 4 },
+  { name: 'Detergente Líquido 500ml', sku: 'DETERG-500', price: 2.79, barcode: '7891022100235', category: ['Limpeza', 'Casa'], unit: 'UN', avg: 5, max: 8, lead: 6, target: 1.4 },
+  { name: 'Sabão em Pó 1kg', sku: 'SABAO-PO-1KG', price: 13.9, barcode: '7891150025240', category: ['Limpeza', 'Roupas'], unit: 'CX', avg: 3, max: 5, lead: 6, target: 0 },
+  { name: 'Creme Dental 90g', sku: 'CREME-DENT-90', price: 4.49, barcode: '7891528038810', category: ['Higiene Pessoal', 'Higiene Bucal'], unit: 'UN', avg: 3, max: 5, lead: 7, target: 2.1 },
+  { name: 'Banana Prata', sku: 'BANANA-PRATA', price: 6.99, category: ['Hortifrúti', 'Frutas'], unit: 'KG', avg: 6, max: 9, lead: 1, target: 1.2 },
 ];
 
 /** Gerador pseudoaleatório com semente fixa: a demonstração sai sempre igual. */
@@ -117,6 +119,8 @@ async function main() {
         ...profile,
         ...indicators,
         currentStock: stock,
+        salePrice: demo.price,
+        costPrice: Math.round(demo.price * 65) / 100,
       },
     });
     await prisma.stockMovement.createMany({ data: movements.map((m) => ({ ...m, productId: product.id })) });

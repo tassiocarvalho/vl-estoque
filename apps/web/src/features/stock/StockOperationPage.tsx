@@ -11,6 +11,8 @@ import { cn } from '@/lib/cn';
 import { formatQuantity, uuid } from '@/lib/format';
 import { ENTRY_TYPES, EXIT_TYPES, MOVEMENT_LABELS, UNIT_SHORT } from '@/lib/labels';
 import type { MovementType, RegisterMovementResult } from '@/lib/types';
+import { P } from '@/lib/permissions';
+import { useAuth } from '../auth/AuthProvider';
 import { useOffline } from '../offline/OfflineProvider';
 import type { CatalogItem } from '../offline/offline-store';
 import { invalidateStockData } from '../products/api';
@@ -60,12 +62,15 @@ function readQuickMode() {
 
 export function StockOperationPage({ mode }: { mode: Mode }) {
   const config = CONFIG[mode];
+  const { can } = useAuth();
+  // Ajuste manual de inventário é restrito ao administrador.
+  const types = config.types.filter((t) => can(P.STOCK_ADJUST) || !t.endsWith('ADJUSTMENT'));
   const queryClient = useQueryClient();
   const { enqueue, pending, discard } = useOffline();
   const scannerRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState<CatalogItem | null>(null);
-  const [type, setType] = useState<MovementType>(config.types[0]);
+  const [type, setType] = useState<MovementType>(types[0]);
   const [quantity, setQuantity] = useState('1');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -170,7 +175,7 @@ export function StockOperationPage({ mode }: { mode: Mode }) {
         <div className="space-y-4 lg:col-span-2">
           <Card className="p-5">
             <div className="mb-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de movimentação">
-              {config.types.map((option) => (
+              {types.map((option) => (
                 <button
                   key={option}
                   type="button"

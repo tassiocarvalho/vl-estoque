@@ -12,6 +12,8 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { IntegrationModule } from './modules/integration/integration.module';
+import { PosModule } from './modules/pos/pos.module';
+import { PrintingModule } from './modules/printing/printing.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PurchaseRequestsModule } from './modules/purchase-requests/purchase-requests.module';
 import { ReportsModule } from './modules/reports/reports.module';
@@ -41,6 +43,8 @@ const staticFiles = existsSync(webDist)
     StockModule,
     PurchaseRequestsModule,
     ReportsModule,
+    PosModule,
+    PrintingModule,
     IntegrationModule,
     SetupModule,
   ],

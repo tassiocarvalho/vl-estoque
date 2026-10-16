@@ -15,10 +15,17 @@ import {
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination';
 
+/** Tipos que podem ser registrados manualmente nas telas de entrada e saída. */
 export const ENTRY_TYPES = [MovementType.IN_PURCHASE, MovementType.IN_RETURN, MovementType.IN_ADJUSTMENT] as const;
 export const EXIT_TYPES = [MovementType.OUT_SALE, MovementType.OUT_LOSS, MovementType.OUT_ADJUSTMENT] as const;
+/** Ajustes manuais de inventário: só o administrador pode registrar. */
+export const ADJUSTMENT_TYPES: readonly MovementType[] = [MovementType.IN_ADJUSTMENT, MovementType.OUT_ADJUSTMENT];
 
-export const isEntry = (type: MovementType) => (ENTRY_TYPES as readonly MovementType[]).includes(type);
+/** Todos os tipos de entrada, inclusive os gerados pelo sistema (ex.: estorno de venda cancelada). */
+export const ALL_ENTRY_TYPES = Object.values(MovementType).filter((type) => type.startsWith('IN_'));
+export const ALL_EXIT_TYPES = Object.values(MovementType).filter((type) => type.startsWith('OUT_'));
+
+export const isEntry = (type: MovementType) => type.startsWith('IN_');
 
 const trimOrUndefined = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() || undefined : value;

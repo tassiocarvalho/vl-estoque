@@ -9,13 +9,18 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Monitor,
+  Moon,
   Package,
+  Receipt,
   RefreshCw,
   Settings,
   ShieldCheck,
+  Sun,
   Trash2,
   UserCircle,
   Users,
+  Vault,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -23,6 +28,7 @@ import { Suspense, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LoadingState } from '@/components/ui/Display';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useBranding } from '@/features/branding/BrandingProvider';
 import { useOffline } from '@/features/offline/OfflineProvider';
 import { cn } from '@/lib/cn';
 import { ROLE_LABELS } from '@/lib/labels';
@@ -40,8 +46,16 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'Operação',
     items: [
       { to: '/', label: 'Painel', icon: LayoutDashboard, permission: P.PRODUCT_READ },
+      { to: '/caixa', label: 'Frente de caixa', icon: Monitor, permission: P.POS_SELL },
       { to: '/entrada', label: 'Registrar entrada', icon: ArrowDownToLine, permission: P.STOCK_IN },
       { to: '/saida', label: 'Registrar saída', icon: ArrowUpFromLine, permission: P.STOCK_OUT },
+    ],
+  },
+  {
+    title: 'Vendas',
+    items: [
+      { to: '/vendas', label: 'Vendas', icon: Receipt, permission: P.SALES_READ },
+      { to: '/caixas', label: 'Caixas', icon: Vault, permission: P.SALES_READ },
     ],
   },
   {
@@ -66,14 +80,31 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
 ];
 
 function Brand() {
+  const { branding, logo } = useBranding();
   return (
     <div className="flex items-center gap-2.5">
-      <img src="/icon.svg" alt="" className="size-9 rounded-lg" />
-      <div className="leading-tight">
-        <p className="text-sm font-semibold text-white">V&amp;L Estoque</p>
-        <p className="text-[11px] text-brand-200/80">Mercadinho e Panificadora</p>
+      <img src={logo} alt="" className="size-9 rounded-lg bg-white/10 object-contain" />
+      <div className="min-w-0 leading-tight">
+        <p className="truncate text-sm font-semibold text-white">{branding.name}</p>
+        {branding.tagline && <p className="truncate text-[11px] text-white/60">{branding.tagline}</p>}
       </div>
     </div>
+  );
+}
+
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggleTheme } = useBranding();
+  const dark = theme === 'dark';
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      title={dark ? 'Usar tema claro' : 'Usar tema escuro'}
+      aria-label={dark ? 'Usar tema claro' : 'Usar tema escuro'}
+      className={cn('rounded-lg p-1.5 transition-colors', className)}
+    >
+      {dark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+    </button>
   );
 }
 
@@ -87,9 +118,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   return (
-    <div className="flex h-full flex-col bg-brand-900 text-brand-50">
-      <div className="px-5 py-5">
+    <div className="flex h-full flex-col bg-brand-900 text-white">
+      <div className="flex items-center justify-between gap-2 px-5 py-5">
         <Brand />
+        {/* No celular o botão de tema fica no cabeçalho (aqui fica o "fechar menu"). */}
+        {!onNavigate && <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />}
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
         {NAV_GROUPS.map((group) => {
@@ -97,7 +130,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           if (items.length === 0) return null;
           return (
             <div key={group.title}>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-brand-200/60 uppercase">
+              <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-white/45 uppercase">
                 {group.title}
               </p>
               <ul className="space-y-0.5">
@@ -112,7 +145,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                           'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                           isActive
                             ? 'bg-white/12 text-white'
-                            : 'text-brand-100/80 hover:bg-white/6 hover:text-white',
+                            : 'text-white/75 hover:bg-white/6 hover:text-white',
                         )
                       }
                     >
@@ -132,15 +165,15 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/6"
         >
-          <UserCircle className="size-8 text-brand-200" />
+          <UserCircle className="size-8 text-white/70" />
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-sm font-medium text-white">{user?.name}</span>
-            <span className="block text-xs text-brand-200/70">{user && ROLE_LABELS[user.role]}</span>
+            <span className="block text-xs text-white/55">{user && ROLE_LABELS[user.role]}</span>
           </span>
         </NavLink>
         <button
           onClick={handleLogout}
-          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/80 hover:bg-white/6 hover:text-white"
+          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/6 hover:text-white"
         >
           <LogOut className="size-[18px]" />
           Sair
@@ -150,16 +183,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function ConnectionBar() {
-  const { online, pending, syncing, sync } = useOffline();
-  const failed = pending.filter((p) => p.error).length;
-  if (online && pending.length === 0) return null;
+export function ConnectionBar() {
+  const { online, pending, pendingSales, syncing, sync } = useOffline();
+  const failed = pending.filter((p) => p.error).length + pendingSales.filter((s) => s.error).length;
+  const waiting = pending.length + pendingSales.length;
+  if (online && waiting === 0) return null;
 
   return (
     <div
       className={cn(
         'no-print flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 text-sm',
-        online ? 'bg-amber-50 text-amber-900' : 'bg-slate-800 text-white',
+        online ? 'bg-amber-50 text-amber-900' : 'bg-[#1e293b] text-white',
       )}
     >
       {!online && (
@@ -167,9 +201,15 @@ function ConnectionBar() {
           <CloudOff className="size-4" /> Sem internet — os registros ficam salvos neste dispositivo
         </span>
       )}
-      {pending.length > 0 && (
+      {waiting > 0 && (
         <span className="inline-flex items-center gap-2">
-          {pending.length} movimentação(ões) aguardando envio
+          {[
+            pendingSales.length > 0 && `${pendingSales.length} venda(s)`,
+            pending.length > 0 && `${pending.length} movimentação(ões)`,
+          ]
+            .filter(Boolean)
+            .join(' e ')}{' '}
+          aguardando envio
           {failed > 0 && <strong className="text-red-600">({failed} com erro)</strong>}
           {online && (
             <button onClick={() => void sync()} className="inline-flex items-center gap-1 font-medium underline">
@@ -179,6 +219,17 @@ function ConnectionBar() {
         </span>
       )}
     </div>
+  );
+}
+
+function MobileBrand() {
+  const { branding, logo } = useBranding();
+  return (
+    <>
+      <img src={logo} alt="" className="size-7 rounded-md object-contain" />
+      <span className="flex-1 truncate text-sm font-semibold">{branding.name}</span>
+      <ThemeToggle className="text-slate-500 hover:bg-slate-100" />
+    </>
   );
 }
 
@@ -200,7 +251,7 @@ export function AppLayout() {
           <aside className="absolute inset-y-0 left-0 w-72 shadow-xl">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-5 right-3 z-10 rounded-lg p-1 text-brand-100 hover:bg-white/10"
+              className="absolute top-5 right-3 z-10 rounded-lg p-1 text-white/80 hover:bg-white/10"
               aria-label="Fechar menu"
             >
               <X className="size-5" />
@@ -218,8 +269,7 @@ export function AppLayout() {
         >
           <Menu className="size-5" />
         </button>
-        <img src="/icon.svg" alt="" className="size-7 rounded-md" />
-        <span className="text-sm font-semibold">V&amp;L Estoque</span>
+        <MobileBrand />
       </header>
 
       <ConnectionBar />

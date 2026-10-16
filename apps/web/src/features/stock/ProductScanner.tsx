@@ -10,7 +10,7 @@ import type { Paginated, Product } from '@/lib/types';
 import { catalog, type CatalogItem } from '../offline/offline-store';
 
 /** Busca na API; sem internet, usa o catálogo salvo no dispositivo. */
-async function searchProducts(term: string): Promise<CatalogItem[]> {
+export async function searchProducts(term: string): Promise<CatalogItem[]> {
   try {
     return (await http.get<Paginated<Product>>('/products', { search: term, pageSize: 8 })).items;
   } catch (error) {
@@ -19,7 +19,7 @@ async function searchProducts(term: string): Promise<CatalogItem[]> {
   }
 }
 
-async function findByCode(code: string): Promise<CatalogItem | null> {
+export async function findByCode(code: string): Promise<CatalogItem | null> {
   try {
     return await http.get<Product>('/products/lookup', { code });
   } catch (error) {
