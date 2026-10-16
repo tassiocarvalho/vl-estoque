@@ -17,7 +17,7 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?logo=pwa&logoColor=white)
 
-<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.2.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
+<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
 
 <img src="docs/screenshots/painel.png" width="900" alt="Painel do sistema" />
 
@@ -757,7 +757,7 @@ Reenviar o mesmo `externalId` não duplica a baixa.
 
 ### Opção 1 · Aplicativo para Windows (recomendado para a loja)
 
-1. Baixe o instalador: **[VL-Estoque-Setup-1.2.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.2.0.exe)**
+1. Baixe o instalador: **[VL-Estoque-Setup-1.3.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe)**
 2. Execute e siga os passos. Ele cria um atalho **VL Estoque** na área de trabalho.
 3. Na primeira abertura, o app **entra sozinho como `admin`** e pede para criar a **senha pessoal e o PIN**. Ninguém precisa ver a senha provisória.
 4. O **Manual de uso (PDF)** fica no menu lateral e também aparece num aviso de boas-vindas no painel. Para atualizá-lo, edite [`docs/manual/manual.html`](docs/manual/manual.html) e rode `npm run manual`.
