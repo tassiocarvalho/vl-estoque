@@ -17,7 +17,7 @@ Entradas e saídas pela bipagem · Alertas automáticos de reposição · Relat�
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?logo=pwa&logoColor=white)
 
-<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
+<a href="https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.1.exe"><img src="https://img.shields.io/badge/Baixar_para_Windows-instalador_.exe-0f766e?style=for-the-badge&logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
 
 <img src="docs/screenshots/painel.png" width="900" alt="Painel do sistema" />
 
@@ -780,7 +780,7 @@ O app abre em **janela própria** (sem barra de endereço) e já traz tudo embut
 
 #### A) Instalar
 
-1. Baixe o instalador **[VL-Estoque-Setup-1.3.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe)** (ou gere com `npm run dist`) e dê dois cliques.
+1. Baixe o instalador **[VL-Estoque-Setup-1.3.1.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.1.exe)** (ou gere com `npm run dist`) e dê dois cliques.
 2. Se aparecer **“O Windows protegeu o computador”**, clique em **Mais informações → Executar assim mesmo**. O aviso aparece porque o instalador não tem assinatura digital paga.
 3. Mantenha a pasta sugerida, clique em **Instalar** e depois em **Concluir**. Não precisa de senha de administrador do Windows (instalação por usuário).
 
