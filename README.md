@@ -87,7 +87,7 @@ O SuaLojaAqui une uma **frente de caixa não fiscal** a um **controle de estoque
 | 🎨 **White-label** | Nome, logotipo, cor, tema claro/escuro e textos dos comprovantes, tudo nas configurações |
 | 📦 **Produtos** | Cadastro com preço de custo e de venda, busca, filtros por situação e categoria e histórico |
 | ⬇️⬆️ **Entradas e saídas** | Pedido recebido, retorno, perdas e ajustes (ajuste só do administrador) |
-| 🔔 **Reposição** | EM, ES e PP calculados, com solicitação de pedido automática |
+| 🔔 **Reposição (opcional por produto)** | EM, ES e PP calculados, com solicitação de pedido automática. Com o interruptor "Controlar consumo e reposição" desligado, o produto não pede consumo nem prazo e não gera solicitação |
 | 📋 **Pedidos e relatórios de estoque** | Fluxo Pendente → Pedido feito → Recebido, estoque parado e rupturas |
 | 👥 **Usuários** | Administrador, Gerente, Estoquista e Operador de caixa, com senha, PIN e bloqueio |
 | 🛡️ **Auditoria** | Quem fez o quê e quando, inclusive itens removidos do cupom e abertura de gaveta |

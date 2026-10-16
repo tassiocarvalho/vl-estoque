@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
-import { Field, Input, Select } from '@/components/ui/Form';
+import { Field, Input, Select, Switch } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { errorMessage, isCanceled } from '@/lib/api';
 import { formatDecimal, formatMoney, formatNumber, parseMoney } from '@/lib/format';
@@ -19,7 +19,7 @@ const emptyToUndefined = (value: unknown) => (value === '' || value === null ? u
 const quantity = (message: string) =>
   z.preprocess(
     emptyToUndefined,
-    z.coerce.number({ invalid_type_error: message }).min(0, 'Não pode ser negativo').max(1_000_000, 'Valor muito alto'),
+    z.coerce.number({ invalid_type_error: message }).min(0, 'Não pode ser negativo').max(1_000_000, 'Valor muito alto').optional(),
   );
 
 /** Preço em reais: aceita "12,90", "1.234,56" ou "12.90". Vazio = não informado. */
@@ -42,19 +42,31 @@ const schema = z
       .regex(/^(\d{8,14})?$/, 'O código de barras deve ter de 8 a 14 números'),
     categoryId: z.string().min(1, 'Selecione a categoria'),
     unit: z.enum(Object.keys(UNIT_LABELS) as [Unit, ...Unit[]]),
+    replenishmentEnabled: z.boolean(),
     avgDailyConsumption: quantity('Informe o consumo médio'),
     maxDailyConsumption: quantity('Informe o consumo máximo'),
     leadTimeDays: z.preprocess(
       emptyToUndefined,
-      z.coerce.number({ invalid_type_error: 'Informe o prazo' }).int('Use dias inteiros').min(0).max(365),
+      z.coerce.number({ invalid_type_error: 'Informe o prazo' }).int('Use dias inteiros').min(0).max(365).optional(),
     ),
     initialStock: z.preprocess(emptyToUndefined, z.coerce.number().min(0, 'Não pode ser negativo').optional()),
     costPrice: money,
     salePrice: money,
   })
-  .refine((data) => data.maxDailyConsumption >= data.avgDailyConsumption, {
-    path: ['maxDailyConsumption'],
-    message: 'Deve ser maior ou igual ao consumo médio',
+  // Consumo e prazo só são obrigatórios com "Controlar consumo e reposição" ligado.
+  .superRefine((data, ctx) => {
+    if (!data.replenishmentEnabled) return;
+    const required = [
+      ['avgDailyConsumption', 'Informe o consumo médio'],
+      ['maxDailyConsumption', 'Informe o consumo máximo'],
+      ['leadTimeDays', 'Informe o prazo'],
+    ] as const;
+    for (const [path, message] of required) {
+      if (data[path] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+    }
+    if ((data.maxDailyConsumption ?? 0) < (data.avgDailyConsumption ?? 0)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['maxDailyConsumption'], message: 'Deve ser maior ou igual ao consumo médio' });
+    }
   });
 
 type FormInput = z.input<typeof schema>;
@@ -66,6 +78,7 @@ const EMPTY: FormInput = {
   barcode: '',
   categoryId: '',
   unit: 'UN',
+  replenishmentEnabled: true,
   avgDailyConsumption: '' as unknown as number,
   maxDailyConsumption: '' as unknown as number,
   leadTimeDays: '' as unknown as number,
@@ -84,7 +97,7 @@ interface ProductFormModalProps {
 export function ProductFormModal({ open, product, onClose, onSaved }: ProductFormModalProps) {
   const editing = Boolean(product);
   const save = useSaveProduct();
-  const { register, handleSubmit, reset, watch, formState } = useForm<FormInput, unknown, FormOutput>({
+  const { register, handleSubmit, reset, watch, setValue, formState } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
     defaultValues: EMPTY,
   });
@@ -100,6 +113,7 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
             barcode: product.barcode ?? '',
             categoryId: product.category.id,
             unit: product.unit,
+            replenishmentEnabled: product.replenishmentEnabled,
             avgDailyConsumption: product.avgDailyConsumption,
             maxDailyConsumption: product.maxDailyConsumption,
             leadTimeDays: product.leadTimeDays,
@@ -110,14 +124,25 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
     );
   }, [open, product, reset]);
 
-  const [avg, max, lead, unit, cost, price] = watch(['avgDailyConsumption', 'maxDailyConsumption', 'leadTimeDays', 'unit', 'costPrice', 'salePrice']);
+  const [avg, max, lead, unit, cost, price, replenishment] = watch([
+    'avgDailyConsumption',
+    'maxDailyConsumption',
+    'leadTimeDays',
+    'unit',
+    'costPrice',
+    'salePrice',
+    'replenishmentEnabled',
+  ]);
   const costValue = parseMoney(String(cost ?? ''));
   const priceValue = parseMoney(String(price ?? ''));
   const margin = costValue > 0 && priceValue > 0 ? ((priceValue - costValue) / priceValue) * 100 : null;
   const preview = previewIndicators(Number(avg) || 0, Number(max) || 0, Number(lead) || 0);
 
   const onSubmit = handleSubmit(async (values) => {
-    const data = editing ? { ...values, initialStock: undefined } : values;
+    const consumption = values.replenishmentEnabled
+      ? {}
+      : { avgDailyConsumption: undefined, maxDailyConsumption: undefined, leadTimeDays: undefined };
+    const data = { ...values, ...consumption, ...(editing && { initialStock: undefined }) };
     try {
       const saved = await save.mutateAsync({ id: product?.id, data });
       toast.success(editing ? 'Produto atualizado' : 'Produto cadastrado');
@@ -134,7 +159,7 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
       onClose={onClose}
       size="lg"
       title={editing ? 'Editar produto' : 'Novo produto'}
-      description="Os indicadores de reposição são calculados automaticamente a partir do consumo e do prazo de entrega."
+      description="Identificação, preços e estoque. O controle de consumo e reposição é opcional."
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -193,46 +218,66 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
           </div>
         </fieldset>
 
-        <fieldset className="grid gap-4 sm:grid-cols-3">
-          <legend className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Consumo e reposição</legend>
-          <Field label="Consumo médio/dia" error={errors.avgDailyConsumption?.message}>
-            {(id) => <Input id={id} type="number" step="0.001" min="0" aria-invalid={!!errors.avgDailyConsumption} {...register('avgDailyConsumption')} />}
-          </Field>
-          <Field label="Consumo máximo/dia" error={errors.maxDailyConsumption?.message}>
-            {(id) => <Input id={id} type="number" step="0.001" min="0" aria-invalid={!!errors.maxDailyConsumption} {...register('maxDailyConsumption')} />}
-          </Field>
-          <Field label="Prazo de entrega (dias)" error={errors.leadTimeDays?.message}>
-            {(id) => <Input id={id} type="number" step="1" min="0" aria-invalid={!!errors.leadTimeDays} {...register('leadTimeDays')} />}
-          </Field>
-          {!editing && (
-            <Field label="Estoque inicial" error={errors.initialStock?.message} hint="Quantidade que já existe hoje" className="sm:col-span-1">
+        {!editing && (
+          <fieldset className="grid gap-4 sm:grid-cols-3">
+            <legend className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Estoque</legend>
+            <Field label="Estoque inicial" error={errors.initialStock?.message} hint="Quantidade que já existe hoje">
               {(id) => <Input id={id} type="number" step="0.001" min="0" {...register('initialStock')} />}
             </Field>
-          )}
-        </fieldset>
+          </fieldset>
+        )}
 
-        <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-4">
-          <p className="mb-3 flex items-center gap-2 text-sm font-medium text-brand-800">
-            <Calculator className="size-4" /> Indicadores calculados
-          </p>
-          <dl className="grid grid-cols-3 gap-3 text-center">
-            {[
-              ['Estoque mínimo', preview.minimumStock, 'Consumo médio × prazo'],
-              ['Estoque de segurança', preview.safetyStock, '(Máximo − médio) × prazo'],
-              ['Ponto de pedido', preview.reorderPoint, 'Mínimo + segurança'],
-            ].map(([label, value, formula]) => (
-              <div key={label as string} className="rounded-lg bg-white px-2 py-3 shadow-sm">
-                <dt className="text-xs text-slate-500">{label}</dt>
-                <dd className="mt-1 text-lg font-semibold text-slate-900">
-                  {formatNumber(value as number)} <span className="text-xs font-normal text-slate-500">{UNIT_SHORT[unit as Unit]}</span>
-                </dd>
-                <dd className="mt-0.5 hidden text-[11px] text-slate-400 sm:block">{formula}</dd>
+        <div className="rounded-xl border border-slate-200 p-4">
+          <Switch
+            label="Controlar consumo e reposição"
+            description={
+              replenishment
+                ? 'Calcula o ponto de pedido e gera solicitação de compra automática quando o saldo baixar.'
+                : 'Desligado: sem consumo e prazo, sem ponto de pedido e sem solicitação automática.'
+            }
+            checked={Boolean(replenishment)}
+            onChange={(checked) => setValue('replenishmentEnabled', checked, { shouldDirty: true, shouldValidate: formState.isSubmitted })}
+          />
+
+          {replenishment && (
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Consumo médio/dia" error={errors.avgDailyConsumption?.message}>
+                  {(id) => <Input id={id} type="number" step="0.001" min="0" aria-invalid={!!errors.avgDailyConsumption} {...register('avgDailyConsumption')} />}
+                </Field>
+                <Field label="Consumo máximo/dia" error={errors.maxDailyConsumption?.message}>
+                  {(id) => <Input id={id} type="number" step="0.001" min="0" aria-invalid={!!errors.maxDailyConsumption} {...register('maxDailyConsumption')} />}
+                </Field>
+                <Field label="Prazo de entrega (dias)" error={errors.leadTimeDays?.message}>
+                  {(id) => <Input id={id} type="number" step="1" min="0" aria-invalid={!!errors.leadTimeDays} {...register('leadTimeDays')} />}
+                </Field>
               </div>
-            ))}
-          </dl>
-          <p className="mt-3 text-xs text-brand-800/70">
-            Quando o saldo chegar ao ponto de pedido, o sistema gera automaticamente uma solicitação de pedido para a gestão.
-          </p>
+
+              <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-brand-800">
+                  <Calculator className="size-4" /> Indicadores calculados
+                </p>
+                <dl className="grid grid-cols-3 gap-3 text-center">
+                  {[
+                    ['Estoque mínimo', preview.minimumStock, 'Consumo médio × prazo'],
+                    ['Estoque de segurança', preview.safetyStock, '(Máximo − médio) × prazo'],
+                    ['Ponto de pedido', preview.reorderPoint, 'Mínimo + segurança'],
+                  ].map(([label, value, formula]) => (
+                    <div key={label as string} className="rounded-lg bg-white px-2 py-3 shadow-sm">
+                      <dt className="text-xs text-slate-500">{label}</dt>
+                      <dd className="mt-1 text-lg font-semibold text-slate-900">
+                        {formatNumber(value as number)} <span className="text-xs font-normal text-slate-500">{UNIT_SHORT[unit as Unit]}</span>
+                      </dd>
+                      <dd className="mt-0.5 hidden text-[11px] text-slate-400 sm:block">{formula}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-3 text-xs text-brand-800/70">
+                  Quando o saldo chegar ao ponto de pedido, o sistema gera automaticamente uma solicitação de pedido para a gestão.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </form>
     </Modal>

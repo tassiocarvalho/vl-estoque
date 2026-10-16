@@ -94,9 +94,17 @@ export function ProductDetailPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicator label="Saldo atual" value={qty(product.currentStock)} hint="Quantidade em estoque" highlight />
-        <Indicator label="Ponto de pedido (PP)" value={qty(product.reorderPoint)} hint="Ao atingir, gera solicitação" />
-        <Indicator label="Estoque de segurança (ES)" value={qty(product.safetyStock)} hint="Proteção contra picos" />
-        <Indicator label="Estoque mínimo (EM)" value={qty(product.minimumStock)} hint="Consumo durante a entrega" />
+        {product.replenishmentEnabled ? (
+          <>
+            <Indicator label="Ponto de pedido (PP)" value={qty(product.reorderPoint)} hint="Ao atingir, gera solicitação" />
+            <Indicator label="Estoque de segurança (ES)" value={qty(product.safetyStock)} hint="Proteção contra picos" />
+            <Indicator label="Estoque mínimo (EM)" value={qty(product.minimumStock)} hint="Consumo durante a entrega" />
+          </>
+        ) : (
+          <div className="col-span-1 flex items-center rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 lg:col-span-3">
+            Consumo e reposição desligados para este produto: sem ponto de pedido e sem solicitação automática.
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -105,9 +113,13 @@ export function ProductDetailPage() {
           <dl className="divide-y divide-slate-100 text-sm">
             {[
               ['Unidade', UNIT_LABELS[product.unit]],
-              ['Consumo médio diário', qty(product.avgDailyConsumption)],
-              ['Consumo máximo diário', qty(product.maxDailyConsumption)],
-              ['Prazo de entrega', `${product.leadTimeDays} dia(s)`],
+              ...(product.replenishmentEnabled
+                ? [
+                    ['Consumo médio diário', qty(product.avgDailyConsumption)],
+                    ['Consumo máximo diário', qty(product.maxDailyConsumption)],
+                    ['Prazo de entrega', `${product.leadTimeDays} dia(s)`],
+                  ]
+                : [['Consumo e reposição', 'Desligado']]),
               ['Cadastrado em', formatDateTime(product.createdAt)],
               ['Última alteração', formatDateTime(product.updatedAt)],
             ].map(([label, value]) => (

@@ -29,6 +29,7 @@ export function toProductView(product: ProductWithCategory) {
       name: category.name,
       path: category.parent ? `${category.parent.name} › ${category.name}` : category.name,
     },
+    replenishmentEnabled: product.replenishmentEnabled,
     avgDailyConsumption: toNumber(product.avgDailyConsumption),
     maxDailyConsumption: toNumber(product.maxDailyConsumption),
     leadTimeDays: product.leadTimeDays,
