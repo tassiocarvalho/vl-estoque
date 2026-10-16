@@ -79,7 +79,9 @@ O sistema substitui o controle manual de estoque do mercadinho e da panificadora
 | 📋 **Pedidos** | Fluxo Pendente → Pedido feito → Recebido (ou Cancelado), com impressão da lista |
 | 📊 **Relatórios** | Por período: movimentação por produto, estoque parado, rupturas e solicitações. Exporta CSV |
 | 🗑️ **Lixeira** | Recupera produtos excluídos dentro do prazo, depois apaga automaticamente |
-| 👥 **Usuários** | Administrador, Estoquista e Caixa, com senha provisória, PIN e bloqueio |
+| 👥 **Usuários** | Administrador, Estoquista e Caixa, com senha provisória, PIN, e-mail e bloqueio |
+| 🔑 **Esqueci minha senha** | Código de 6 números por e-mail (Gmail com senha de app ou outro SMTP), válido por 15 min |
+| ⚖️ **LGPD** | Termo de Uso e Política de Privacidade com aceite versionado, “Baixar meus dados”, anonimização e retenção automática |
 | 🛡️ **Auditoria** | Quem fez o quê e quando, inclusive tentativas de login erradas |
 | ⚙️ **Configurações** | Regras ajustáveis sem programação |
 | 📴 **Offline** | Registra sem internet e sincroniza quando a conexão volta |
@@ -674,6 +676,23 @@ stateDiagram-v2
 | Banco exposto | PostgreSQL só escuta em `127.0.0.1` |
 | Computador compartilhado | O cache offline é apagado no logout |
 | Rastreabilidade | **Auditoria** de logins, falhas, cadastros, exclusões e configurações |
+| Recuperação de senha | Código de 6 dígitos guardado como hash, 15 min de validade, uso único, 5 tentativas, 3 pedidos/hora, resposta genérica e sessões encerradas ao redefinir |
+| Senha do e-mail de envio | Criptografada no banco com **AES-256-GCM** (chave derivada do `JWT_SECRET`); nunca sai da API; TLS obrigatório |
+
+### ⚖️ LGPD (Lei nº 13.709/2018)
+
+| Requisito | Como o sistema atende |
+|---|---|
+| Transparência (art. 6º, VI, e art. 9º) | **Termo de Uso e Política de Privacidade** em `/termos`, com controlador, encarregado, finalidades, bases legais, compartilhamento e retenção |
+| Ciência do titular | Aceite obrigatório no 1º acesso, **versionado** (`TERMS_VERSION`): se o texto mudar, todos aceitam de novo. A API bloqueia o uso até o aceite |
+| Minimização (art. 6º, III) | Só nome, login, e-mail (opcional, exceto admin) e auditoria. IP apagado da auditoria após **12 meses**; códigos de recuperação após 1 dia |
+| Acesso e portabilidade (art. 18, II e V) | “Baixar meus dados” em Meu perfil (JSON com cadastro, auditoria e operações) |
+| Correção (art. 18, III) | O próprio usuário corrige o e-mail; o administrador corrige o nome |
+| Eliminação/anonimização (art. 18, IV e VI) | “Anonimizar dados” para usuários desativados: apaga nome, login, e-mail, credenciais e IPs, mantendo o histórico do estoque sem identificação |
+| Encarregado (art. 41) | Nome e e-mail configuráveis em Configurações › Empresa e privacidade |
+| Segurança (art. 46) | Medidas da tabela acima |
+
+> O texto do termo fica em [`TermsContent.tsx`](apps/web/src/features/legal/TermsContent.tsx). Ele é um modelo e deve ser revisado por um profissional jurídico antes do uso definitivo.
 
 ---
 
@@ -686,7 +705,13 @@ Prefixo `/api`. Autenticação por cookie de sessão. A integração com o PDV u
 | `POST` | `/auth/login` | pública | Login (cria o cookie de sessão) |
 | `POST` | `/auth/logout` | logado | Encerra e revoga sessões |
 | `GET` | `/auth/me` | logado | Perfil e permissões |
-| `POST` | `/auth/change-password` · `/auth/pin` | logado | Troca a senha / define o PIN |
+| `POST` | `/auth/change-password` · `/auth/pin` | logado | Troca a senha / define o PIN (no 1º acesso: + e-mail e aceite do termo) |
+| `GET` | `/auth/recovery` | pública | Se a recuperação por e-mail está ativa |
+| `POST` | `/auth/forgot-password` · `/auth/reset-password` | pública | Envia o código por e-mail / redefine a senha com o código |
+| `POST` | `/auth/accept-terms` | logado | Aceite da versão atual do termo |
+| `PATCH` | `/auth/profile` | logado | Corrige o próprio e-mail (com a senha atual) |
+| `GET` | `/auth/my-data` | logado | Exporta os próprios dados pessoais (LGPD) |
+| `GET` | `/legal` | pública | Versão do termo e dados da empresa |
 | `GET` | `/products` | product:read | Lista (busca, situação, categoria, paginação) |
 | `GET` | `/products/lookup?code=` | product:read | Busca exata por SKU ou EAN (bipagem) |
 | `POST` `PATCH` | `/products` · `/products/:id` | product:write + PIN | Cadastrar / editar |
@@ -698,6 +723,9 @@ Prefixo `/api`. Autenticação por cookie de sessão. A integração com o PDV u
 | `GET` | `/reports/dashboard` · `/reports/movements` | product:read / report:read | Painel e relatório por período |
 | `GET` `POST` `PATCH` | `/users` · `/users/:id/reset-password` · `/reset-pin` | user:manage | Usuários |
 | `GET` `PATCH` | `/settings` | settings:manage | Configurações |
+| `GET` `PUT` · `POST` | `/settings/mail` · `/settings/mail/test` | settings:manage | E-mail de envio (senha criptografada) / teste |
+| `PUT` | `/settings/company` | settings:manage | Dados da empresa e do encarregado |
+| `POST` | `/users/:id/anonymize` | user:manage | Anonimiza um usuário desativado (LGPD) |
 | `GET` | `/audit` | audit:read | Auditoria |
 | `GET` | `/integration/pdv/products/:code/availability` | X-API-Key | PDV consulta estoque |
 | `POST` | `/integration/pdv/sales` | X-API-Key | PDV envia venda (idempotente por `externalId`) |

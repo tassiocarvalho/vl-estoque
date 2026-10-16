@@ -7,6 +7,8 @@ import { Card, CardHeader, ErrorState, LoadingState, PageHeader } from '@/compon
 import { Field, Input, Switch } from '@/components/ui/Form';
 import { errorMessage, http } from '@/lib/api';
 import type { SystemSettings } from '@/lib/types';
+import { CompanySettingsCard } from './CompanySettingsCard';
+import { MailSettingsCard } from './MailSettingsCard';
 
 const PIN_OPTIONS: { key: keyof SystemSettings['pinRequired']; label: string; description: string }[] = [
   { key: 'stockOut', label: 'Registrar saída', description: 'Vendas, perdas e ajustes de saída' },
@@ -118,6 +120,11 @@ export function SettingsPage() {
             </div>
           </Card>
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <MailSettingsCard />
+        <CompanySettingsCard />
       </div>
     </>
   );

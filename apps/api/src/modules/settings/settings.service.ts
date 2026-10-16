@@ -25,6 +25,18 @@ export class SettingsService {
     return this.cache;
   }
 
+  /** Outras configurações guardadas em chaves próprias (ex.: e-mail, dados da empresa). */
+  async getValue<T extends object>(key: string, defaults: T): Promise<T> {
+    const row = await this.prisma.setting.findUnique({ where: { key } });
+    return { ...defaults, ...((row?.value ?? {}) as Partial<T>) };
+  }
+
+  async setValue<T extends object>(key: string, value: T): Promise<T> {
+    const json = value as unknown as Prisma.InputJsonValue;
+    await this.prisma.setting.upsert({ where: { key }, create: { key, value: json }, update: { value: json } });
+    return value;
+  }
+
   async update(patch: UpdateSettingsDto): Promise<SystemSettings> {
     const current = await this.get();
     const next: SystemSettings = {

@@ -19,6 +19,8 @@ model User {
   id                  String    @id @default(uuid()) @db.Uuid
   name                String
   username            String    @unique
+  /// Usado só para recuperar a senha. Obrigatório para administradores.
+  email               String?   @unique
   passwordHash        String
   pinHash             String?
   role                Role
@@ -29,14 +31,36 @@ model User {
   /// Incrementado no logout, troca de senha ou desativação: invalida sessões antigas.
   tokenVersion        Int       @default(0)
   lastLoginAt         DateTime?
+  /// Versão do Termo de Uso e Política de Privacidade aceita pelo usuário (LGPD).
+  termsVersion        String?
+  termsAcceptedAt     DateTime?
+  /// Preenchido quando os dados pessoais foram anonimizados (LGPD, art. 18).
+  anonymizedAt        DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
   movements        StockMovement[]
   purchaseRequests PurchaseRequest[]
   auditLogs        AuditLog[]
+  passwordResets   PasswordReset[]
 
   @@map("users")
+}
+
+/// Código de recuperação de senha enviado por e-mail (guardado só como hash; vale 15 minutos).
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("password_resets")
 }
 
 // ─── Catálogo ─────────────────────────────────────────────────────────────────

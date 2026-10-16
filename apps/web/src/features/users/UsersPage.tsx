@@ -1,17 +1,17 @@
-import { KeyRound, Lock, MoreHorizontal, Pencil, Plus, Power, RectangleEllipsis } from 'lucide-react';
+import { KeyRound, Lock, MoreHorizontal, Pencil, Plus, Power, RectangleEllipsis, UserX } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui/Display';
 import { Field, Input } from '@/components/ui/Form';
-import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog, Modal } from '@/components/ui/Modal';
 import { errorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { ROLE_LABELS } from '@/lib/labels';
 import type { UserAccount } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { passwordRule, pinRule } from '../auth/password-schemas';
-import { useResetCredential, useSaveUser, useUsers } from './api';
+import { useAnonymizeUser, useResetCredential, useSaveUser, useUsers } from './api';
 import { UserFormModal } from './UserFormModal';
 
 const ROLE_TONE = { ADMIN: 'violet', STOCKIST: 'blue', CASHIER: 'neutral' } as const;
@@ -138,6 +138,19 @@ export function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<UserAccount | null>(null);
   const [resetTarget, setResetTarget] = useState<{ user: UserAccount; kind: 'password' | 'pin' } | null>(null);
+  const [anonymizeTarget, setAnonymizeTarget] = useState<UserAccount | null>(null);
+  const anonymize = useAnonymizeUser();
+
+  const confirmAnonymize = async () => {
+    if (!anonymizeTarget) return;
+    try {
+      await anonymize.mutateAsync(anonymizeTarget.id);
+      toast.success('Dados pessoais anonimizados');
+      setAnonymizeTarget(null);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+  };
 
   const openForm = (user: UserAccount | null) => {
     setEditing(user);
@@ -190,26 +203,36 @@ export function UsersPage() {
                     <p className="font-medium text-slate-900">
                       {user.name} {user.id === me?.id && <span className="text-xs font-normal text-slate-400">(você)</span>}
                     </p>
-                    <p className="text-xs text-slate-500">@{user.username}</p>
+                    <p className="text-xs text-slate-500">
+                      @{user.username}
+                      {user.email && <span className="hidden sm:inline"> · {user.email}</span>}
+                    </p>
                   </td>
                   <td>
                     <Badge tone={ROLE_TONE[user.role]}>{ROLE_LABELS[user.role]}</Badge>
                   </td>
                   <td className="hidden md:table-cell">
                     <div className="flex flex-wrap gap-1">
-                      {user.active ? <Badge tone="green" dot>Ativo</Badge> : <Badge dot>Inativo</Badge>}
+                      {user.anonymized ? (
+                        <Badge>Anonimizado</Badge>
+                      ) : user.active ? (
+                        <Badge tone="green" dot>Ativo</Badge>
+                      ) : (
+                        <Badge dot>Inativo</Badge>
+                      )}
+                      {user.role === 'ADMIN' && !user.email && !user.anonymized && <Badge tone="amber">Sem e-mail</Badge>}
                       {user.locked && (
                         <Badge tone="red">
                           <Lock className="size-3" /> Bloqueado
                         </Badge>
                       )}
                       {user.mustChangePassword && user.active && <Badge tone="amber">Senha provisória</Badge>}
-                      {!user.hasPin && <Badge>Sem PIN</Badge>}
+                      {!user.hasPin && !user.anonymized && <Badge>Sem PIN</Badge>}
                     </div>
                   </td>
                   <td className="hidden text-slate-600 lg:table-cell">{user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Nunca'}</td>
                   <td className="text-right">
-                    <RowMenu
+                    {!user.anonymized && <RowMenu
                       items={[
                         { label: 'Editar', icon: <Pencil className="size-4" />, onClick: () => openForm(user) },
                         { label: 'Redefinir senha', icon: <KeyRound className="size-4" />, onClick: () => setResetTarget({ user, kind: 'password' }) },
@@ -217,8 +240,11 @@ export function UsersPage() {
                         ...(user.id !== me?.id
                           ? [{ label: user.active ? 'Desativar' : 'Reativar', icon: <Power className="size-4" />, onClick: () => toggleActive(user), danger: user.active }]
                           : []),
+                        ...(!user.active
+                          ? [{ label: 'Anonimizar dados (LGPD)', icon: <UserX className="size-4" />, onClick: () => setAnonymizeTarget(user), danger: true }]
+                          : []),
                       ]}
-                    />
+                    />}
                   </td>
                 </tr>
               ))}
@@ -230,6 +256,15 @@ export function UsersPage() {
       {/* key: recria o formulário ao trocar entre "novo" e "editar" (regras de validação diferentes) */}
       <UserFormModal key={editing?.id ?? 'new'} open={formOpen} user={editing} onClose={() => setFormOpen(false)} />
       <ResetCredentialModal target={resetTarget} onClose={() => setResetTarget(null)} />
+      <ConfirmDialog
+        open={Boolean(anonymizeTarget)}
+        onClose={() => setAnonymizeTarget(null)}
+        onConfirm={confirmAnonymize}
+        loading={anonymize.isPending}
+        title="Anonimizar dados pessoais?"
+        description={`Nome, login, e-mail, senha, PIN e endereços IP de ${anonymizeTarget?.name ?? ''} serão apagados de forma definitiva. As movimentações continuam no histórico, sem identificar a pessoa. Não é possível desfazer.`}
+        confirmLabel="Anonimizar"
+      />
     </>
   );
 }

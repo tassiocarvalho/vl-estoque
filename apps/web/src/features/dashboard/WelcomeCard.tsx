@@ -1,8 +1,10 @@
-import { BookOpen, X } from 'lucide-react';
+import { BookOpen, MailWarning, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Display';
 import { MANUAL_URL } from '@/lib/manual';
+import { useAuth } from '../auth/AuthProvider';
 
 const DISMISSED_KEY = 'vl-welcome-dismissed';
 
@@ -54,6 +56,23 @@ export function WelcomeCard() {
       >
         <X className="size-4" />
       </button>
+    </Card>
+  );
+}
+
+/** Administrador sem e-mail não consegue recuperar a senha: lembra de cadastrar. */
+export function MissingEmailCard() {
+  const { user } = useAuth();
+  if (user?.role !== 'ADMIN' || user.email) return null;
+  return (
+    <Card className="mb-6 flex flex-col gap-3 border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center">
+      <MailWarning className="size-5 shrink-0 text-amber-600" />
+      <p className="flex-1 text-sm text-slate-700">
+        Cadastre o seu e-mail para conseguir recuperar a senha se esquecê-la.
+      </p>
+      <Link to="/perfil" className="text-sm font-medium text-amber-800 hover:underline">
+        Cadastrar em Meu perfil
+      </Link>
     </Card>
   );
 }

@@ -72,8 +72,8 @@
 <section class="toc">
   <h2>Sumário</h2>
   <ol>
-    <li>Primeiro acesso <span>senha e PIN</span></li>
-    <li>Entrando no sistema <span>login e perfis</span></li>
+    <li>Primeiro acesso <span>senha, PIN, e-mail e termo</span></li>
+    <li>Entrando no sistema <span>login, perfis e senha esquecida</span></li>
     <li>O painel <span>visão geral do dia</span></li>
     <li>Cadastrar produtos <span>e os cálculos automáticos</span></li>
     <li>Registrar entrada <span>mercadoria que chegou</span></li>
@@ -84,6 +84,7 @@
     <li>Usuários e permissões <span>administrador</span></li>
     <li>Configurações <span>administrador</span></li>
     <li>Backup no Google Drive <span>proteção dos dados</span></li>
+    <li>Privacidade e LGPD <span>termo e direitos</span></li>
     <li>Celular e uso sem internet</li>
     <li>Dúvidas frequentes</li>
   </ol>
@@ -95,9 +96,11 @@
   <ol class="steps">
     <li>Em <span class="ui">Nova senha</span>, crie a sua senha pessoal: <strong>mínimo de 8 caracteres, com letras e números</strong>. Repita em <span class="ui">Confirme a nova senha</span>.</li>
     <li>Crie também o seu <strong>PIN</strong>: um código de <strong>4 a 6 números</strong>, usado para confirmar operações como vendas, entradas e exclusões. Repita em <span class="ui">Confirme o PIN</span>.</li>
+    <li>Informe o seu <strong>e-mail</strong> em <span class="ui">E-mail para recuperar a senha</span>. Ele é obrigatório para administradores e serve <b>somente</b> para receber um código se você esquecer a senha (capítulo 2).</li>
+    <li>Leia o <span class="ui">Termo de Uso e a Política de Privacidade</span> (clique no link para abrir) e marque <b>“Li e concordo”</b>. O capítulo 13 explica o que ele diz.</li>
     <li>Clique em <span class="ui">Salvar e continuar</span>. Pronto: o sistema abre no painel.</li>
   </ol>
-  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Recomendamos cadastrar um segundo administrador (veja o capítulo 10): assim, se alguém esquecer a senha, o outro pode redefinir.</div>
+  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Se esquecer a senha, use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 2).</div>
   <div class="tip"><b>Sobre o backup</b>Logo depois, o sistema avisa se encontrou o Google Drive para guardar os backups. Se ainda não estiver instalado, veja o capítulo 12.</div>
   <p>Os funcionários que você cadastrar passam pelo mesmo processo: no primeiro login com a senha provisória que você definir, o sistema pede que cada um crie a própria senha e o próprio PIN.</p>
 </section>
@@ -110,6 +113,14 @@
     <li>Digite o seu <span class="ui">usuário</span> e a sua <span class="ui">senha</span> e clique em <span class="ui">Entrar</span>.</li>
   </ol>
   <div class="warn"><b>Segurança</b>Depois de <b>5 senhas erradas</b>, o usuário fica bloqueado por <b>15 minutos</b>. Para sair, use <span class="ui">Sair</span> no fim do menu lateral, principalmente em computadores compartilhados.</div>
+  <h3>Esqueci minha senha</h3>
+  <ol class="steps">
+    <li>Na tela de login, clique em <span class="ui">Esqueci minha senha</span>.</li>
+    <li>Digite o seu <b>usuário ou e-mail</b> e clique em <span class="ui">Enviar código</span>.</li>
+    <li>Abra o seu e-mail: chega uma mensagem do <b>V&amp;L Estoque</b> com um <b>código de 6 números</b> (veja também a caixa de spam).</li>
+    <li>Digite o código, crie a nova senha e clique em <span class="ui">Salvar nova senha</span>. Depois, entre normalmente.</li>
+  </ol>
+  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro, e são no máximo 3 pedidos por hora. Ao redefinir, o sistema encerra as sessões abertas em outros aparelhos. Quem não tem e-mail cadastrado, ou se a recuperação por e-mail ainda não foi configurada (capítulo 11), deve pedir a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
   <h3>Perfis de acesso</h3>
   <p>Cada pessoa vê apenas o que o seu perfil permite:</p>
   <table>
@@ -250,14 +261,15 @@
   <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: assim o sistema registra quem fez cada operação.</p>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
-    <li>Preencha <span class="ui">Nome completo</span>, <span class="ui">Login (usuário)</span> (ex.: <i>maria.silva</i>), o perfil (<b>Administrador</b>, <b>Estoquista</b> ou <b>Caixa</b>) e uma <span class="ui">Senha provisória</span>.</li>
-    <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o próprio PIN.</li>
+    <li>Preencha <span class="ui">Nome completo</span>, o <span class="ui">E-mail</span> (obrigatório para administradores, opcional para os demais), o perfil (<b>Administrador</b>, <b>Estoquista</b> ou <b>Caixa</b>), o <span class="ui">Login (usuário)</span> (ex.: <i>maria.silva</i>) e uma <span class="ui">Senha provisória</span>.</li>
+    <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o próprio PIN e lê o termo de uso.</li>
   </ol>
   <table>
     <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
-    <tr><td>Funcionário esqueceu a senha</td><td><span class="ui">Redefinir senha</span>: ele recebe uma nova senha provisória.</td></tr>
+    <tr><td>Funcionário esqueceu a senha</td><td>Com e-mail cadastrado: ele mesmo usa <span class="ui">Esqueci minha senha</span>. Sem e-mail: <span class="ui">Redefinir senha</span>, e ele recebe uma nova senha provisória.</td></tr>
     <tr><td>Funcionário esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
     <tr><td>Funcionário saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
+    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, use <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 13).</td></tr>
   </table>
   <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, cadastros, exclusões e alterações, com data, hora e usuário.</p>
   <p>Cada pessoa pode trocar a própria senha e o PIN em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
@@ -273,7 +285,17 @@
     <tr><td><b>Dias de cobertura do pedido sugerido</b></td><td>Para quantos dias a quantidade sugerida deve durar depois da entrega (padrão: 7).</td></tr>
     <tr><td><b>Permitir estoque negativo</b></td><td>Se ligado, permite registrar saída maior que o saldo (padrão: desligado).</td></tr>
     <tr><td><b>Dias até a exclusão definitiva</b></td><td>Por quanto tempo os produtos excluídos ficam na lixeira (padrão: 15).</td></tr>
+    <tr><td><b>Recuperação de senha por e-mail</b></td><td>Conta de e-mail que envia os códigos de “Esqueci minha senha” (veja abaixo).</td></tr>
+    <tr><td><b>Empresa e privacidade (LGPD)</b></td><td>Razão social, CNPJ, endereço e o <b>encarregado de dados</b> (nome e e-mail). Aparecem no termo de uso.</td></tr>
   </table>
+  <h3>Ativar a recuperação de senha com uma conta Gmail</h3>
+  <ol class="steps">
+    <li>Na Conta Google da loja, ative a <b>Verificação em duas etapas</b> (myaccount.google.com › Segurança).</li>
+    <li>Abra <b>myaccount.google.com/apppasswords</b>, crie uma <b>senha de app</b> chamada “V&amp;L Estoque” e copie os 16 caracteres.</li>
+    <li>Em <span class="ui">Configurações</span> › <span class="ui">Recuperação de senha por e-mail</span>, escolha <b>Gmail</b>, informe o e-mail da conta e cole a senha de app. Clique em <span class="ui">Salvar</span>.</li>
+    <li>Clique em <span class="ui">Enviar e-mail de teste</span>. Se a mensagem chegar ao seu e-mail (cadastrado em <span class="ui">Meu perfil</span>), está tudo certo: o selo muda para <b>Ativa</b>.</li>
+  </ol>
+  <div class="tip"><b>Segurança</b>Use a <b>senha de app</b>, nunca a senha normal do Gmail. Ela fica guardada criptografada e pode ser revogada a qualquer momento na Conta Google.</div>
 </section>
 
 <section>
@@ -295,7 +317,31 @@
 </section>
 
 <section>
-  <h2>13. Celular e uso sem internet</h2>
+  <h2>13. Privacidade e LGPD</h2>
+  <p>O V&amp;L Estoque trata dados pessoais de quem usa o sistema (nome, login, e-mail e o registro das ações). Ele foi feito para ajudar a empresa a cumprir a <b>Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</b>.</p>
+  <h3>Termo de Uso e Política de Privacidade</h3>
+  <p>Explica quais dados são tratados, para quê, por quanto tempo e quais são os direitos de cada pessoa. Todo usuário dá ciência dele no primeiro acesso, e ele fica sempre disponível em <span class="ui">Termos e privacidade</span>, no menu lateral, e no link da tela de login. Se o termo for atualizado, o sistema pede uma nova leitura.</p>
+  <div class="warn"><b>Para o administrador</b>Preencha os dados da empresa e do <b>encarregado de dados</b> em <span class="ui">Configurações</span> › <span class="ui">Empresa e privacidade</span>. O encarregado é a pessoa que responde aos pedidos dos funcionários sobre os seus dados.</div>
+  <h3>Direitos de cada pessoa</h3>
+  <table>
+    <tr><th style="width:36%">Direito</th><th>Como exercer no sistema</th></tr>
+    <tr><td>Ver os próprios dados (acesso e portabilidade)</td><td><span class="ui">Meu perfil</span> › <span class="ui">Baixar meus dados</span>: gera um arquivo com o cadastro, o registro de auditoria e as operações feitas com o usuário.</td></tr>
+    <tr><td>Corrigir o e-mail</td><td><span class="ui">Meu perfil</span> › <span class="ui">E-mail para recuperar a senha</span>, confirmando com a senha atual.</td></tr>
+    <tr><td>Corrigir o nome</td><td>Pedir a um administrador (<span class="ui">Usuários</span> › <span class="ui">Editar</span>).</td></tr>
+    <tr><td>Eliminação ou anonimização</td><td>O administrador desativa o usuário e usa <span class="ui">Anonimizar dados (LGPD)</span>. Nome, login, e-mail, senha, PIN e endereços IP são apagados; as movimentações continuam no histórico sem identificar a pessoa. Não pode ser desfeito.</td></tr>
+  </table>
+  <p>O prazo legal para responder aos pedidos é de <b>15 dias</b>.</p>
+  <h3>O que o sistema faz sozinho</h3>
+  <ul>
+    <li>Guarda senhas e PINs de forma <b>irreversível</b> (ninguém consegue vê-los).</li>
+    <li>Apaga o <b>endereço IP</b> dos registros de auditoria depois de <b>12 meses</b>.</li>
+    <li>Apaga os <b>códigos de recuperação de senha</b> em até 1 dia.</li>
+    <li>Registra na auditoria quem aceitou o termo, quem baixou os próprios dados e quem anonimizou um usuário.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>14. Celular e uso sem internet</h2>
   <h3>Sem internet</h3>
   <p>No computador da loja, o V&amp;L Estoque <strong>funciona normalmente sem internet</strong>: o banco de dados fica no próprio computador. A internet só é usada pelo Google Drive para enviar os backups.</p>
   <h3>Usar no celular (mesma rede Wi-Fi)</h3>
@@ -310,10 +356,12 @@
 </section>
 
 <section>
-  <h2>14. Dúvidas frequentes</h2>
+  <h2>15. Dúvidas frequentes</h2>
   <table>
     <tr><th style="width:36%">Pergunta</th><th>Resposta</th></tr>
-    <tr><td>Esqueci minha senha.</td><td>Peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
+    <tr><td>Esqueci minha senha.</td><td>Use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 2). Sem e-mail cadastrado, peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
+    <tr><td>O código de recuperação não chegou.</td><td>Confira a caixa de spam e se o e-mail em <span class="ui">Meu perfil</span> está certo. O administrador pode testar o envio em <span class="ui">Configurações</span> › <span class="ui">Enviar e-mail de teste</span>.</td></tr>
+    <tr><td>Aparece a tela do termo de uso ao entrar.</td><td>O termo foi atualizado. Leia, marque “Li e concordo” e clique em <span class="ui">Continuar</span>.</td></tr>
     <tr><td>Errei o PIN e foi bloqueado.</td><td>Depois de 5 PINs errados, aguarde <b>5 minutos</b>. Se esqueceu o PIN, peça ao administrador para redefinir.</td></tr>
     <tr><td>Aparece “Você ainda não cadastrou um PIN”.</td><td>Vá em <span class="ui">Meu perfil</span> e crie o PIN em <span class="ui">PIN de confirmação</span>.</td></tr>
     <tr><td>O leitor de código de barras não funciona.</td><td>Clique primeiro no campo de busca ou de bipagem; o leitor “digita” o código onde o cursor estiver.</td></tr>

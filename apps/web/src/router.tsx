@@ -1,7 +1,9 @@
-import { lazy, type ComponentType } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { LoadingState } from './components/ui/Display';
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { RequireAuth, RequirePermission } from './features/auth/guards';
 import { DashboardPage } from './features/dashboard/DashboardPage';
@@ -24,13 +26,18 @@ const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'Set
 const MovementsPage = page(() => import('./features/stock/MovementsPage'), 'MovementsPage');
 const TrashPage = page(() => import('./features/trash/TrashPage'), 'TrashPage');
 const UsersPage = page(() => import('./features/users/UsersPage'), 'UsersPage');
+const TermsPage = page(() => import('./features/legal/TermsPage'), 'TermsPage');
+const AcceptTermsPage = page(() => import('./features/legal/AcceptTermsPage'), 'AcceptTermsPage');
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/recuperar-senha', element: <ForgotPasswordPage /> },
+  { path: '/termos', element: <Suspense fallback={<LoadingState />}><TermsPage /></Suspense> },
   {
     element: <RequireAuth />,
     children: [
       { path: '/trocar-senha', element: <ChangePasswordPage /> },
+      { path: '/aceitar-termos', element: <Suspense fallback={<LoadingState />}><AcceptTermsPage /></Suspense> },
       {
         element: <AppLayout />,
         children: [

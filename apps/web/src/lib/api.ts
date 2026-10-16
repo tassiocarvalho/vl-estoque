@@ -41,7 +41,7 @@ export const registerSessionExpiredHandler = (fn: (() => void) | null) => {
 type QueryValue = string | number | boolean | null | undefined;
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   query?: Record<string, QueryValue>;
   pin?: string;
@@ -101,6 +101,7 @@ export const http = {
   get: <T>(path: string, query?: Record<string, QueryValue>) => request<T>(path, { query }),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body: body ?? {} }),
   patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body }),
+  put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body }),
   delete: <T = void>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
 

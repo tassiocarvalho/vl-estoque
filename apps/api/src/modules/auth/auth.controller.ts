@@ -1,10 +1,18 @@
-import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Patch, Post, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Response } from 'express';
 import { env } from '../../config/env';
 import { AuthUser, SESSION_COOKIE } from '../../common/auth/auth-user';
 import { AllowPendingPasswordChange, ClientIp, CurrentUser, Public } from '../../common/auth/decorators';
-import { ChangePasswordDto, LoginDto, SetPinDto } from './auth.dto';
+import {
+  AcceptTermsDto,
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RecoverPasswordDto,
+  SetPinDto,
+  UpdateProfileDto,
+} from './auth.dto';
 import { AuthService, toProfile } from './auth.service';
 
 /**
@@ -67,5 +75,53 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   setPin(@CurrentUser() user: AuthUser, @Body() dto: SetPinDto, @ClientIp() ip: string) {
     return this.auth.setPin(user.id, dto, ip);
+  }
+
+  // ─── LGPD ──────────────────────────────────────────────────────────────────
+
+  @Post('accept-terms')
+  @HttpCode(200)
+  @AllowPendingPasswordChange()
+  async acceptTerms(@CurrentUser() user: AuthUser, @Body() dto: AcceptTermsDto, @ClientIp() ip: string) {
+    return toProfile(await this.auth.acceptTerms(user.id, dto.version, ip));
+  }
+
+  @Patch('profile')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async updateProfile(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto, @ClientIp() ip: string) {
+    return toProfile(await this.auth.updateProfile(user.id, dto, ip));
+  }
+
+  /** Baixa um arquivo JSON com os dados pessoais do próprio usuário. */
+  @Get('my-data')
+  @Header('Cache-Control', 'no-store')
+  async myData(@CurrentUser() user: AuthUser, @ClientIp() ip: string, @Res({ passthrough: true }) res: Response) {
+    res.attachment(`meus-dados-vl-estoque_${user.username}.json`);
+    return this.auth.exportMyData(user.id, ip);
+  }
+
+  // ─── Recuperação de senha ──────────────────────────────────────────────────
+
+  @Public()
+  @Get('recovery')
+  recoveryOptions() {
+    return this.auth.recoveryOptions();
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(202)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @ClientIp() ip: string) {
+    await this.auth.forgotPassword(dto.identifier, ip);
+    return { message: 'Se houver um e-mail cadastrado para este usuário, enviamos um código para ele.' };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  resetPassword(@Body() dto: RecoverPasswordDto, @ClientIp() ip: string) {
+    return this.auth.recoverPassword(dto, ip);
   }
 }

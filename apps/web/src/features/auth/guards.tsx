@@ -5,15 +5,19 @@ import { LoadingState } from '@/components/ui/Display';
 import type { Permission } from '@/lib/permissions';
 import { useAuth } from './AuthProvider';
 
-/** Exige login e, se a senha for provisória, obriga a troca antes de qualquer coisa. */
+/** Exige login; se a senha for provisória ou o termo de uso estiver pendente, resolve isso antes de tudo. */
 export function RequireAuth() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingState label="Verificando sessão..." />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  if (user.mustChangePassword && location.pathname !== '/trocar-senha') {
-    return <Navigate to="/trocar-senha" replace />;
+  if (user.mustChangePassword) {
+    return location.pathname === '/trocar-senha' ? <Outlet /> : <Navigate to="/trocar-senha" replace />;
+  }
+  // Termo de Uso e Política de Privacidade (LGPD): ciência da versão atual antes de usar o sistema.
+  if (!user.termsAccepted && location.pathname !== '/aceitar-termos') {
+    return <Navigate to="/aceitar-termos" replace />;
   }
   return <Outlet />;
 }

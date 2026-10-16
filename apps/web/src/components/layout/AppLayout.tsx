@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Settings,
   ShieldCheck,
+  Scale,
   Trash2,
   UserCircle,
   Users,
@@ -21,7 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Suspense, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LoadingState } from '@/components/ui/Display';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useOffline } from '@/features/offline/OfflineProvider';
@@ -138,6 +139,14 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <BookOpen className="size-[18px]" />
           Manual de uso
         </a>
+        <Link
+          to="/termos"
+          onClick={onNavigate}
+          className="mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/80 hover:bg-white/6 hover:text-white"
+        >
+          <Scale className="size-[18px]" />
+          Termos e privacidade
+        </Link>
         <NavLink
           to="/perfil"
           onClick={onNavigate}

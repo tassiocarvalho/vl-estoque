@@ -11,7 +11,7 @@ export const PIN_OPERATION = 'auth:pin-operation';
 /** Rota acessível sem login. */
 export const Public = () => SetMetadata(IS_PUBLIC, true);
 
-/** Rota acessível mesmo antes de o usuário trocar a senha inicial. */
+/** Rota acessível mesmo antes de o usuário trocar a senha inicial e aceitar o termo de uso. */
 export const AllowPendingPasswordChange = () => SetMetadata(ALLOW_PENDING_PASSWORD, true);
 
 /** Exige que o perfil do usuário tenha todas as permissões informadas. */
