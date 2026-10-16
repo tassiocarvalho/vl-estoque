@@ -84,6 +84,8 @@ model Product {
   categoryId          String    @db.Uuid
   category            Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   unit                Unit
+  /// Desligado: o produto não usa consumo/prazo, não tem ponto de pedido nem gera solicitação automática.
+  replenishmentEnabled Boolean  @default(true)
   avgDailyConsumption Decimal   @db.Decimal(12, 3)
   maxDailyConsumption Decimal   @db.Decimal(12, 3)
   leadTimeDays        Int

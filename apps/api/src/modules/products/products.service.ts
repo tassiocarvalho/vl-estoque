@@ -66,7 +66,8 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, actor: Actor): Promise<ProductView> {
-    const { initialStock = 0, ...data } = dto;
+    const { initialStock = 0, ...input } = dto;
+    const data = { ...input, ...this.consumptionFor(input.replenishmentEnabled ?? true, input) };
     this.assertConsumption(data);
     await this.assertCategory(data.categoryId);
 
@@ -100,16 +101,17 @@ export class ProductsService {
     if (!current) throw notFound('Produto');
     if (dto.categoryId) await this.assertCategory(dto.categoryId);
 
-    const profile: ConsumptionProfile = {
+    const enabled = dto.replenishmentEnabled ?? current.replenishmentEnabled;
+    const profile: ConsumptionProfile = this.consumptionFor(enabled, {
       avgDailyConsumption: dto.avgDailyConsumption ?? toNumber(current.avgDailyConsumption),
       maxDailyConsumption: dto.maxDailyConsumption ?? toNumber(current.maxDailyConsumption),
       leadTimeDays: dto.leadTimeDays ?? current.leadTimeDays,
-    };
+    });
     this.assertConsumption(profile);
 
     const product = await this.prisma.product.update({
       where: { id },
-      data: { ...dto, ...calculateIndicators(profile) },
+      data: { ...dto, ...profile, ...calculateIndicators(profile) },
       include: productInclude,
     });
     await this.log(actor, 'product.update', id, toJson(dto));
@@ -140,6 +142,16 @@ export class ProductsService {
       default:
         return {};
     }
+  }
+
+  /** Reposição desligada: consumo e prazo zerados (EM, ES e PP também ficam zero). */
+  private consumptionFor(enabled: boolean, values: Partial<ConsumptionProfile>): ConsumptionProfile {
+    if (!enabled) return { avgDailyConsumption: 0, maxDailyConsumption: 0, leadTimeDays: 0 };
+    return {
+      avgDailyConsumption: values.avgDailyConsumption ?? 0,
+      maxDailyConsumption: values.maxDailyConsumption ?? 0,
+      leadTimeDays: values.leadTimeDays ?? 0,
+    };
   }
 
   private assertConsumption({ avgDailyConsumption, maxDailyConsumption }: ConsumptionProfile) {

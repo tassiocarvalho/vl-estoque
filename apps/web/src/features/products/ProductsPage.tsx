@@ -163,7 +163,7 @@ export function ProductsPage() {
                         {formatQuantity(product.currentStock, product.unit)}
                       </td>
                       <td className="hidden text-right tabular-nums text-slate-500 sm:table-cell">
-                        {formatNumber(product.reorderPoint)} {UNIT_SHORT[product.unit]}
+                        {product.replenishmentEnabled ? `${formatNumber(product.reorderPoint)} ${UNIT_SHORT[product.unit]}` : '—'}
                       </td>
                       <td>
                         <StockStatusBadge status={product.status} />

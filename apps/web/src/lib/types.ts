@@ -37,6 +37,8 @@ export interface Product {
   barcode: string | null;
   unit: Unit;
   category: { id: string; name: string; path: string };
+  /** Desligado: sem consumo/prazo, ponto de pedido nem solicitação automática. */
+  replenishmentEnabled: boolean;
   avgDailyConsumption: number;
   maxDailyConsumption: number;
   leadTimeDays: number;

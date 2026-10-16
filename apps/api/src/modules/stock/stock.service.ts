@@ -158,7 +158,7 @@ export class StockService {
     product: ReturnType<typeof toProductView>,
     coverageDays: number,
   ): Promise<boolean> {
-    if (!needsReorder(product.currentStock, product)) return false;
+    if (!product.replenishmentEnabled || !needsReorder(product.currentStock, product)) return false;
 
     const open = await tx.purchaseRequest.findFirst({
       where: { productId: product.id, status: { in: OPEN_REQUEST_STATUSES } },

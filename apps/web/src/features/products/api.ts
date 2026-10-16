@@ -16,9 +16,10 @@ export interface ProductInput {
   barcode: string;
   categoryId: string;
   unit: Unit;
-  avgDailyConsumption: number;
-  maxDailyConsumption: number;
-  leadTimeDays: number;
+  replenishmentEnabled: boolean;
+  avgDailyConsumption?: number;
+  maxDailyConsumption?: number;
+  leadTimeDays?: number;
   initialStock?: number;
   costPrice?: number;
   salePrice?: number;

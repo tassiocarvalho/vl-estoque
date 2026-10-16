@@ -2,6 +2,7 @@ import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { Unit } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -13,6 +14,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination';
 
@@ -25,6 +27,9 @@ const emptyToNull = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() || null : value;
 
 const QUANTITY = { maxDecimalPlaces: 3 };
+/** Valida o campo se a reposição estiver ligada (ou não informada) ou se o valor vier preenchido. */
+const replenishmentOn = (dto: { replenishmentEnabled?: boolean }, value: unknown) =>
+  dto.replenishmentEnabled !== false || value !== undefined;
 const MONEY = { maxDecimalPlaces: 2 };
 
 export class CreateProductDto {
@@ -48,16 +53,25 @@ export class CreateProductDto {
   @IsEnum(Unit, { message: 'Unidade de medida inválida' })
   unit: Unit;
 
+  /** Controla consumo e reposição (ponto de pedido e solicitação automática). Padrão: ligado. */
+  @IsOptional()
+  @IsBoolean()
+  replenishmentEnabled?: boolean;
+
+  // Consumo e prazo só são obrigatórios com a reposição ligada.
+  @ValidateIf(replenishmentOn)
   @IsNumber(QUANTITY)
   @Min(0)
   @Max(1_000_000)
   avgDailyConsumption: number;
 
+  @ValidateIf(replenishmentOn)
   @IsNumber(QUANTITY)
   @Min(0)
   @Max(1_000_000)
   maxDailyConsumption: number;
 
+  @ValidateIf(replenishmentOn)
   @IsInt()
   @Min(0)
   @Max(365)
