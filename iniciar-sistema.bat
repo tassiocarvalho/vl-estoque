@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title V^&L Estoque
+title SuaLojaAqui
 cd /d "%~dp0"
 
 rem Inicia o sistema em modo de producao (banco + aplicacao) e abre o navegador.
