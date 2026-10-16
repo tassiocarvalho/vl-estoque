@@ -8,11 +8,15 @@ export enum ErrorCode {
   PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED',
   INSUFFICIENT_STOCK = 'INSUFFICIENT_STOCK',
   CONFLICT = 'CONFLICT',
+  /** A ação exige um supervisor: o caixa abre o diálogo de autorização e repete a requisição. */
+  AUTHORIZATION_REQUIRED = 'AUTHORIZATION_REQUIRED',
+  /** Não há caixa aberto (ou o turno informado já foi fechado). */
+  CASH_CLOSED = 'CASH_CLOSED',
 }
 
 export class AppException extends HttpException {
-  constructor(status: HttpStatus, message: string, code?: ErrorCode) {
-    super({ statusCode: status, message, code }, status);
+  constructor(status: HttpStatus, message: string, code?: ErrorCode, extra?: Record<string, unknown>) {
+    super({ statusCode: status, message, code, ...extra }, status);
   }
 }
 

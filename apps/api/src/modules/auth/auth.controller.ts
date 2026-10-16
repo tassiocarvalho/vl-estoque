@@ -4,7 +4,7 @@ import type { CookieOptions, Response } from 'express';
 import { env } from '../../config/env';
 import { AuthUser, SESSION_COOKIE } from '../../common/auth/auth-user';
 import { AllowPendingPasswordChange, ClientIp, CurrentUser, Public } from '../../common/auth/decorators';
-import { ChangePasswordDto, LoginDto, SetPinDto } from './auth.dto';
+import { ChangePasswordDto, LoginDto, PinLoginDto, SetPinDto } from './auth.dto';
 import { AuthService, toProfile } from './auth.service';
 
 /**
@@ -29,6 +29,17 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async login(@Body() dto: LoginDto, @ClientIp() ip: string, @Res({ passthrough: true }) res: Response) {
     const { token, user } = await this.auth.login(dto, ip);
+    res.cookie(SESSION_COOKIE, token, cookieOptions());
+    return toProfile(user);
+  }
+
+  /** Troca rápida de operador no caixa: substitui a sessão atual pela do novo operador. */
+  @Public()
+  @Post('pin-login')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async pinLogin(@Body() dto: PinLoginDto, @ClientIp() ip: string, @Res({ passthrough: true }) res: Response) {
+    const { token, user } = await this.auth.pinLogin(dto, ip);
     res.cookie(SESSION_COOKIE, token, cookieOptions());
     return toProfile(user);
   }

@@ -28,7 +28,9 @@ export function MovementsPage() {
     pageSize: 25,
   });
 
-  const typeOptions = direction === 'IN' ? ENTRY_TYPES : direction === 'OUT' ? EXIT_TYPES : [...ENTRY_TYPES, ...EXIT_TYPES];
+  // Para filtrar, inclui também o estorno de venda cancelada (gerado pelo caixa).
+  const entryTypes = [...ENTRY_TYPES, 'IN_SALE_CANCEL' as const];
+  const typeOptions = direction === 'IN' ? entryTypes : direction === 'OUT' ? EXIT_TYPES : [...entryTypes, ...EXIT_TYPES];
   const resetPage = <T,>(setter: (value: T) => void) => (value: T) => {
     setter(value);
     setPage(1);

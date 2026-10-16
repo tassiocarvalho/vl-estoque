@@ -1,8 +1,10 @@
-import { lazy, type ComponentType } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { lazy, Suspense, type ComponentType } from 'react';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { LoadingState } from './components/ui/Display';
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage';
 import { LoginPage } from './features/auth/LoginPage';
+import { useAuth } from './features/auth/AuthProvider';
 import { RequireAuth, RequirePermission } from './features/auth/guards';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ProductsPage } from './features/products/ProductsPage';
@@ -24,6 +26,20 @@ const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'Set
 const MovementsPage = page(() => import('./features/stock/MovementsPage'), 'MovementsPage');
 const TrashPage = page(() => import('./features/trash/TrashPage'), 'TrashPage');
 const UsersPage = page(() => import('./features/users/UsersPage'), 'UsersPage');
+const PosPage = page(() => import('./features/pos/PosPage'), 'PosPage');
+const SalesPage = page(() => import('./features/sales/SalesPage'), 'SalesPage');
+const CashSessionsPage = page(() => import('./features/sales/CashSessionsPage'), 'CashSessionsPage');
+
+/** O operador de caixa cai direto na frente de caixa; os demais, no painel. */
+function Home() {
+  const { user } = useAuth();
+  if (user?.role === 'CASHIER') return <Navigate to="/caixa" replace />;
+  return (
+    <RequirePermission permission={P.PRODUCT_READ}>
+      <DashboardPage />
+    </RequirePermission>
+  );
+}
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -31,10 +47,23 @@ export const router = createBrowserRouter([
     element: <RequireAuth />,
     children: [
       { path: '/trocar-senha', element: <ChangePasswordPage /> },
+      // Frente de caixa: tela cheia, fora do menu lateral.
+      {
+        path: '/caixa',
+        element: (
+          <Suspense fallback={<LoadingState label="Abrindo o caixa..." />}>
+            <RequirePermission permission={P.POS_SELL}>
+              <PosPage />
+            </RequirePermission>
+          </Suspense>
+        ),
+      },
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <RequirePermission permission={P.PRODUCT_READ}><DashboardPage /></RequirePermission> },
+          { index: true, element: <Home /> },
+          { path: 'vendas', element: <RequirePermission permission={P.SALES_READ}><SalesPage /></RequirePermission> },
+          { path: 'caixas', element: <RequirePermission permission={P.SALES_READ}><CashSessionsPage /></RequirePermission> },
           { path: 'entrada', element: <RequirePermission permission={P.STOCK_IN}><StockOperationPage mode="entry" /></RequirePermission> },
           { path: 'saida', element: <RequirePermission permission={P.STOCK_OUT}><StockOperationPage mode="exit" /></RequirePermission> },
           { path: 'produtos', element: <RequirePermission permission={P.PRODUCT_READ}><ProductsPage /></RequirePermission> },

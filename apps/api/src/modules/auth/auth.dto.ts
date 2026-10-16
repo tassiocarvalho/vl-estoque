@@ -16,6 +16,16 @@ export class LoginDto {
   password: string;
 }
 
+/** Troca rápida de operador no caixa: usuário + PIN. */
+export class PinLoginDto {
+  @IsString()
+  @Length(1, 50)
+  username: string;
+
+  @Matches(PIN_RULE, { message: PIN_RULE_MESSAGE })
+  pin: string;
+}
+
 export class ChangePasswordDto {
   @IsString()
   @MaxLength(72)

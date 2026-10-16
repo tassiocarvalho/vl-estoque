@@ -7,7 +7,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { needsReorder, suggestOrderQuantity } from '../products/domain/replenishment';
 import { productInclude, toProductView } from '../products/product.view';
 import { SettingsService } from '../settings/settings.service';
-import { ENTRY_TYPES, EXIT_TYPES, isEntry, ListMovementsQueryDto } from './stock.dto';
+import { ALL_ENTRY_TYPES, ALL_EXIT_TYPES, isEntry, ListMovementsQueryDto } from './stock.dto';
 
 export interface RegisterMovementCommand {
   id?: string;
@@ -54,45 +54,59 @@ export class StockService {
    */
   async register(command: RegisterMovementCommand) {
     const settings = await this.settings.get();
+    return this.prisma.$transaction((tx) =>
+      this.registerInTransaction(tx, command, {
+        allowNegative: settings.allowNegativeStock,
+        coverageDays: settings.orderCoverageDays,
+      }),
+    );
+  }
 
-    return this.prisma.$transaction(async (tx) => {
-      if (command.id) {
-        const existing = await tx.stockMovement.findUnique({ where: { id: command.id }, include: movementInclude });
-        if (existing) return { movement: toMovementView(existing), purchaseRequestCreated: false, duplicated: true };
-      }
+  /**
+   * Mesma regra do `register`, dentro de uma transação já aberta — usada pelo caixa:
+   * a venda e a baixa de todos os itens são gravadas juntas (ou nada é gravado).
+   */
+  async registerInTransaction(
+    tx: Tx,
+    command: RegisterMovementCommand,
+    options: { allowNegative: boolean; coverageDays: number; allowTrashed?: boolean },
+  ) {
+    if (command.id) {
+      const existing = await tx.stockMovement.findUnique({ where: { id: command.id }, include: movementInclude });
+      if (existing) return { movement: toMovementView(existing), purchaseRequestCreated: false, duplicated: true };
+    }
 
-      const entry = isEntry(command.type);
-      await this.applyBalanceChange(tx, command, entry, settings.allowNegativeStock);
+    const entry = isEntry(command.type);
+    await this.applyBalanceChange(tx, command, entry, options.allowNegative, options.allowTrashed ?? false);
 
-      const product = await tx.product.findUniqueOrThrow({ where: { id: command.productId }, include: productInclude });
-      const movement = await tx.stockMovement.create({
-        data: {
-          id: command.id,
-          productId: command.productId,
-          type: command.type,
-          quantity: command.quantity,
-          balanceAfter: product.currentStock,
-          note: command.note,
-          source: command.source ?? MovementSource.APP,
-          userId: command.userId,
-          occurredAt: command.occurredAt ?? new Date(),
-        },
-        include: movementInclude,
-      });
-
-      const view = toProductView(product);
-      const purchaseRequestCreated =
-        !entry && (await this.createPurchaseRequestIfNeeded(tx, view, settings.orderCoverageDays));
-
-      return { movement: toMovementView(movement), product: view, purchaseRequestCreated, duplicated: false };
+    const product = await tx.product.findUniqueOrThrow({ where: { id: command.productId }, include: productInclude });
+    const movement = await tx.stockMovement.create({
+      data: {
+        id: command.id,
+        productId: command.productId,
+        type: command.type,
+        quantity: command.quantity,
+        balanceAfter: product.currentStock,
+        note: command.note,
+        source: command.source ?? MovementSource.APP,
+        userId: command.userId,
+        occurredAt: command.occurredAt ?? new Date(),
+      },
+      include: movementInclude,
     });
+
+    const view = toProductView(product);
+    const purchaseRequestCreated =
+      !entry && (await this.createPurchaseRequestIfNeeded(tx, view, options.coverageDays));
+
+    return { movement: toMovementView(movement), product: view, purchaseRequestCreated, duplicated: false };
   }
 
   async list(query: ListMovementsQueryDto): Promise<Paginated<ReturnType<typeof toMovementView>>> {
     const typeFilter = query.type
       ? { type: query.type }
       : query.direction
-        ? { type: { in: [...(query.direction === 'IN' ? ENTRY_TYPES : EXIT_TYPES)] } }
+        ? { type: { in: query.direction === 'IN' ? ALL_ENTRY_TYPES : ALL_EXIT_TYPES } }
         : {};
 
     const where: Prisma.StockMovementWhereInput = {
@@ -118,15 +132,18 @@ export class StockService {
     { productId, quantity }: RegisterMovementCommand,
     entry: boolean,
     allowNegative: boolean,
+    /** Venda feita offline de um produto que foi para a lixeira nesse meio-tempo: a venda aconteceu. */
+    allowTrashed: boolean,
   ) {
     const guard = entry || allowNegative ? {} : { currentStock: { gte: quantity } };
+    const notTrashed = allowTrashed ? {} : { deletedAt: null };
     const { count } = await tx.product.updateMany({
-      where: { id: productId, deletedAt: null, ...guard },
+      where: { id: productId, ...notTrashed, ...guard },
       data: { currentStock: entry ? { increment: quantity } : { decrement: quantity } },
     });
     if (count === 1) return;
 
-    const product = await tx.product.findFirst({ where: { id: productId, deletedAt: null } });
+    const product = await tx.product.findFirst({ where: { id: productId, ...notTrashed } });
     if (!product) throw notFound('Produto');
     throw new AppException(
       HttpStatus.CONFLICT,

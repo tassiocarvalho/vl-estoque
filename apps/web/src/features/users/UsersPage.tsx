@@ -14,7 +14,7 @@ import { passwordRule, pinRule } from '../auth/password-schemas';
 import { useResetCredential, useSaveUser, useUsers } from './api';
 import { UserFormModal } from './UserFormModal';
 
-const ROLE_TONE = { ADMIN: 'violet', STOCKIST: 'blue', CASHIER: 'neutral' } as const;
+const ROLE_TONE = { ADMIN: 'violet', MANAGER: 'amber', STOCKIST: 'blue', CASHIER: 'neutral' } as const;
 
 function RowMenu({ items }: { items: { label: string; icon: ReactNode; onClick: () => void; danger?: boolean }[] }) {
   const [open, setOpen] = useState(false);

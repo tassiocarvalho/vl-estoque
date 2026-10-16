@@ -13,14 +13,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'V&L Estoque',
-        short_name: 'V&L Estoque',
-        description: 'Gestão de estoque — V&L Mercadinho e Panificadora',
+        // Nome padrão (white-label). O nome e a cor de cada loja são aplicados em tempo de execução.
+        name: 'SuaLojaAqui — Vendas e estoque',
+        short_name: 'SuaLojaAqui',
+        description: 'Frente de caixa (PDV não fiscal) e gestão de estoque',
         lang: 'pt-BR',
         start_url: '/',
         display: 'standalone',
         background_color: '#f6f7f9',
-        theme_color: '#18664f',
+        theme_color: '#0f766e',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {

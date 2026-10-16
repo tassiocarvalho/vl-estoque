@@ -116,7 +116,7 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button variant={tone} loading={loading} onClick={onConfirm}>
+          <Button variant={tone} loading={loading} onClick={onConfirm} autoFocus>
             {confirmLabel}
           </Button>
         </>

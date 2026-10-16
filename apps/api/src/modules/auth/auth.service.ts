@@ -7,7 +7,7 @@ import { AppException, badRequest } from '../../common/errors';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { hashSecret, simulateVerification, verifySecret } from '../../common/security/password';
 import { AuditService } from '../audit/audit.service';
-import { ChangePasswordDto, LoginDto, SetPinDto } from './auth.dto';
+import { ChangePasswordDto, LoginDto, PinLoginDto, SetPinDto } from './auth.dto';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
@@ -22,11 +22,34 @@ export class AuthService {
   ) {}
 
   /** Autentica e devolve o token de sessão. Bloqueia a conta após tentativas seguidas erradas. */
-  async login({ username, password }: LoginDto, ip: string): Promise<{ token: string; user: User }> {
-    const user = await this.prisma.user.findUnique({ where: { username: username.trim().toLowerCase() } });
+  login({ username, password }: LoginDto, ip: string): Promise<{ token: string; user: User }> {
+    return this.authenticate(username, password, (user) => user.passwordHash, 'auth.login', ip);
+  }
 
-    if (!user || !user.active) {
-      await simulateVerification(password); // evita descobrir usuários pelo tempo de resposta
+  /**
+   * Troca rápida de operador no caixa (usuário + PIN). Mesmas proteções do login com senha;
+   * quem ainda tem senha provisória precisa entrar com a senha para trocá-la.
+   */
+  async pinLogin({ username, pin }: PinLoginDto, ip: string): Promise<{ token: string; user: User }> {
+    const result = await this.authenticate(username, pin, (user) => user.pinHash, 'auth.pin-login', ip);
+    if (result.user.mustChangePassword) {
+      throw badRequest('Este usuário ainda tem senha provisória: entre com usuário e senha');
+    }
+    return result;
+  }
+
+  private async authenticate(
+    username: string,
+    secret: string,
+    hashOf: (user: User) => string | null,
+    action: string,
+    ip: string,
+  ): Promise<{ token: string; user: User }> {
+    const user = await this.prisma.user.findUnique({ where: { username: username.trim().toLowerCase() } });
+    const hashed = user ? hashOf(user) : null;
+
+    if (!user || !user.active || !hashed) {
+      await simulateVerification(secret); // evita descobrir usuários pelo tempo de resposta
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
 
@@ -38,7 +61,7 @@ export class AuthService {
       );
     }
 
-    if (!(await verifySecret(user.passwordHash, password))) {
+    if (!(await verifySecret(hashed, secret))) {
       await this.registerFailedLogin(user, ip);
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
@@ -47,7 +70,7 @@ export class AuthService {
       where: { id: user.id },
       data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date() },
     });
-    await this.audit.log({ userId: user.id, action: 'auth.login', entity: 'user', entityId: user.id, ip });
+    await this.audit.log({ userId: user.id, action, entity: 'user', entityId: user.id, ip });
 
     return { token: await this.signSession(updated), user: updated };
   }

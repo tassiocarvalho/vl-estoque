@@ -28,7 +28,8 @@ async function bootstrap() {
 
   app.disable('x-powered-by');
   app.set('trust proxy', 'loopback'); // IP real do cliente atrás de proxy reverso local (logs e rate limit)
-  app.useBodyParser('json', { limit: '100kb' });
+  // 300 KB: comporta o logotipo da loja (até ~150 KB) nas configurações; o resto da API envia bem menos.
+  app.useBodyParser('json', { limit: '300kb' });
   app.use(
     helmet({
       contentSecurityPolicy: {

@@ -2,7 +2,8 @@
  * Cliente HTTP da aplicação.
  *  - envia o cookie de sessão (httpOnly) automaticamente;
  *  - adiciona o cabeçalho anti-CSRF exigido pela API;
- *  - quando a API pede PIN, abre o diálogo de PIN e repete a requisição.
+ *  - quando a API pede PIN, abre o diálogo de PIN e repete a requisição;
+ *  - quando a ação exige um supervisor (caixa), abre o diálogo de autorização e repete com o token.
  */
 
 export class ApiError extends Error {
@@ -31,8 +32,19 @@ type PinRequester = (reason?: string) => Promise<string | null>;
 let requestPin: PinRequester | null = null;
 let onSessionExpired: (() => void) | null = null;
 
+export interface AuthorizationNeeded {
+  permission: string;
+  scope: string | null;
+  message: string;
+}
+type AuthorizationRequester = (needed: AuthorizationNeeded) => Promise<string | null>;
+let requestAuthorization: AuthorizationRequester | null = null;
+
 export const registerPinRequester = (fn: PinRequester | null) => {
   requestPin = fn;
+};
+export const registerAuthorizationRequester = (fn: AuthorizationRequester | null) => {
+  requestAuthorization = fn;
 };
 export const registerSessionExpiredHandler = (fn: (() => void) | null) => {
   onSessionExpired = fn;
@@ -45,6 +57,14 @@ interface RequestOptions {
   body?: unknown;
   query?: Record<string, QueryValue>;
   pin?: string;
+  headers?: Record<string, string>;
+  /** Envio em segundo plano (sincronização): nunca abre diálogos de PIN ou de autorização. */
+  silent?: boolean;
+}
+
+export interface PostOptions {
+  headers?: Record<string, string>;
+  silent?: boolean;
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>) {
@@ -60,6 +80,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
+    ...options.headers,
   };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   if (options.pin) headers['X-Operation-Pin'] = options.pin;
@@ -87,19 +108,29 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const code: string | undefined = data?.code;
 
   const pinProblem = code === 'PIN_REQUIRED' || (code === 'PIN_INVALID' && response.status === 403);
-  if (pinProblem && requestPin) {
+  if (pinProblem && requestPin && !options.silent) {
     const pin = await requestPin(code === 'PIN_INVALID' ? 'PIN incorreto. Tente novamente.' : undefined);
     if (!pin) throw new ApiError(0, 'Operação cancelada', 'CANCELED');
     return request<T>(path, { ...options, pin });
   }
 
-  if (response.status === 401 && !path.startsWith('/auth/login')) onSessionExpired?.();
+  const canAskAuthorization = requestAuthorization && !options.silent && !options.headers?.['X-Supervisor-Token'];
+  if (code === 'AUTHORIZATION_REQUIRED' && canAskAuthorization) {
+    const token = await requestAuthorization!({ permission: data?.permission, scope: data?.scope ?? null, message });
+    if (!token) throw new ApiError(0, 'Operação cancelada', 'CANCELED');
+    return request<T>(path, { ...options, headers: { ...options.headers, 'X-Supervisor-Token': token } });
+  }
+
+  if (response.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/pin-login')) {
+    onSessionExpired?.();
+  }
   throw new ApiError(response.status, message, code);
 }
 
 export const http = {
   get: <T>(path: string, query?: Record<string, QueryValue>) => request<T>(path, { query }),
-  post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body: body ?? {} }),
+  post: <T>(path: string, body?: unknown, options?: PostOptions) =>
+    request<T>(path, { method: 'POST', body: body ?? {}, ...options }),
   patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body }),
   delete: <T = void>(path: string) => request<T>(path, { method: 'DELETE' }),
 };

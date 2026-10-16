@@ -20,6 +20,8 @@ export interface ProductInput {
   maxDailyConsumption: number;
   leadTimeDays: number;
   initialStock?: number;
+  costPrice?: number;
+  salePrice?: number;
 }
 
 /** Tudo que depende do saldo de estoque precisa ser recarregado após uma alteração. */

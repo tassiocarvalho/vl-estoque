@@ -13,11 +13,11 @@ import type { Role, UserAccount } from '@/lib/types';
 import { passwordRule, pinRule } from '../auth/password-schemas';
 import { useSaveUser } from './api';
 
-const ROLES: Role[] = ['CASHIER', 'STOCKIST', 'ADMIN'];
+const ROLES: Role[] = ['CASHIER', 'MANAGER', 'STOCKIST', 'ADMIN'];
 
 const baseSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome').max(80),
-  role: z.enum(['ADMIN', 'STOCKIST', 'CASHIER']),
+  role: z.enum(['ADMIN', 'MANAGER', 'STOCKIST', 'CASHIER']),
 });
 const createSchema = baseSchema.extend({
   username: z
@@ -70,7 +70,7 @@ export function UserFormModal({ open, user, onClose }: { open: boolean; user: Us
       open={open}
       onClose={onClose}
       title={editing ? 'Editar usuário' : 'Novo usuário'}
-      description={editing ? `Login: ${user?.username}` : 'Crie o acesso de um funcionário (caixa, estoquista ou administrador).'}
+      description={editing ? `Login: ${user?.username}` : 'Crie o acesso de um funcionário (operador de caixa, gerente, estoquista ou administrador).'}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -118,7 +118,7 @@ export function UserFormModal({ open, user, onClose }: { open: boolean; user: Us
               <Field label="Senha provisória" error={errors.password?.message} hint="8+ caracteres, letras e números">
                 {(id) => <Input id={id} type="text" autoComplete="off" aria-invalid={!!errors.password} {...register('password')} />}
               </Field>
-              <Field label="PIN (opcional)" error={errors.pin?.message} hint="4 a 6 números">
+              <Field label="PIN (opcional)" error={errors.pin?.message} hint="4 a 6 números · troca rápida de operador no caixa">
                 {(id) => <Input id={id} inputMode="numeric" maxLength={6} autoComplete="off" aria-invalid={!!errors.pin} {...register('pin')} />}
               </Field>
             </div>

@@ -1,18 +1,28 @@
 @import 'tailwindcss';
 
+/*
+ * White-label: a cor principal da loja vem das configurações (variável --brand, aplicada em tempo de
+ * execução). Todos os tons "brand-*" são derivados dela — trocar a cor muda o sistema inteiro.
+ */
+:root {
+  --brand: #0f766e;
+  --surface: #ffffff;
+}
+
 @theme {
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
 
-  --color-brand-50: #effaf5;
-  --color-brand-100: #d8f3e6;
-  --color-brand-200: #b4e6d0;
-  --color-brand-300: #82d2b3;
-  --color-brand-400: #4db891;
-  --color-brand-500: #2a9d76;
-  --color-brand-600: #1c7f60;
-  --color-brand-700: #18664f;
-  --color-brand-800: #165141;
-  --color-brand-900: #134337;
+  --color-brand-50: color-mix(in oklab, var(--brand) 7%, white);
+  --color-brand-100: color-mix(in oklab, var(--brand) 14%, white);
+  --color-brand-200: color-mix(in oklab, var(--brand) 28%, white);
+  --color-brand-300: color-mix(in oklab, var(--brand) 46%, white);
+  --color-brand-400: color-mix(in oklab, var(--brand) 70%, white);
+  --color-brand-500: color-mix(in oklab, var(--brand) 88%, white);
+  --color-brand-600: var(--brand);
+  --color-brand-700: color-mix(in oklab, var(--brand) 84%, black);
+  --color-brand-800: color-mix(in oklab, var(--brand) 68%, black);
+  --color-brand-900: color-mix(in oklab, var(--brand) 52%, black);
+  --color-brand-950: color-mix(in oklab, var(--brand) 36%, black);
 
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
 }
@@ -48,6 +58,72 @@
   .table-base tbody tr {
     @apply transition-colors hover:bg-slate-50/80;
   }
+
+  /* Tecla de atalho (F1, F5, Esc...) exibida nos botões do caixa. */
+  .kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-300 bg-slate-100 px-1 font-mono text-[11px] font-semibold text-slate-600;
+  }
+}
+
+/*
+ * Tema escuro: em vez de espalhar "dark:" por todas as telas, a paleta neutra e os tons claros
+ * das cores de status são remapeados. Telas novas e antigas ficam escuras automaticamente.
+ */
+.dark {
+  --surface: #121b2e;
+
+  --color-slate-50: #0b1220;
+  --color-slate-100: #1a2438;
+  --color-slate-200: #263247;
+  --color-slate-300: #334158;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #b6c2d3;
+  --color-slate-700: #d5dde8;
+  --color-slate-800: #e8edf4;
+  --color-slate-900: #f4f7fb;
+  --color-slate-950: #ffffff;
+
+  --color-brand-50: color-mix(in oklab, var(--brand) 16%, #121b2e);
+  --color-brand-100: color-mix(in oklab, var(--brand) 26%, #121b2e);
+  --color-brand-200: color-mix(in oklab, var(--brand) 40%, #121b2e);
+
+  --color-emerald-50: #0f2a24;
+  --color-emerald-700: #6ee7b7;
+  --color-amber-50: #2e2410;
+  --color-amber-100: #3b2e12;
+  --color-amber-200: #5c4718;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-orange-50: #301c10;
+  --color-orange-700: #fdba74;
+  --color-red-50: #331417;
+  --color-red-100: #451a1e;
+  --color-red-200: #5f2328;
+  --color-red-700: #fca5a5;
+  --color-sky-50: #0f2433;
+  --color-sky-700: #7dd3fc;
+  --color-violet-50: #221a3d;
+  --color-violet-700: #c4b5fd;
+  --color-rose-50: #33141c;
+  --color-rose-600: #fb7185;
+  --color-rose-700: #fda4af;
+}
+
+.dark .bg-white,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: var(--surface);
+}
+.dark .bg-slate-900\/40 {
+  background-color: rgb(0 0 0 / 0.6);
+}
+.dark .text-brand-700,
+.dark .text-brand-800 {
+  color: var(--color-brand-300);
+}
+.dark .shadow-card {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 /* Impressão: esconde a navegação e imprime só o conteúdo (relatórios e pedidos). */

@@ -4,27 +4,33 @@ import { toast } from 'sonner';
 import { errorMessage, http, isCanceled, isNetworkError } from '@/lib/api';
 import type { Paginated, Product } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
-import { catalog, outbox, type PendingMovement } from './offline-store';
+import { catalog, outbox, salesOutbox, type PendingMovement, type PendingSale } from './offline-store';
 
 interface OfflineContextValue {
   online: boolean;
   pending: PendingMovement[];
+  /** Vendas do caixa feitas sem internet, aguardando envio. */
+  pendingSales: PendingSale[];
   syncing: boolean;
   enqueue: (movement: PendingMovement) => Promise<void>;
+  enqueueSale: (sale: PendingSale) => Promise<void>;
   sync: () => Promise<void>;
   discard: (id: string) => Promise<void>;
+  discardSale: (id: string) => Promise<void>;
+  /** Atualiza a cópia local dos produtos (preços e saldos) usada sem internet. */
+  refreshCatalog: () => Promise<void>;
 }
 
 const OfflineContext = createContext<OfflineContextValue | null>(null);
 const SYNC_INTERVAL_MS = 30_000;
 
 /** Baixa o catálogo completo de produtos para consulta offline. */
-async function refreshCatalog() {
+async function refreshCatalogFromApi() {
   const items = [];
   for (let page = 1; ; page++) {
     const result = await http.get<Paginated<Product>>('/products', { page, pageSize: 100 });
-    items.push(...result.items.map(({ id, name, sku, barcode, unit, currentStock, status }) => ({
-      id, name, sku, barcode, unit, currentStock, status,
+    items.push(...result.items.map(({ id, name, sku, barcode, unit, currentStock, status, salePrice }) => ({
+      id, name, sku, barcode, unit, currentStock, status, salePrice,
     })));
     if (page * result.pageSize >= result.total) break;
   }
@@ -40,17 +46,38 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [online, setOnline] = useState(navigator.onLine);
   const [pending, setPending] = useState<PendingMovement[]>([]);
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  const reload = useCallback(async () => setPending(await outbox.list()), []);
+  const reload = useCallback(async () => {
+    const [movements, sales] = await Promise.all([outbox.list(), salesOutbox.list()]);
+    setPending(movements);
+    setPendingSales(sales);
+  }, []);
 
   const sync = useCallback(async () => {
     if (syncingRef.current || !user) return;
     syncingRef.current = true;
     setSyncing(true);
     let sent = 0;
+    let salesSent = 0;
     try {
+      // Vendas primeiro: são as que mexem no dinheiro do caixa.
+      for (const sale of await salesOutbox.list()) {
+        if (sale.error) continue;
+        try {
+          await http.post('/sales', { ...sale.payload, offline: true }, {
+            silent: true,
+            headers: sale.authorizationToken ? { 'X-Supervisor-Token': sale.authorizationToken } : undefined,
+          });
+          await salesOutbox.remove(sale.id);
+          salesSent++;
+        } catch (error) {
+          if (isNetworkError(error)) throw error;
+          await salesOutbox.markError(sale.id, errorMessage(error));
+        }
+      }
       for (const item of await outbox.list()) {
         if (item.error) continue; // erros de negócio aguardam decisão do usuário
         try {
@@ -62,15 +89,16 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           await outbox.markError(item.id, errorMessage(error));
         }
       }
+    } catch (error) {
+      if (!isNetworkError(error)) throw error; // sem conexão: tenta de novo no próximo ciclo
     } finally {
       syncingRef.current = false;
       setSyncing(false);
       await reload();
     }
-    if (sent > 0) {
-      toast.success(`${sent} movimentação(ões) registrada(s) offline foram enviadas`);
-      void queryClient.invalidateQueries();
-    }
+    if (salesSent > 0) toast.success(`${salesSent} venda(s) feita(s) sem internet foram enviadas`);
+    if (sent > 0) toast.success(`${sent} movimentação(ões) registrada(s) offline foram enviadas`);
+    if (sent + salesSent > 0) void queryClient.invalidateQueries();
   }, [user, reload, queryClient]);
 
   useEffect(() => {
@@ -90,7 +118,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     void reload().then(sync);
-    if (user.permissions.includes('product:read')) void refreshCatalog().catch(() => undefined);
+    if (user.permissions.includes('product:read')) void refreshCatalogFromApi().catch(() => undefined);
 
     const timer = setInterval(() => {
       if (navigator.onLine) void sync();
@@ -106,6 +134,24 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     [reload],
   );
 
+  const enqueueSale = useCallback(
+    async (sale: PendingSale) => {
+      await salesOutbox.add(sale);
+      await reload();
+    },
+    [reload],
+  );
+
+  const discardSale = useCallback(
+    async (id: string) => {
+      await salesOutbox.remove(id);
+      await reload();
+    },
+    [reload],
+  );
+
+  const refreshCatalog = useCallback(() => refreshCatalogFromApi(), []);
+
   const discard = useCallback(
     async (id: string) => {
       await outbox.remove(id);
@@ -115,8 +161,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ online, pending, syncing, enqueue, sync, discard }),
-    [online, pending, syncing, enqueue, sync, discard],
+    () => ({ online, pending, pendingSales, syncing, enqueue, enqueueSale, sync, discard, discardSale, refreshCatalog }),
+    [online, pending, pendingSales, syncing, enqueue, enqueueSale, sync, discard, discardSale, refreshCatalog],
   );
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
 }
