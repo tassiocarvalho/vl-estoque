@@ -757,50 +757,81 @@ Reenviar o mesmo `id` devolve a mesma venda, sem duplicar.
 
 ## 🚀 Como rodar
 
-| Item | Versão |
+> 📘 **Manual do usuário completo (PDF, 33 páginas, com telas):** [docs/Manual-SuaLojaAqui.pdf](docs/Manual-SuaLojaAqui.pdf). Ele cobre instalação, configuração da loja, caixa, estoque, gerência, impressoras e solução de problemas.
+
+### O que você precisa
+
+| Item | Detalhe |
 |---|---|
-| Node.js | 22 ou superior (LTS) |
-| Banco de dados | Nenhuma instalação: o PostgreSQL vem embutido via npm |
-| Sistema | Windows, macOS ou Linux |
+| Computador principal | Windows 10/11 (também roda em macOS e Linux), 4 GB de RAM. Fica ligado enquanto a loja usa o sistema |
+| **Node.js 22 ou mais novo** | [nodejs.org](https://nodejs.org) → versão LTS → instalar com "Avançar". É a **única** instalação necessária |
+| Banco de dados | Nada a instalar: o PostgreSQL vem embutido |
+| Navegador | Edge ou Chrome |
 
-```bash
-# 1. Instala, gera senhas aleatórias, cria o banco e o usuário admin
-npm run setup
+### Instalação (uma vez só)
 
-# 2. (opcional) 22 produtos de exemplo, com preços e 30 dias de movimentação
-npm run db:demo
+Abra o **Prompt de Comando** (tecla Windows → `cmd` → Enter) na pasta do projeto e rode:
 
-# 3a. Desenvolvimento: http://localhost:5173
-npm run dev
+```bat
+cd "C:\caminho\para\o\projeto"
 
-# 3b. Produção (uso na loja): http://localhost:3000
-npm run build && npm start
+:: 1. Instala tudo, gera as senhas, cria o banco e o usuário admin
+npm.cmd run setup
+
+:: 2. (opcional) 22 produtos de exemplo, com preços, para treinar
+npm.cmd run db:demo -w @vl/api
+
+:: 3. Gera a versão de uso
+npm.cmd run build
 ```
 
-O usuário inicial é `admin`. A senha aparece no fim do `setup` e fica em `apps/api/.env` (`ADMIN_INITIAL_PASSWORD`). O sistema obriga a troca no primeiro acesso.
+No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela também fica em `apps/api/.env` (`ADMIN_INITIAL_PASSWORD`). O sistema pede a troca no primeiro acesso.
 
-**Primeiros passos na loja:**
+> 💡 **Por que `npm.cmd`?** No PowerShell, `npm` pode dar o erro *"a execução de scripts foi desabilitada neste sistema"*. `npm.cmd` (ou usar o Prompt de Comando) evita isso. Para liberar o `npm` de vez: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` e responda **S**.
 
-1. Em **Configurações → Identidade da loja**, defina nome, logotipo e cor. Em **Impressão**, escolha o papel e a impressora.
-2. Em **Produtos**, cadastre os itens com **preço de venda** (e de custo, para a margem).
-3. Em **Usuários**, crie os operadores de caixa e os gerentes, todos **com PIN**.
-4. No computador do caixa, abra `http://ENDERECO:3000`, entre como operador e **abra o caixa**.
+### Uso no dia a dia
 
-### Comandos
+| Ação | Como |
+|---|---|
+| **Ligar** | Dois cliques em **`iniciar-sistema.bat`**. Abre a janela *SuaLojaAqui* e, em seguida, o navegador em **http://localhost:3000** |
+| **Desligar** | Fechar a janela *SuaLojaAqui* (o banco desliga com segurança) |
+| **Ligar com o Windows** | Windows + R → `shell:startup` → colocar um atalho do `iniciar-sistema.bat` |
+| **Outros PCs, tablets e celulares** | Na mesma rede: `http://IP-DO-COMPUTADOR:3000` (veja o IP com `ipconfig`). Se não abrir, libere a porta TCP 3000 no Firewall do Windows |
+| **Caixa sem janela de impressão** | Atalho: `msedge.exe --kiosk-printing --app=http://localhost:3000/caixa` |
+
+### Primeiros passos na loja
+
+1. Entre como `admin`, troque a senha e crie seu **PIN** em *Meu perfil*.
+2. **Configurações → Identidade da loja:** nome, logotipo, cor, CNPJ e endereço. **→ Impressão:** papel e impressora, depois *Imprimir página de teste*.
+3. **Produtos:** cadastre com **preço de venda** (e de custo, para a margem). "Controlar consumo e reposição" é opcional por produto.
+4. **Usuários:** crie operadores de caixa e gerentes, todos **com PIN**.
+5. No computador do caixa, entre como operador. Ele cai direto na frente de caixa: informe o troco inicial e **abra o caixa**.
+
+### Para desenvolvedores
 
 | Comando | Descrição |
 |---|---|
-| `npm run setup` | Instalação completa (primeira vez) |
-| `npm run dev` | Banco, API e front com recarga automática |
-| `npm run build` · `npm start` | Build e execução em produção |
+| `npm run dev` | Banco, API e front com recarga automática (http://localhost:5173) |
+| `npm run build` · `npm start` | Build e execução em produção (http://localhost:3000) |
 | `npm test` | Testes das regras de negócio (Vitest) |
 | `npm run typecheck` | Verificação de tipos da API e do front |
+| `npm run db:deploy -w @vl/api` | Aplica as migrations (rode após atualizar o sistema) |
 | `npm run db:demo -w @vl/api` | Dados de demonstração |
 | `npm run db:stop -w @vl/api` | Desliga o banco embutido |
 
-> 💾 Os dados ficam em `%LOCALAPPDATA%\vl-estoque\pgdata`, **fora do OneDrive** de propósito, porque a sincronização de arquivos corrompe bancos de dados. Para publicar na nuvem, troque a `DATABASE_URL`, use **HTTPS** e defina `COOKIE_SECURE=true`.
+### Problemas comuns
 
-> 🖥️ **App desktop:** o instalador do Windows (`apps/desktop`) ainda é o da versão anterior, só de estoque. A frente de caixa roda pelo navegador (instalável como PWA). O app desktop do PDV é uma próxima etapa.
+| Sintoma | Solução |
+|---|---|
+| *"a execução de scripts foi desabilitada"* | Use `npm.cmd` em vez de `npm` (veja acima) |
+| `P1000: Authentication failed` | O `apps/api/.env` tem uma senha diferente da do banco que já existe no PC. Use o `.env` antigo **ou** aponte `DB_DATA_DIR` no `.env` para uma pasta nova e rode `npm.cmd run db:deploy -w @vl/api` e `npm.cmd run db:seed -w @vl/api` |
+| Porta 3000 em uso | O sistema já está ligado em outra janela: feche-a ou use a que está aberta |
+| Tela antiga depois de atualizar | `Ctrl+F5` no navegador (fora do caixa) |
+| Celular não acessa | Mesmo Wi-Fi, IP do computador principal e porta 3000 liberada no firewall |
+
+> 💾 Os dados ficam em `%LOCALAPPDATA%\vl-estoque\pgdata` (ou na pasta de `DB_DATA_DIR`), **fora do OneDrive** de propósito, porque a sincronização de arquivos corrompe bancos de dados. **Backup:** desligue o sistema e copie essa pasta **e** o `apps/api/.env` para um HD externo. Para publicar na nuvem, troque a `DATABASE_URL`, use **HTTPS** e defina `COOKIE_SECURE=true`.
+
+> 🖥️ **App desktop:** o instalador do Windows (`apps/desktop`) ainda é o da versão anterior, só de estoque. A frente de caixa roda pelo navegador (instalável como PWA).
 
 ---
 
@@ -846,6 +877,8 @@ npm test
 │   │       └── features/…                # estoque, usuários, configurações...
 │   └── desktop/                          # App Windows (versão anterior, só estoque)
 ├── docs/
+│   ├── Manual-SuaLojaAqui.pdf            # 📘 Manual do usuário (para atualizar: abra manual/manual.html no Edge → Imprimir → Salvar como PDF)
+│   ├── manual/                           # Fonte do manual (HTML + imagens)
 │   ├── DRS-PDV.md                        # Requisitos e rastreabilidade
 │   └── screenshots/
 └── scripts/setup.mjs
