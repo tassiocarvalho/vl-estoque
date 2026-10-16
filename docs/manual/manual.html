@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual de Uso — V&amp;L Estoque</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm; }
+  :root { --brand: #18664f; --brand-dark: #134337; --brand-soft: #e8f3ef; --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --amber: #b45309; --amber-soft: #fef3c7; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.55; background: #fff; }
+  h1, h2, h3 { color: var(--brand-dark); line-height: 1.25; }
+  h2 { font-size: 17pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2px solid var(--brand); break-after: avoid; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  section { break-before: page; }
+  ol, ul { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1.2mm; }
+  strong { color: var(--brand-dark); }
+  .ui { font-weight: 600; color: var(--brand-dark); background: var(--brand-soft); padding: 0 1.5mm; border-radius: 1mm; white-space: nowrap; }
+  kbd { font-family: inherit; font-size: 9pt; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 1mm; padding: 0 1.2mm; background: #f8fafc; }
+  figure { margin: 4mm 0 5mm; break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 2mm; box-shadow: 0 1mm 3mm rgba(15, 23, 42, .08); }
+  figure.phone img { max-height: 105mm; }
+  figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
+  .tip, .warn { break-inside: avoid; border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 10pt; }
+  .tip { background: var(--brand-soft); border-left: 1.2mm solid var(--brand); }
+  .warn { background: var(--amber-soft); border-left: 1.2mm solid var(--amber); }
+  .tip > b:first-child, .warn > b:first-child { display: block; margin-bottom: .5mm; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.5pt; break-inside: avoid; }
+  th { background: var(--brand); color: #fff; text-align: left; font-weight: 600; }
+  th, td { padding: 1.8mm 2.5mm; border: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .formula { font-family: Consolas, monospace; font-size: 10pt; background: #f1f5f9; padding: .3mm 1.5mm; border-radius: 1mm; }
+  .badge { display: inline-block; font-size: 8.5pt; font-weight: 600; padding: .2mm 2mm; border-radius: 10mm; }
+  .b-ok { background: #dcfce7; color: #166534; } .b-reorder { background: #fef3c7; color: #92400e; }
+  .b-critical { background: #ffedd5; color: #9a3412; } .b-out { background: #fee2e2; color: #991b1b; }
+
+  /* Capa */
+  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; padding: 30mm 6mm 6mm; }
+  .cover .logo { width: 30mm; height: 30mm; border-radius: 6mm; }
+  .cover h1 { font-size: 34pt; margin: 10mm 0 3mm; letter-spacing: -.5pt; }
+  .cover .subtitle { font-size: 15pt; color: var(--muted); margin: 0; }
+  .cover .band { height: 3mm; width: 40mm; background: var(--brand); border-radius: 2mm; margin-top: 10mm; }
+  .cover .meta { font-size: 9.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4mm; }
+
+  /* Sumário */
+  .toc ol { list-style: none; padding: 0; counter-reset: toc; columns: 1; }
+  .toc li { counter-increment: toc; display: flex; gap: 3mm; padding: 2mm 0; border-bottom: 1px dotted var(--line); font-size: 11pt; }
+  .toc li::before { content: counter(toc, decimal-leading-zero); color: var(--brand); font-weight: 700; min-width: 8mm; }
+  .toc li span { color: var(--muted); font-size: 9.5pt; margin-left: auto; }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 9mm; margin-bottom: 2.2mm; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: .2mm; width: 6mm; height: 6mm; border-radius: 50%; background: var(--brand); color: #fff; font-size: 8.5pt; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div>
+    <img class="logo" src="../../apps/web/public/icon.svg" alt="">
+    <h1>Manual de Uso</h1>
+    <p class="subtitle">V&amp;L Estoque · Sistema de gestão de estoque</p>
+    <div class="band"></div>
+  </div>
+  <div class="meta">
+    V&amp;L Mercadinho e Panificadora<br>
+    Este manual também está disponível dentro do sistema, no menu <b>Manual de uso</b>.
+  </div>
+</div>
+
+<section class="toc">
+  <h2>Sumário</h2>
+  <ol>
+    <li>Primeiro acesso <span>senha e PIN</span></li>
+    <li>Entrando no sistema <span>login e perfis</span></li>
+    <li>O painel <span>visão geral do dia</span></li>
+    <li>Cadastrar produtos <span>e os cálculos automáticos</span></li>
+    <li>Registrar entrada <span>mercadoria que chegou</span></li>
+    <li>Registrar saída <span>vendas e perdas</span></li>
+    <li>Alertas e solicitações de pedido <span>reposição</span></li>
+    <li>Relatórios <span>por período e por produto</span></li>
+    <li>Excluir e recuperar produtos <span>lixeira</span></li>
+    <li>Usuários e permissões <span>administrador</span></li>
+    <li>Configurações <span>administrador</span></li>
+    <li>Backup no Google Drive <span>proteção dos dados</span></li>
+    <li>Celular e uso sem internet</li>
+    <li>Dúvidas frequentes</li>
+  </ol>
+</section>
+
+<section>
+  <h2>1. Primeiro acesso</h2>
+  <p>Na primeira vez que o V&amp;L Estoque é aberto depois da instalação, ele <strong>entra sozinho</strong> com o usuário administrador (<span class="ui">admin</span>) e mostra a tela <span class="ui">Bem-vindo</span>. Não é preciso digitar nenhuma senha provisória.</p>
+  <ol class="steps">
+    <li>Em <span class="ui">Nova senha</span>, crie a sua senha pessoal: <strong>mínimo de 8 caracteres, com letras e números</strong>. Repita em <span class="ui">Confirme a nova senha</span>.</li>
+    <li>Crie também o seu <strong>PIN</strong>: um código de <strong>4 a 6 números</strong>, usado para confirmar operações como vendas, entradas e exclusões. Repita em <span class="ui">Confirme o PIN</span>.</li>
+    <li>Clique em <span class="ui">Salvar e continuar</span>. Pronto: o sistema abre no painel.</li>
+  </ol>
+  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Recomendamos cadastrar um segundo administrador (veja o capítulo 10): assim, se alguém esquecer a senha, o outro pode redefinir.</div>
+  <div class="tip"><b>Sobre o backup</b>Logo depois, o sistema avisa se encontrou o Google Drive para guardar os backups. Se ainda não estiver instalado, veja o capítulo 12.</div>
+  <p>Os funcionários que você cadastrar passam pelo mesmo processo: no primeiro login com a senha provisória que você definir, o sistema pede que cada um crie a própria senha e o próprio PIN.</p>
+</section>
+
+<section>
+  <h2>2. Entrando no sistema</h2>
+  <figure><img src="../screenshots/login.png" alt=""><figcaption>Tela de login</figcaption></figure>
+  <ol class="steps">
+    <li>Abra o atalho <span class="ui">VL Estoque</span> na área de trabalho. Aguarde a tela de carregamento (alguns segundos).</li>
+    <li>Digite o seu <span class="ui">usuário</span> e a sua <span class="ui">senha</span> e clique em <span class="ui">Entrar</span>.</li>
+  </ol>
+  <div class="warn"><b>Segurança</b>Depois de <b>5 senhas erradas</b>, o usuário fica bloqueado por <b>15 minutos</b>. Para sair, use <span class="ui">Sair</span> no fim do menu lateral, principalmente em computadores compartilhados.</div>
+  <h3>Perfis de acesso</h3>
+  <p>Cada pessoa vê apenas o que o seu perfil permite:</p>
+  <table>
+    <tr><th style="width:24%">Perfil</th><th>O que pode fazer</th></tr>
+    <tr><td><b>Administrador</b></td><td>Acesso total: usuários, configurações, lixeira e auditoria.</td></tr>
+    <tr><td><b>Estoquista</b></td><td>Cadastra produtos, registra entradas e saídas, pedidos e relatórios.</td></tr>
+    <tr><td><b>Caixa</b></td><td>Consulta produtos e registra saídas (vendas).</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>3. O painel</h2>
+  <p>É a primeira tela depois do login. Mostra, num relance, como está o estoque:</p>
+  <figure><img src="../screenshots/painel.png" alt=""><figcaption>Painel com indicadores, alertas de reposição e últimas movimentações</figcaption></figure>
+  <table>
+    <tr><th style="width:32%">Indicador</th><th>O que significa</th></tr>
+    <tr><td><b>Produtos ativos</b></td><td>Total de produtos cadastrados (e quantos estão com estoque normal).</td></tr>
+    <tr><td><b>Precisam de reposição</b></td><td>Produtos que chegaram no ponto de pedido (e quantos estão em nível crítico).</td></tr>
+    <tr><td><b>Sem estoque (ruptura)</b></td><td>Produtos com saldo zerado.</td></tr>
+    <tr><td><b>Pedidos em aberto</b></td><td>Solicitações de pedido ainda não recebidas, e o número de entradas e saídas de hoje.</td></tr>
+  </table>
+  <p>Os botões <span class="ui">Entrada</span> e <span class="ui">Saída</span>, no topo, levam direto ao registro de movimentações. No menu lateral, <span class="ui">Manual de uso</span> abre este manual a qualquer momento.</p>
+</section>
+
+<section>
+  <h2>4. Cadastrar produtos</h2>
+  <ol class="steps">
+    <li>No menu, clique em <span class="ui">Produtos</span> e depois em <span class="ui">Novo produto</span>.</li>
+    <li>Preencha os campos (veja a tabela abaixo). Para o código de barras, clique no campo e <strong>bipe o produto</strong> com o leitor.</li>
+    <li>Clique em <span class="ui">Cadastrar produto</span> e confirme com o seu PIN.</li>
+  </ol>
+  <figure><img src="../screenshots/novo-produto.png" alt=""><figcaption>Cadastro de produto: os indicadores são calculados enquanto você digita</figcaption></figure>
+  <table>
+    <tr><th style="width:30%">Campo</th><th>O que colocar</th></tr>
+    <tr><td><b>Nome do produto</b></td><td>Descrição clara e padronizada: marca, tipo, tamanho. Ex.: <i>Arroz Tio João Tipo 1 5kg</i>.</td></tr>
+    <tr><td><b>SKU (código interno)</b></td><td>Código criado pela loja para identificar o item.</td></tr>
+    <tr><td><b>Código de barras (EAN)</b></td><td>O código impresso na embalagem. Basta bipar.</td></tr>
+    <tr><td><b>Categoria / Subcategoria</b></td><td>Organiza o catálogo e os relatórios. Novas categorias são criadas em <span class="ui">Categorias</span>.</td></tr>
+    <tr><td><b>Unidade de medida</b></td><td>Como o item é vendido ou contado: unidade, kg, g, litro, ml, metro, caixa, pacote ou dúzia.</td></tr>
+    <tr><td><b>Consumo médio/dia</b></td><td>Quanto sai, em média, por dia.</td></tr>
+    <tr><td><b>Consumo máximo/dia</b></td><td>Quanto sai num dia de muito movimento.</td></tr>
+    <tr><td><b>Prazo de entrega (dias)</b></td><td>Quantos dias o fornecedor leva para entregar depois do pedido.</td></tr>
+    <tr><td><b>Estoque inicial</b></td><td>Quantidade que já existe hoje na loja (só no cadastro).</td></tr>
+  </table>
+  <h3>Cálculos automáticos</h3>
+  <p>Com o consumo e o prazo de entrega, o sistema calcula sozinho três indicadores:</p>
+  <table>
+    <tr><th style="width:30%">Indicador</th><th style="width:42%">Fórmula</th><th>Para que serve</th></tr>
+    <tr><td><b>Estoque mínimo (EM)</b></td><td><span class="formula">consumo médio × prazo</span></td><td>O que se consome enquanto a entrega não chega.</td></tr>
+    <tr><td><b>Estoque de segurança (ES)</b></td><td><span class="formula">(consumo máximo − médio) × prazo</span></td><td>Proteção contra dias de pico.</td></tr>
+    <tr><td><b>Ponto de pedido (PP)</b></td><td><span class="formula">EM + ES</span></td><td>Ao chegar nele, o sistema gera a solicitação de pedido.</td></tr>
+  </table>
+  <div class="tip"><b>Exemplo</b>Pão de forma: consumo médio de 10 por dia, máximo de 16, entrega em 3 dias. EM = 10 × 3 = <b>30</b>. ES = (16 − 10) × 3 = <b>18</b>. PP = 30 + 18 = <b>48</b>. Quando o estoque cair para 48 ou menos, o sistema pede reposição.</div>
+  <h3>Encontrar e editar um produto</h3>
+  <p>Em <span class="ui">Produtos</span>, digite parte do nome, o SKU ou bipe o código de barras na busca. Clique no produto para ver os detalhes, o histórico e o botão <span class="ui">Editar</span>.</p>
+  <figure><img src="../screenshots/produtos.png" alt=""><figcaption>Lista de produtos com busca, filtros e situação do estoque</figcaption></figure>
+</section>
+
+<section>
+  <h2>5. Registrar entrada</h2>
+  <p>Use quando chega mercadoria de um pedido ou quando um item volta para o estoque.</p>
+  <ol class="steps">
+    <li>No menu, clique em <span class="ui">Registrar entrada</span>.</li>
+    <li>Clique no campo <span class="ui">Clique aqui e bipe o produto</span> e bipe o código de barras. Também dá para digitar o nome ou o SKU.</li>
+    <li>Escolha o <span class="ui">Tipo de movimentação</span>: <b>Pedido recebido</b>, <b>Retorno ao estoque</b> ou <b>Ajuste (entrada)</b>.</li>
+    <li>Informe a quantidade (use os botões <kbd>−</kbd> e <kbd>+</kbd> ou digite) e confirme. O sistema pede o seu PIN.</li>
+  </ol>
+  <div class="tip"><b>Registro rápido</b>Ligando a opção <span class="ui">Registro rápido</span>, cada bipagem registra <b>1 unidade</b> na hora, sem precisar confirmar. É ideal para conferir uma caixa item por item.</div>
+  <p>O saldo do produto é somado automaticamente, e a movimentação fica gravada no histórico (<span class="ui">Movimentações</span>), com data, hora e quem registrou.</p>
+</section>
+
+<section>
+  <h2>6. Registrar saída</h2>
+  <p>Use para vendas e para tudo que sai do estoque.</p>
+  <figure><img src="../screenshots/saida.png" alt=""><figcaption>Registro de saída com o alerta de reposição</figcaption></figure>
+  <ol class="steps">
+    <li>No menu, clique em <span class="ui">Registrar saída</span>.</li>
+    <li>Bipe ou busque o produto.</li>
+    <li>Escolha o tipo: <b>Venda</b>, <b>Perda / quebra / vencimento</b> ou <b>Ajuste (saída)</b>.</li>
+    <li>Informe a quantidade e confirme com o seu PIN.</li>
+  </ol>
+  <p>Se, depois da saída, o produto atingir o <b>ponto de pedido</b>, aparece um <strong>alerta de reposição</strong> e o sistema cria automaticamente uma <strong>solicitação de pedido</strong> (capítulo 7).</p>
+  <div class="warn"><b>Estoque insuficiente</b>Por padrão, o sistema não deixa a saída ser maior que o saldo. Se isso acontecer, confira o estoque físico e registre um ajuste. O administrador pode mudar essa regra em <span class="ui">Configurações</span>.</div>
+</section>
+
+<section>
+  <h2>7. Alertas e solicitações de pedido</h2>
+  <h3>Situação de cada produto</h3>
+  <table>
+    <tr><th style="width:24%">Situação</th><th>Quando aparece</th></tr>
+    <tr><td><span class="badge b-ok">Normal</span></td><td>Estoque acima do ponto de pedido.</td></tr>
+    <tr><td><span class="badge b-reorder">Repor</span></td><td>Chegou no ponto de pedido: hora de pedir.</td></tr>
+    <tr><td><span class="badge b-critical">Crítico</span></td><td>Abaixo do estoque de segurança: risco de faltar.</td></tr>
+    <tr><td><span class="badge b-out">Sem estoque</span></td><td>Saldo zerado (ruptura).</td></tr>
+  </table>
+  <h3>Solicitações de pedido</h3>
+  <p>Quando um produto chega ao ponto de pedido, o sistema gera uma solicitação com o <b>SKU</b>, os dados do item e a <b>quantidade sugerida</b>, que aparece em <span class="ui">Solicitações de pedido</span> para a gestão.</p>
+  <figure><img src="../screenshots/pedidos.png" alt=""><figcaption>Solicitações de pedido geradas automaticamente</figcaption></figure>
+  <ol class="steps">
+    <li><b>Pendente</b>: a solicitação foi gerada. Ao fazer o pedido ao fornecedor, clique em <span class="ui">Pedido feito</span>. Se não for pedir, clique em <span class="ui">Cancelar</span>.</li>
+    <li><b>Pedido feito</b>: quando a mercadoria chegar, clique em <span class="ui">Recebido</span>.</li>
+    <li>Em seguida, <strong>registre a entrada</strong> da mercadoria (capítulo 5) para o saldo ser atualizado.</li>
+  </ol>
+  <div class="tip"><b>Como a quantidade é sugerida</b><span class="formula">ES + consumo médio × (prazo + dias de cobertura) − saldo atual</span>. Os <i>dias de cobertura</i> (padrão: 7) são ajustados em <span class="ui">Configurações</span>.</div>
+</section>
+
+<section>
+  <h2>8. Relatórios</h2>
+  <figure><img src="../screenshots/relatorios.png" alt=""><figcaption>Relatório de movimentações por período</figcaption></figure>
+  <ol class="steps">
+    <li>No menu, clique em <span class="ui">Relatórios</span>.</li>
+    <li>Escolha o período: <b>Hoje</b>, <b>7 dias</b>, <b>30 dias</b>, <b>Este mês</b> ou <b>Personalizado</b> (de/até).</li>
+    <li>O relatório é <b>geral</b>. Para ver <b>um item específico</b>, digite o nome ou o SKU no campo <span class="ui">Filtrar produto...</span>, acima da tabela.</li>
+  </ol>
+  <table>
+    <tr><th style="width:30%">Aba</th><th>O que mostra</th></tr>
+    <tr><td><b>Por produto</b></td><td>Entradas, saídas e saldo de cada produto no período.</td></tr>
+    <tr><td><b>Estoque parado</b></td><td>Produtos sem nenhuma saída no período.</td></tr>
+    <tr><td><b>Rupturas</b></td><td>Produtos que estão sem estoque.</td></tr>
+    <tr><td><b>Solicitações de pedido</b></td><td>Todas as solicitações emitidas no período.</td></tr>
+  </table>
+  <p>Use <span class="ui">Imprimir</span> para gerar uma versão em papel (ou PDF) e <span class="ui">Exportar Excel (CSV)</span> para abrir a planilha no Excel.</p>
+</section>
+
+<section>
+  <h2>9. Excluir e recuperar produtos</h2>
+  <p>Quando um produto deixa de ser vendido, ele pode ser excluído. A exclusão tem uma <strong>“reciclagem”</strong> para os casos de engano:</p>
+  <ol class="steps">
+    <li>Abra o produto e clique em <span class="ui">Excluir</span> e depois em <span class="ui">Mover para a lixeira</span> (o PIN é pedido).</li>
+    <li>O produto vai para a <span class="ui">Lixeira</span> e some das listas, mas pode ser recuperado com <span class="ui">Restaurar</span> durante o prazo (padrão: <b>15 dias</b>).</li>
+    <li>Passado o prazo, ele é <strong>apagado definitivamente</strong>, junto com todo o histórico de movimentações e solicitações. O administrador também pode usar <span class="ui">Excluir definitivamente</span> antes do prazo.</li>
+  </ol>
+  <div class="warn"><b>Atenção</b>A exclusão definitiva não pode ser desfeita.</div>
+</section>
+
+<section>
+  <h2>10. Usuários e permissões</h2>
+  <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: assim o sistema registra quem fez cada operação.</p>
+  <ol class="steps">
+    <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
+    <li>Preencha <span class="ui">Nome completo</span>, <span class="ui">Login (usuário)</span> (ex.: <i>maria.silva</i>), o perfil (<b>Administrador</b>, <b>Estoquista</b> ou <b>Caixa</b>) e uma <span class="ui">Senha provisória</span>.</li>
+    <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o próprio PIN.</li>
+  </ol>
+  <table>
+    <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
+    <tr><td>Funcionário esqueceu a senha</td><td><span class="ui">Redefinir senha</span>: ele recebe uma nova senha provisória.</td></tr>
+    <tr><td>Funcionário esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
+    <tr><td>Funcionário saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
+  </table>
+  <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, cadastros, exclusões e alterações, com data, hora e usuário.</p>
+  <p>Cada pessoa pode trocar a própria senha e o PIN em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
+</section>
+
+<section>
+  <h2>11. Configurações</h2>
+  <p><i>Somente o administrador.</i> Em <span class="ui">Configurações</span>:</p>
+  <figure><img src="../screenshots/configuracoes.png" alt=""><figcaption>Configurações do sistema</figcaption></figure>
+  <table>
+    <tr><th style="width:36%">Opção</th><th>O que faz</th></tr>
+    <tr><td><b>PIN exigido para…</b></td><td>Escolhe quais operações pedem o PIN: registrar saída, registrar entrada, cadastrar ou editar produto e excluir produto. Por padrão, todas pedem.</td></tr>
+    <tr><td><b>Dias de cobertura do pedido sugerido</b></td><td>Para quantos dias a quantidade sugerida deve durar depois da entrega (padrão: 7).</td></tr>
+    <tr><td><b>Permitir estoque negativo</b></td><td>Se ligado, permite registrar saída maior que o saldo (padrão: desligado).</td></tr>
+    <tr><td><b>Dias até a exclusão definitiva</b></td><td>Por quanto tempo os produtos excluídos ficam na lixeira (padrão: 15).</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>12. Backup no Google Drive</h2>
+  <p>O sistema guarda os dados no próprio computador e faz <strong>cópias de segurança automáticas no Google Drive</strong>. Assim, se o computador der defeito, nada se perde.</p>
+  <h3>Como ativar (uma vez só)</h3>
+  <ol class="steps">
+    <li>Instale o <b>Google Drive para computador</b> (google.com/drive/download) e entre com a conta Google da loja.</li>
+    <li>Feche e abra o V&amp;L Estoque. Ele encontra a pasta <b>Meu Drive</b> sozinho e avisa: <i>“Backup automático no Google Drive ativado”</i>.</li>
+  </ol>
+  <p>A partir daí, uma cópia é salva <b>ao abrir, a cada 4 horas e ao fechar</b> o sistema, na pasta <b>Meu Drive › VL Estoque - Backups</b>. Ficam guardados os backups dos <b>últimos 30 dias</b>.</p>
+  <h3>Computador novo ou com defeito</h3>
+  <ol class="steps">
+    <li>No computador novo, instale o Google Drive (com a mesma conta) e o V&amp;L Estoque.</li>
+    <li>Na primeira abertura, o sistema encontra o backup e pergunta: <i>“Deseja restaurar os produtos, movimentações e usuários?”</i>. Clique em <span class="ui">Restaurar dados</span>.</li>
+    <li>Entre com os usuários e senhas de sempre.</li>
+  </ol>
+  <div class="warn"><b>Importante</b>Se o Google Drive estiver fechado ou sem internet, o backup é guardado no próprio computador e enviado ao Drive quando ele voltar. Mantenha o Google Drive sempre aberto.</div>
+</section>
+
+<section>
+  <h2>13. Celular e uso sem internet</h2>
+  <h3>Sem internet</h3>
+  <p>No computador da loja, o V&amp;L Estoque <strong>funciona normalmente sem internet</strong>: o banco de dados fica no próprio computador. A internet só é usada pelo Google Drive para enviar os backups.</p>
+  <h3>Usar no celular (mesma rede Wi-Fi)</h3>
+  <ol class="steps">
+    <li>Com o sistema aberto no computador da loja, descubra o endereço IP do computador (ex.: <i>192.168.0.10</i>).</li>
+    <li>No celular, conectado ao <b>mesmo Wi-Fi</b>, abra o navegador e acesse <b>http://IP-DO-COMPUTADOR:3030</b>.</li>
+    <li>No menu do navegador, toque em <b>Instalar app</b> (ou <i>Adicionar à tela inicial</i>) para criar um atalho.</li>
+  </ol>
+  <figure class="phone"><img src="../screenshots/celular-painel.png" alt=""><figcaption>Painel no celular</figcaption></figure>
+  <div class="tip"><b>Se o Wi-Fi cair</b>No celular, as entradas e saídas registradas sem conexão ficam guardadas e são enviadas sozinhas quando a conexão voltar. Um aviso no topo da tela mostra quantas estão aguardando.</div>
+  <div class="warn"><b>Primeira vez</b>O Windows pode perguntar se o V&amp;L Estoque pode se comunicar na rede. Clique em <b>Permitir</b> (redes privadas) para o celular conseguir acessar.</div>
+</section>
+
+<section>
+  <h2>14. Dúvidas frequentes</h2>
+  <table>
+    <tr><th style="width:36%">Pergunta</th><th>Resposta</th></tr>
+    <tr><td>Esqueci minha senha.</td><td>Peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
+    <tr><td>Errei o PIN e foi bloqueado.</td><td>Depois de 5 PINs errados, aguarde <b>5 minutos</b>. Se esqueceu o PIN, peça ao administrador para redefinir.</td></tr>
+    <tr><td>Aparece “Você ainda não cadastrou um PIN”.</td><td>Vá em <span class="ui">Meu perfil</span> e crie o PIN em <span class="ui">PIN de confirmação</span>.</td></tr>
+    <tr><td>O leitor de código de barras não funciona.</td><td>Clique primeiro no campo de busca ou de bipagem; o leitor “digita” o código onde o cursor estiver.</td></tr>
+    <tr><td>Registrei uma quantidade errada.</td><td>Faça um <b>ajuste</b> (entrada ou saída) com a diferença. O histórico guarda as duas operações.</td></tr>
+    <tr><td>O produto sumiu da lista.</td><td>Ele pode ter sido excluído: confira a <span class="ui">Lixeira</span> (administrador).</td></tr>
+    <tr><td>O sistema não abre.</td><td>Feche e abra de novo. Se persistir, reinicie o computador. Os detalhes do erro ficam em <i>%LOCALAPPDATA%\VLEstoque\logs</i>.</td></tr>
+  </table>
+</section>
+
+</body>
+</html>

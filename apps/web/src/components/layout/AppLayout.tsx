@@ -2,6 +2,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   BarChart3,
+  BookOpen,
   ClipboardList,
   CloudOff,
   FolderTree,
@@ -26,6 +27,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { useOffline } from '@/features/offline/OfflineProvider';
 import { cn } from '@/lib/cn';
 import { ROLE_LABELS } from '@/lib/labels';
+import { MANUAL_URL } from '@/lib/manual';
 import { P, type Permission } from '@/lib/permissions';
 
 interface NavItem {
@@ -127,6 +129,15 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
       <div className="border-t border-white/10 p-3">
+        <a
+          href={MANUAL_URL}
+          target="_blank"
+          rel="noopener"
+          className="mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/80 hover:bg-white/6 hover:text-white"
+        >
+          <BookOpen className="size-[18px]" />
+          Manual de uso
+        </a>
         <NavLink
           to="/perfil"
           onClick={onNavigate}

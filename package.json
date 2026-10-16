@@ -19,7 +19,8 @@
     "test": "npm run test -w @vl/api",
     "typecheck": "npm run typecheck -w @vl/api && npm run typecheck -w @vl/web",
     "desktop": "npm run build && npm run start -w @vl/desktop",
-    "dist": "npm run dist -w @vl/desktop"
+    "dist": "npm run manual && npm run dist -w @vl/desktop",
+    "manual": "node scripts/build-manual.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

@@ -26,3 +26,23 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+
+/** Primeiro acesso: a senha provisória já foi conferida no login; o PIN é criado junto, se ainda não existir. */
+export const firstAccessSchema = (withPin: boolean) =>
+  z
+    .object({
+      newPassword: passwordRule,
+      confirmPassword: z.string(),
+      pin: withPin ? pinRule : z.string().optional(),
+      confirmPin: z.string().optional(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      path: ['confirmPassword'],
+      message: 'As senhas não conferem',
+    })
+    .refine((data) => !withPin || data.pin === data.confirmPin, {
+      path: ['confirmPin'],
+      message: 'Os PINs não conferem',
+    });
+
+export type FirstAccessData = z.infer<ReturnType<typeof firstAccessSchema>>;

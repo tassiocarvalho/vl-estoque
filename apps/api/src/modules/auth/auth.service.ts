@@ -58,9 +58,16 @@ export class AuthService {
     await this.audit.log({ userId, action: 'auth.logout', entity: 'user', entityId: userId, ip });
   }
 
+  /**
+   * Troca de senha. No primeiro acesso (senha provisória), a senha atual não é pedida de novo, porque
+   * já foi conferida no login, e o PIN pode ser criado no mesmo passo.
+   */
   async changePassword(userId: string, dto: ChangePasswordDto, ip: string) {
-    const user = await this.verifyCurrentPassword(userId, dto.currentPassword);
-    if (dto.currentPassword === dto.newPassword) throw badRequest('A nova senha deve ser diferente da atual');
+    let user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const firstAccess = user.mustChangePassword;
+    if (!firstAccess) user = await this.verifyCurrentPassword(userId, dto.currentPassword ?? '');
+    if (dto.pin && !firstAccess) throw badRequest('Para trocar o PIN, use “PIN de confirmação” em Meu perfil');
+    if (await verifySecret(user.passwordHash, dto.newPassword)) throw badRequest('A nova senha deve ser diferente da atual');
 
     const updated = await this.prisma.user.update({
       where: { id: user.id },
@@ -68,6 +75,7 @@ export class AuthService {
         passwordHash: await hashSecret(dto.newPassword),
         mustChangePassword: false,
         tokenVersion: { increment: 1 }, // derruba sessões abertas em outros dispositivos
+        ...(dto.pin && { pinHash: await hashSecret(dto.pin) }),
       },
     });
     await this.audit.log({ userId, action: 'auth.change-password', entity: 'user', entityId: userId, ip });

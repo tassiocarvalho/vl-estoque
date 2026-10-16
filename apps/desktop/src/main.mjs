@@ -6,7 +6,7 @@
  * Faz backup no Google Drive ao abrir, a cada 4 horas e ao fechar; numa instalação nova,
  * oferece restaurar o backup mais recente. Ao fechar a janela, desliga tudo de forma limpa.
  */
-import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
+import { app, BrowserWindow, dialog, Menu, session, shell } from 'electron';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -54,13 +54,19 @@ let cleanedUp = false;
 const secret = (bytes) => randomBytes(bytes).toString('base64url');
 
 function loadConfig() {
-  if (existsSync(configPath)) return JSON.parse(readFileSync(configPath, 'utf8'));
+  if (existsSync(configPath)) {
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    // Versões até a 1.1 mostravam a senha provisória numa caixa de diálogo.
+    if (config.firstAccessDone === undefined && config.adminPasswordShown) config.firstAccessDone = true;
+    delete config.adminPasswordShown;
+    return config;
+  }
   const config = {
     dbPassword: secret(18),
     jwtSecret: secret(48),
     pdvApiKey: secret(32),
     adminPassword: `Adm-${secret(6)}`,
-    adminPasswordShown: false,
+    firstAccessDone: false,
   };
   saveConfig(config);
   return config;
@@ -150,7 +156,7 @@ async function startServices(config) {
     DATABASE_URL: databaseUrl,
     JWT_SECRET: config.jwtSecret,
     PDV_API_KEY: config.pdvApiKey,
-    INITIAL_ADMIN_PASSWORD: config.adminPassword,
+    ...(config.adminPassword && { INITIAL_ADMIN_PASSWORD: config.adminPassword }),
     PORT: String(API_PORT),
     HOST: '0.0.0.0', // permite acesso de outros aparelhos da rede (celular do estoque)
     WEB_ORIGIN: APP_URL,
@@ -186,9 +192,11 @@ function createMainWindow() {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
   });
 
-  // Links externos abrem no navegador; a janela do app só navega dentro do próprio sistema.
+  // O manual (PDF) abre no leitor de PDF do Windows; links externos, no navegador.
+  // A janela do app só navega dentro do próprio sistema.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//.test(url) && !url.startsWith(APP_URL)) void shell.openExternal(url);
+    if (url.startsWith(APP_URL) && /\.pdf$/i.test(new URL(url).pathname)) void openManual(url);
+    else if (/^https?:\/\//.test(url) && !url.startsWith(APP_URL)) void shell.openExternal(url);
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', (event, url) => {
@@ -205,19 +213,71 @@ function createMainWindow() {
   return mainWindow.loadURL(APP_URL);
 }
 
-async function showFirstRunInfo(config) {
-  if (config.adminPasswordShown) return;
-  await dialog.showMessageBox(mainWindow, {
-    type: 'info',
-    title: 'Bem-vindo ao V&L Estoque',
-    message: 'Sistema instalado com sucesso!',
-    detail:
-      `Acesse com:\n\n   Usuário: admin\n   Senha provisória: ${config.adminPassword}\n\n` +
-      'Anote esta senha — no primeiro acesso o sistema pedirá para você criar uma senha pessoal.\n\n' +
-      `Ela também fica guardada em:\n${configPath}`,
-    buttons: ['Entendi'],
+async function openManual(url) {
+  const file = join(root, 'web', 'dist', decodeURIComponent(new URL(url).pathname));
+  const error = existsSync(file) ? await shell.openPath(file) : 'arquivo não encontrado';
+  if (error) await shell.openExternal(url); // sem leitor de PDF instalado: abre no navegador
+}
+
+// ─── Primeiro acesso ─────────────────────────────────────────────────────────
+
+const SESSION_COOKIE = 'vl_session';
+
+/** Fim do primeiro acesso: a senha provisória deixa de existir também no arquivo de configuração. */
+function finishFirstAccess(config) {
+  config.firstAccessDone = true;
+  delete config.adminPassword;
+  saveConfig(config);
+  writeLog('Primeiro acesso concluído');
+}
+
+/**
+ * Na primeira abertura, entra sozinho como administrador com a senha provisória (que ninguém precisa ver)
+ * e o sistema abre direto na tela de criar a senha pessoal e o PIN.
+ */
+async function autoLoginFirstAccess(config) {
+  if (config.firstAccessDone || !config.adminPassword) return;
+
+  const response = await fetch(`${APP_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ username: 'admin', password: config.adminPassword }),
   });
-  saveConfig({ ...config, adminPasswordShown: true });
+  if (response.status === 401) return finishFirstAccess(config); // a senha já foi trocada
+  if (!response.ok) throw new Error(`login automático falhou (HTTP ${response.status})`);
+
+  const profile = await response.json();
+  const token = response.headers
+    .getSetCookie()
+    .map((cookie) => cookie.match(new RegExp(`^${SESSION_COOKIE}=([^;]+)`))?.[1])
+    .find(Boolean);
+  if (!profile.mustChangePassword || !token) return finishFirstAccess(config);
+
+  await session.defaultSession.cookies.set({
+    url: APP_URL,
+    name: SESSION_COOKIE,
+    value: token,
+    path: '/',
+    httpOnly: true,
+    sameSite: 'strict',
+    expirationDate: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
+  });
+  writeLog('Primeiro acesso: login automático do administrador');
+
+  // Quando a senha pessoal é criada, a API renova o cookie da sessão: aí o primeiro acesso terminou.
+  const onCookieChanged = async (_event, cookie, _cause, removed) => {
+    if (cookie.name !== SESSION_COOKIE || removed || cookie.value === token) return;
+    try {
+      const me = await fetch(`${APP_URL}/api/auth/me`, { headers: { Cookie: `${SESSION_COOKIE}=${cookie.value}` } });
+      if (me.ok && !(await me.json()).mustChangePassword) {
+        session.defaultSession.cookies.off('changed', onCookieChanged);
+        finishFirstAccess(config);
+      }
+    } catch (error) {
+      writeLog(`Falha ao conferir o primeiro acesso: ${error}`);
+    }
+  };
+  session.defaultSession.cookies.on('changed', onCookieChanged);
 }
 
 // ─── Backup no Google Drive ──────────────────────────────────────────────────
@@ -250,8 +310,7 @@ async function offerRestore(config) {
   await backups.restore(latest.path);
   restoredFrom = latest.modifiedAt;
   // Os usuários vieram do backup: a senha provisória gerada nesta instalação não vale.
-  config.adminPasswordShown = true;
-  saveConfig(config);
+  finishFirstAccess(config);
 }
 
 /** Na primeira vez, encontra a pasta do Google Drive (ou pede uma pasta sincronizada). */
@@ -318,8 +377,8 @@ async function boot() {
     const config = loadConfig();
     await startServices(config);
     shutdownBackup = () => runBackup(config);
+    await autoLoginFirstAccess(config).catch((error) => writeLog(`Login automático: ${error}`));
     await createMainWindow();
-    await showFirstRunInfo(config);
     if (restoredFrom) {
       await dialog.showMessageBox(mainWindow, {
         type: 'info',

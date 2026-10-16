@@ -1,4 +1,4 @@
-import { IsString, Length, Matches, MaxLength } from 'class-validator';
+import { IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 import {
   PASSWORD_RULE,
   PASSWORD_RULE_MESSAGE,
@@ -17,12 +17,19 @@ export class LoginDto {
 }
 
 export class ChangePasswordDto {
+  /** Dispensada no primeiro acesso: a senha provisória já foi conferida no login. */
+  @IsOptional()
   @IsString()
   @MaxLength(72)
-  currentPassword: string;
+  currentPassword?: string;
 
   @Matches(PASSWORD_RULE, { message: PASSWORD_RULE_MESSAGE })
   newPassword: string;
+
+  /** No primeiro acesso, o PIN pode ser criado junto com a senha. */
+  @IsOptional()
+  @Matches(PIN_RULE, { message: PIN_RULE_MESSAGE })
+  pin?: string;
 }
 
 export class SetPinDto {

@@ -21,6 +21,7 @@ import { P } from '@/lib/permissions';
 import type { Dashboard, Movement } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { useMovements } from '../stock/api';
+import { WelcomeCard } from './WelcomeCard';
 
 /** Versão compacta do histórico, para a coluna estreita do painel. */
 function RecentMovements({ movements }: { movements: Movement[] }) {
@@ -79,6 +80,7 @@ export function DashboardPage() {
 
   return (
     <>
+      <WelcomeCard />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">

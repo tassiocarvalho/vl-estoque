@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /\.pdf$/], // o manual em PDF abre direto, não pela tela do sistema
         runtimeCaching: [
           {
             // Consultas à API: tenta a rede e, sem internet, usa a última resposta salva.
