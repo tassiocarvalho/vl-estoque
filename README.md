@@ -757,20 +757,70 @@ Reenviar o mesmo `externalId` não duplica a baixa.
 
 ### Opção 1 · Aplicativo para Windows (recomendado para a loja)
 
-1. Baixe o instalador: **[VL-Estoque-Setup-1.3.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe)**
-2. Execute e siga os passos. Ele cria um atalho **VL Estoque** na área de trabalho.
-3. Na primeira abertura, o app **entra sozinho como `admin`** e pede para criar a **senha pessoal e o PIN**. Ninguém precisa ver a senha provisória.
-4. O **Manual de uso (PDF)** fica no menu lateral e também aparece num aviso de boas-vindas no painel. Para atualizá-lo, edite [`docs/manual/manual.html`](docs/manual/manual.html) e rode `npm run manual`.
+> 📘 O passo a passo completo, com telas, está no capítulo 1 do **[Manual de Uso (PDF)](apps/web/public/manual-de-uso.pdf)**.
 
 O app abre em **janela própria** (sem barra de endereço) e já traz tudo embutido: banco PostgreSQL, API e telas. Não é preciso instalar Node.js nem nada além dele.
 
+| Requisito | Mínimo |
+|---|---|
+| Sistema | Windows 10 ou 11, 64 bits |
+| Memória | 4 GB de RAM (recomendado 8 GB) |
+| Disco | ~1 GB para o programa |
+| Leitor de código de barras | Qualquer leitor USB que funcione como teclado |
+| Internet | Não é necessária (só para o backup no Google Drive e o e-mail de recuperação) |
+
+#### Duas formas de usar
+
+| | A) Instalado (recomendado) | B) Sem instalar |
+|---|---|---|
+| Como abre | Atalho **VL Estoque** na Área de Trabalho e no Menu Iniciar | Dois cliques em `VL Estoque.exe` |
+| Onde fica | `%LOCALAPPDATA%\Programs\vl-estoque` | `apps\desktop\release\win-unpacked` (recriada a cada `npm run dist`) |
+| Indicado para | Computador da loja | Desenvolvimento e testes |
+| Dados | As duas usam os **mesmos dados** (`%LOCALAPPDATA%\VLEstoque`) | ← |
+
+#### A) Instalar
+
+1. Baixe o instalador **[VL-Estoque-Setup-1.3.0.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.0.exe)** (ou gere com `npm run dist`) e dê dois cliques.
+2. Se aparecer **“O Windows protegeu o computador”**, clique em **Mais informações → Executar assim mesmo**. O aviso aparece porque o instalador não tem assinatura digital paga.
+3. Mantenha a pasta sugerida, clique em **Instalar** e depois em **Concluir**. Não precisa de senha de administrador do Windows (instalação por usuário).
+
+#### B) Usar sem instalar
+
+1. Abra `sistema-estoque\apps\desktop\release\win-unpacked` e dê dois cliques em **VL Estoque.exe**.
+2. Atalho opcional: botão direito no arquivo → **Enviar para → Área de trabalho (criar atalho)**.
+
+#### Ao abrir
+
+1. Aparece a tela de carregamento verde: *Iniciando o banco de dados → Atualizando o banco de dados → Iniciando o sistema* (10 a 30 segundos).
+2. **Primeira abertura:** o app **entra sozinho como `admin`** e pede a **senha pessoal, o PIN, o e-mail de recuperação e o aceite do termo de uso**. Ninguém precisa ver a senha provisória.
+3. O **Manual de uso** fica no menu lateral e aparece num aviso de boas-vindas no painel.
+4. Enquanto o app está aberto, o sistema também funciona no navegador em **http://localhost:3030** e no celular (mesma rede) em `http://IP-DO-COMPUTADOR:3030`.
+5. Para fechar, clique no **X**: o app faz o último backup e desliga o banco com segurança. Clicar no atalho com o app aberto só traz a janela para a frente.
+
+#### Atualizar e desinstalar
+
+- **Atualizar:** feche o app e instale a versão nova **por cima** (ou use a nova pasta `win-unpacked`). Ao abrir, *Atualizando o banco de dados...* ajusta os dados sozinho.
+- **Desinstalar:** Configurações do Windows → Aplicativos → **VL Estoque** → Desinstalar. Os dados em `%LOCALAPPDATA%\VLEstoque` são mantidos.
+
 | Item | Onde fica |
 |---|---|
+| Programa instalado | `%LOCALAPPDATA%\Programs\vl-estoque` |
 | Dados do estoque | `%LOCALAPPDATA%\VLEstoque\pgdata` (preservados ao desinstalar) |
 | Segredos gerados na instalação | `%LOCALAPPDATA%\VLEstoque\config.json` (a senha provisória é apagada após o primeiro acesso) |
 | Logs | `%LOCALAPPDATA%\VLEstoque\logs` |
 | Backups automáticos | `Meu Drive\VL Estoque - Backups` no Google Drive (ou `%LOCALAPPDATA%\VLEstoque\backups` sem o Drive) |
-| Acesso pelo celular (mesma rede) | `http://IP-DO-COMPUTADOR:3030` |
+| Portas usadas | `3030` (sistema) e `5434` (banco, só no próprio computador) |
+
+#### Se não abrir
+
+| Sintoma | Solução |
+|---|---|
+| “Não foi possível iniciar o V&L Estoque” | Abra de novo ou reinicie o computador. A mensagem mostra o arquivo de log com os detalhes |
+| Carregamento demorado | Antivírus podem atrasar a primeira abertura: aguarde até 1 minuto ou adicione a pasta do programa às exceções |
+| Porta 3030 ou 5434 ocupada | Feche o programa que usa a porta ou reinicie o computador |
+| Celular não acessa | No aviso do Firewall do Windows, clique em **Permitir** (redes privadas) |
+
+Para atualizar o manual, edite [`docs/manual/manual.html`](docs/manual/manual.html) e rode `npm run manual`.
 
 #### ☁️ Backup no Google Drive
 

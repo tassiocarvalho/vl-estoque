@@ -198,7 +198,7 @@ export function UsersPage() {
             </thead>
             <tbody>
               {data.map((user) => (
-                <tr key={user.id} className={user.active ? undefined : 'opacity-60'}>
+                <tr key={user.id} className={user.active ? undefined : '[&>td:not(:last-child)]:opacity-60'}>
                   <td>
                     <p className="font-medium text-slate-900">
                       {user.name} {user.id === me?.id && <span className="text-xs font-normal text-slate-400">(você)</span>}

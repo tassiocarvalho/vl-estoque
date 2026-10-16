@@ -22,6 +22,10 @@
   figure { margin: 4mm 0 5mm; break-inside: avoid; text-align: center; }
   figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 2mm; box-shadow: 0 1mm 3mm rgba(15, 23, 42, .08); }
   figure.phone img { max-height: 105mm; }
+  figure.narrow img { max-width: 62%; }
+  figure.half img { max-width: 80%; }
+  .pair { display: flex; gap: 4mm; align-items: flex-start; break-inside: avoid; }
+  .pair figure { flex: 1; margin: 2mm 0 4mm; }
   figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
   .tip, .warn { break-inside: avoid; border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 10pt; }
   .tip { background: var(--brand-soft); border-left: 1.2mm solid var(--brand); }
@@ -72,6 +76,7 @@
 <section class="toc">
   <h2>Sumário</h2>
   <ol>
+    <li>Instalar, abrir e atualizar <span>passo a passo</span></li>
     <li>Primeiro acesso <span>senha, PIN, e-mail e termo</span></li>
     <li>Entrando no sistema <span>login, perfis e senha esquecida</span></li>
     <li>O painel <span>visão geral do dia</span></li>
@@ -91,22 +96,131 @@
 </section>
 
 <section>
-  <h2>1. Primeiro acesso</h2>
+  <h2>1. Instalar, abrir e atualizar o sistema</h2>
+  <p>O V&amp;L Estoque é um programa para Windows que já traz <strong>tudo embutido</strong>: o banco de dados, o servidor e as telas. Não é preciso instalar mais nada nem ter internet para usar. Este capítulo explica, passo a passo, como colocar o sistema para funcionar e onde fica cada arquivo.</p>
+
+  <h3>1.1 O que é necessário</h3>
+  <table>
+    <tr><th style="width:34%">Item</th><th>Mínimo</th></tr>
+    <tr><td><b>Sistema</b></td><td>Windows 10 ou 11, 64 bits</td></tr>
+    <tr><td><b>Memória (RAM)</b></td><td>4 GB (recomendado 8 GB)</td></tr>
+    <tr><td><b>Espaço em disco</b></td><td>cerca de 1 GB para o programa, mais o espaço dos dados (poucos MB por ano)</td></tr>
+    <tr><td><b>Leitor de código de barras</b></td><td>Qualquer leitor USB que funcione como teclado (o comum nas lojas)</td></tr>
+    <tr><td><b>Internet</b></td><td>Não é necessária para usar. Só é usada pelo Google Drive (backup) e pelo envio do código de recuperação de senha</td></tr>
+  </table>
+
+  <h3>1.2 Duas formas de usar</h3>
+  <table>
+    <tr><th style="width:22%"></th><th style="width:39%">A) Instalado (recomendado para a loja)</th><th>B) Sem instalar (pasta do projeto)</th></tr>
+    <tr><td><b>Como abre</b></td><td>Atalho <span class="ui">VL Estoque</span> na Área de Trabalho e no Menu Iniciar</td><td>Dois cliques no arquivo <i>VL Estoque.exe</i> dentro da pasta do projeto</td></tr>
+    <tr><td><b>Onde fica</b></td><td><i>C:\Users\<b>seu-usuário</b>\AppData\Local\Programs\vl-estoque</i></td><td><i>…\sistema-estoque\apps\desktop\release\win-unpacked</i></td></tr>
+    <tr><td><b>Indicado para</b></td><td>Computador do caixa e uso diário</td><td>Quem está desenvolvendo ou testando novas versões</td></tr>
+    <tr><td><b>Dados</b></td><td colspan="2">As duas formas usam <b>os mesmos dados</b> (<i>%LOCALAPPDATA%\VLEstoque</i>). Dá para trocar de uma para a outra sem perder nada.</td></tr>
+  </table>
+
+  <h3>1.3 Instalar (forma A)</h3>
+  <ol class="steps">
+    <li>Copie o instalador <b>VL-Estoque-Setup-<i>versão</i>.exe</b> para o computador (por pen drive, e-mail ou pelo link de download) e dê dois cliques nele.</li>
+    <li>Se aparecer a tela azul <b>“O Windows protegeu o computador”</b>, clique em <span class="ui">Mais informações</span> e depois em <span class="ui">Executar assim mesmo</span>. O aviso aparece porque o instalador ainda não tem assinatura digital paga; ele não indica vírus.</li>
+    <li>Na tela de instalação, mantenha a pasta sugerida (ou escolha outra) e clique em <span class="ui">Instalar</span>. Leva menos de um minuto.</li>
+    <li>Ao terminar, deixe marcada a opção de executar o VL Estoque e clique em <span class="ui">Concluir</span>.</li>
+    <li>Pronto: o atalho <span class="ui">VL Estoque</span> aparece na Área de Trabalho e no Menu Iniciar.</li>
+  </ol>
+  <div class="tip"><b>Instalação por usuário</b>O programa é instalado só para o usuário do Windows que está logado e não pede senha de administrador do Windows. Em outro usuário do Windows, é preciso instalar de novo.</div>
+
+  <h3>1.4 Usar sem instalar (forma B)</h3>
+  <ol class="steps">
+    <li>Abra a pasta <i>…\sistema-estoque\apps\desktop\release\win-unpacked</i> no Explorador de Arquivos.</li>
+    <li>Dê dois cliques em <b>VL Estoque.exe</b> (o arquivo com o ícone verde).</li>
+    <li><b>Atalho opcional:</b> clique com o botão direito em <b>VL Estoque.exe</b> › <span class="ui">Enviar para</span> › <span class="ui">Área de trabalho (criar atalho)</span>. No Windows 11, clique antes em <span class="ui">Mostrar mais opções</span>.</li>
+  </ol>
+  <div class="warn"><b>Atenção</b>Essa pasta é <b>apagada e recriada</b> sempre que uma nova versão do instalador é gerada. Não guarde arquivos seus dentro dela e não abra o programa enquanto uma nova versão estiver sendo gerada.</div>
+
+  <h3>1.5 O que acontece ao abrir</h3>
+  <figure class="narrow"><img src="../screenshots/splash.png" alt=""><figcaption>Tela de carregamento</figcaption></figure>
+  <p>Primeiro aparece a tela de carregamento verde, que mostra cada etapa:</p>
+  <table>
+    <tr><th style="width:40%">Mensagem</th><th>O que o sistema está fazendo</th></tr>
+    <tr><td><i>Iniciando o banco de dados...</i></td><td>Liga o banco de dados no próprio computador.</td></tr>
+    <tr><td><i>Atualizando o banco de dados...</i></td><td>Ajusta o banco para a versão do programa (necessário após atualizar). Os dados são mantidos.</td></tr>
+    <tr><td><i>Restaurando o backup...</i></td><td>Só numa instalação nova, se você escolher restaurar um backup (capítulo 13).</td></tr>
+    <tr><td><i>Iniciando o sistema...</i></td><td>Liga o servidor e abre a janela do sistema.</td></tr>
+  </table>
+  <p>Em seguida, a janela do V&amp;L Estoque abre <b>maximizada e sem barra de endereço</b>, como um programa comum. Tudo leva de <b>10 a 30 segundos</b>, conforme o computador. Na primeira abertura, o sistema já entra sozinho como administrador para você criar a sua senha (capítulo 2).</p>
+  <div class="tip"><b>Já está aberto?</b>Clicar no atalho de novo não abre uma segunda cópia: o sistema só traz a janela que já está aberta para a frente.</div>
+
+  <h3>1.6 Abrir no navegador do mesmo computador</h3>
+  <p>Com o programa aberto, o sistema também pode ser usado no navegador (Chrome, Edge), no endereço <b>http://localhost:3030</b>. É útil, por exemplo, para ter duas telas abertas. O navegador pede login normalmente. Para usar no celular, veja o capítulo 15.</p>
+  <div class="warn"><b>Importante</b>O endereço só funciona <b>enquanto o programa estiver aberto</b>, porque é ele que liga o banco de dados e o servidor.</div>
+
+  <h3>1.7 Fechar corretamente</h3>
+  <ol class="steps">
+    <li>Clique no <b>X</b> da janela do V&amp;L Estoque.</li>
+    <li>O sistema salva um último backup e desliga o banco de dados com segurança. Leva poucos segundos.</li>
+  </ol>
+  <div class="warn"><b>Evite</b>Encerrar o programa pelo Gerenciador de Tarefas ou desligar o computador da tomada com ele aberto. O banco resiste a quedas de energia, mas o fechamento normal garante o backup mais recente.</div>
+
+  <h3>1.8 Atualizar para uma nova versão</h3>
+  <ol class="steps">
+    <li>Feche o V&amp;L Estoque (clique no X).</li>
+    <li><b>Instalado:</b> execute o instalador da nova versão <b>por cima</b> da atual, sem desinstalar. <b>Sem instalar:</b> basta usar a nova pasta <i>win-unpacked</i> gerada.</li>
+    <li>Abra o sistema. Na tela de carregamento aparece <i>“Atualizando o banco de dados...”</i>: os seus dados são ajustados para a nova versão automaticamente.</li>
+    <li>Se a nova versão trouxer um termo de uso atualizado, cada usuário lê e aceita de novo no próximo acesso.</li>
+  </ol>
+  <div class="tip"><b>Seus dados estão seguros</b>Produtos, movimentações, usuários e backups ficam em uma pasta separada do programa e <b>nunca</b> são apagados pela atualização.</div>
+
+  <h3>1.9 Desinstalar</h3>
+  <ol class="steps">
+    <li>Abra <span class="ui">Configurações do Windows</span> › <span class="ui">Aplicativos</span> › <span class="ui">Aplicativos instalados</span>.</li>
+    <li>Procure <b>VL Estoque</b>, clique em <b>⋯</b> e em <span class="ui">Desinstalar</span>.</li>
+  </ol>
+  <p>A desinstalação remove só o programa. Os dados continuam em <i>%LOCALAPPDATA%\VLEstoque</i> e voltam a aparecer se você instalar de novo. Para apagar tudo de vez, apague também essa pasta (faça um backup antes).</p>
+
+  <h3>1.10 Onde fica cada arquivo</h3>
+  <p>Para abrir uma pasta que começa com <i>%LOCALAPPDATA%</i>, aperte <kbd>Windows</kbd> + <kbd>R</kbd>, cole o caminho e tecle <kbd>Enter</kbd>.</p>
+  <table>
+    <tr><th style="width:30%">O quê</th><th>Onde</th></tr>
+    <tr><td>Programa instalado</td><td><i>%LOCALAPPDATA%\Programs\vl-estoque</i></td></tr>
+    <tr><td>Programa sem instalar</td><td><i>…\sistema-estoque\apps\desktop\release\win-unpacked</i></td></tr>
+    <tr><td><b>Dados do estoque</b></td><td><i>%LOCALAPPDATA%\VLEstoque\pgdata</i> (não mexa nesta pasta)</td></tr>
+    <tr><td>Configuração e chaves de segurança</td><td><i>%LOCALAPPDATA%\VLEstoque\config.json</i> (não compartilhe este arquivo)</td></tr>
+    <tr><td>Registros de funcionamento (logs)</td><td><i>%LOCALAPPDATA%\VLEstoque\logs</i></td></tr>
+    <tr><td>Backups no Google Drive</td><td><i>Meu Drive › VL Estoque - Backups</i> (capítulo 13)</td></tr>
+    <tr><td>Backups locais (sem Drive)</td><td><i>%LOCALAPPDATA%\VLEstoque\backups</i></td></tr>
+    <tr><td>Este manual</td><td>Menu lateral › <span class="ui">Manual de uso</span></td></tr>
+  </table>
+
+  <h3>1.11 Se o sistema não abrir</h3>
+  <table>
+    <tr><th style="width:36%">O que aparece</th><th>O que fazer</th></tr>
+    <tr><td>“O Windows protegeu o computador”</td><td><span class="ui">Mais informações</span> › <span class="ui">Executar assim mesmo</span> (item 1.3).</td></tr>
+    <tr><td>“Não foi possível iniciar o V&amp;L Estoque”</td><td>Feche e abra de novo. Se repetir, reinicie o computador. A mensagem mostra o caminho do arquivo de log com os detalhes: envie esse arquivo para o suporte.</td></tr>
+    <tr><td>A tela de carregamento não sai do lugar</td><td>Aguarde até 1 minuto (antivírus podem atrasar a primeira abertura). Se não abrir, reinicie o computador.</td></tr>
+    <tr><td>O antivírus bloqueou o programa</td><td>Adicione a pasta do programa às exceções do antivírus.</td></tr>
+    <tr><td>Outro programa usa a porta 3030</td><td>O sistema precisa das portas <b>3030</b> e <b>5434</b> do computador. Feche o programa que as usa ou reinicie o computador.</td></tr>
+    <tr><td>O Windows pergunta sobre o Firewall</td><td>Clique em <span class="ui">Permitir</span> em redes privadas, para o celular conseguir acessar pelo Wi-Fi.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. Primeiro acesso</h2>
   <p>Na primeira vez que o V&amp;L Estoque é aberto depois da instalação, ele <strong>entra sozinho</strong> com o usuário administrador (<span class="ui">admin</span>) e mostra a tela <span class="ui">Bem-vindo</span>. Não é preciso digitar nenhuma senha provisória.</p>
+  <figure class="narrow"><img src="../screenshots/primeiro-acesso-preenchido.png" alt=""><figcaption>Tela de primeiro acesso preenchida</figcaption></figure>
   <ol class="steps">
     <li>Em <span class="ui">Nova senha</span>, crie a sua senha pessoal: <strong>mínimo de 8 caracteres, com letras e números</strong>. Repita em <span class="ui">Confirme a nova senha</span>.</li>
     <li>Crie também o seu <strong>PIN</strong>: um código de <strong>4 a 6 números</strong>, usado para confirmar operações como vendas, entradas e exclusões. Repita em <span class="ui">Confirme o PIN</span>.</li>
-    <li>Informe o seu <strong>e-mail</strong> em <span class="ui">E-mail para recuperar a senha</span>. Ele é obrigatório para administradores e serve <b>somente</b> para receber um código se você esquecer a senha (capítulo 2).</li>
-    <li>Leia o <span class="ui">Termo de Uso e a Política de Privacidade</span> (clique no link para abrir) e marque <b>“Li e concordo”</b>. O capítulo 13 explica o que ele diz.</li>
+    <li>Informe o seu <strong>e-mail</strong> em <span class="ui">E-mail para recuperar a senha</span>. Ele é obrigatório para administradores e serve <b>somente</b> para receber um código se você esquecer a senha (capítulo 3).</li>
+    <li>Leia o <span class="ui">Termo de Uso e a Política de Privacidade</span> (clique no link para abrir) e marque <b>“Li e concordo”</b>. O capítulo 14 explica o que ele diz.</li>
     <li>Clique em <span class="ui">Salvar e continuar</span>. Pronto: o sistema abre no painel.</li>
   </ol>
-  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Se esquecer a senha, use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 2).</div>
-  <div class="tip"><b>Sobre o backup</b>Logo depois, o sistema avisa se encontrou o Google Drive para guardar os backups. Se ainda não estiver instalado, veja o capítulo 12.</div>
+  <figure class="half"><img src="../screenshots/termo-modal.png" alt=""><figcaption>O termo abre numa janela, sem sair da tela de primeiro acesso</figcaption></figure>
+  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Se esquecer a senha, use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 3).</div>
+  <div class="tip"><b>Sobre o backup</b>Logo depois, o sistema avisa se encontrou o Google Drive para guardar os backups. Se ainda não estiver instalado, veja o capítulo 13.</div>
   <p>Os funcionários que você cadastrar passam pelo mesmo processo: no primeiro login com a senha provisória que você definir, o sistema pede que cada um crie a própria senha e o próprio PIN.</p>
 </section>
 
 <section>
-  <h2>2. Entrando no sistema</h2>
+  <h2>3. Entrando no sistema</h2>
   <figure><img src="../screenshots/login.png" alt=""><figcaption>Tela de login</figcaption></figure>
   <ol class="steps">
     <li>Abra o atalho <span class="ui">VL Estoque</span> na área de trabalho. Aguarde a tela de carregamento (alguns segundos).</li>
@@ -120,7 +234,12 @@
     <li>Abra o seu e-mail: chega uma mensagem do <b>V&amp;L Estoque</b> com um <b>código de 6 números</b> (veja também a caixa de spam).</li>
     <li>Digite o código, crie a nova senha e clique em <span class="ui">Salvar nova senha</span>. Depois, entre normalmente.</li>
   </ol>
-  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro, e são no máximo 3 pedidos por hora. Ao redefinir, o sistema encerra as sessões abertas em outros aparelhos. Quem não tem e-mail cadastrado, ou se a recuperação por e-mail ainda não foi configurada (capítulo 11), deve pedir a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
+  <div class="pair">
+    <figure><img src="../screenshots/esqueci-senha.png" alt=""><figcaption>1. Informe o usuário ou e-mail</figcaption></figure>
+    <figure><img src="../screenshots/codigo-recuperacao.png" alt=""><figcaption>3. Digite o código e a nova senha</figcaption></figure>
+  </div>
+  <figure class="half"><img src="../screenshots/email-codigo.png" alt=""><figcaption>2. Exemplo do e-mail com o código</figcaption></figure>
+  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro, e são no máximo 3 pedidos por hora. Ao redefinir, o sistema encerra as sessões abertas em outros aparelhos. Quem não tem e-mail cadastrado, ou se a recuperação por e-mail ainda não foi configurada (capítulo 12), deve pedir a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
   <h3>Perfis de acesso</h3>
   <p>Cada pessoa vê apenas o que o seu perfil permite:</p>
   <table>
@@ -132,7 +251,7 @@
 </section>
 
 <section>
-  <h2>3. O painel</h2>
+  <h2>4. O painel</h2>
   <p>É a primeira tela depois do login. Mostra, num relance, como está o estoque:</p>
   <figure><img src="../screenshots/painel.png" alt=""><figcaption>Painel com indicadores, alertas de reposição e últimas movimentações</figcaption></figure>
   <table>
@@ -146,7 +265,7 @@
 </section>
 
 <section>
-  <h2>4. Cadastrar produtos</h2>
+  <h2>5. Cadastrar produtos</h2>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Produtos</span> e depois em <span class="ui">Novo produto</span>.</li>
     <li>Preencha os campos (veja a tabela abaixo). Para o código de barras, clique no campo e <strong>bipe o produto</strong> com o leitor.</li>
@@ -180,7 +299,7 @@
 </section>
 
 <section>
-  <h2>5. Registrar entrada</h2>
+  <h2>6. Registrar entrada</h2>
   <p>Use quando chega mercadoria de um pedido ou quando um item volta para o estoque.</p>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Registrar entrada</span>.</li>
@@ -193,7 +312,7 @@
 </section>
 
 <section>
-  <h2>6. Registrar saída</h2>
+  <h2>7. Registrar saída</h2>
   <p>Use para vendas e para tudo que sai do estoque.</p>
   <figure><img src="../screenshots/saida.png" alt=""><figcaption>Registro de saída com o alerta de reposição</figcaption></figure>
   <ol class="steps">
@@ -202,12 +321,12 @@
     <li>Escolha o tipo: <b>Venda</b>, <b>Perda / quebra / vencimento</b> ou <b>Ajuste (saída)</b>.</li>
     <li>Informe a quantidade e confirme com o seu PIN.</li>
   </ol>
-  <p>Se, depois da saída, o produto atingir o <b>ponto de pedido</b>, aparece um <strong>alerta de reposição</strong> e o sistema cria automaticamente uma <strong>solicitação de pedido</strong> (capítulo 7).</p>
+  <p>Se, depois da saída, o produto atingir o <b>ponto de pedido</b>, aparece um <strong>alerta de reposição</strong> e o sistema cria automaticamente uma <strong>solicitação de pedido</strong> (capítulo 8).</p>
   <div class="warn"><b>Estoque insuficiente</b>Por padrão, o sistema não deixa a saída ser maior que o saldo. Se isso acontecer, confira o estoque físico e registre um ajuste. O administrador pode mudar essa regra em <span class="ui">Configurações</span>.</div>
 </section>
 
 <section>
-  <h2>7. Alertas e solicitações de pedido</h2>
+  <h2>8. Alertas e solicitações de pedido</h2>
   <h3>Situação de cada produto</h3>
   <table>
     <tr><th style="width:24%">Situação</th><th>Quando aparece</th></tr>
@@ -222,13 +341,13 @@
   <ol class="steps">
     <li><b>Pendente</b>: a solicitação foi gerada. Ao fazer o pedido ao fornecedor, clique em <span class="ui">Pedido feito</span>. Se não for pedir, clique em <span class="ui">Cancelar</span>.</li>
     <li><b>Pedido feito</b>: quando a mercadoria chegar, clique em <span class="ui">Recebido</span>.</li>
-    <li>Em seguida, <strong>registre a entrada</strong> da mercadoria (capítulo 5) para o saldo ser atualizado.</li>
+    <li>Em seguida, <strong>registre a entrada</strong> da mercadoria (capítulo 6) para o saldo ser atualizado.</li>
   </ol>
   <div class="tip"><b>Como a quantidade é sugerida</b><span class="formula">ES + consumo médio × (prazo + dias de cobertura) − saldo atual</span>. Os <i>dias de cobertura</i> (padrão: 7) são ajustados em <span class="ui">Configurações</span>.</div>
 </section>
 
 <section>
-  <h2>8. Relatórios</h2>
+  <h2>9. Relatórios</h2>
   <figure><img src="../screenshots/relatorios.png" alt=""><figcaption>Relatório de movimentações por período</figcaption></figure>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Relatórios</span>.</li>
@@ -246,7 +365,7 @@
 </section>
 
 <section>
-  <h2>9. Excluir e recuperar produtos</h2>
+  <h2>10. Excluir e recuperar produtos</h2>
   <p>Quando um produto deixa de ser vendido, ele pode ser excluído. A exclusão tem uma <strong>“reciclagem”</strong> para os casos de engano:</p>
   <ol class="steps">
     <li>Abra o produto e clique em <span class="ui">Excluir</span> e depois em <span class="ui">Mover para a lixeira</span> (o PIN é pedido).</li>
@@ -257,26 +376,28 @@
 </section>
 
 <section>
-  <h2>10. Usuários e permissões</h2>
+  <h2>11. Usuários e permissões</h2>
   <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: assim o sistema registra quem fez cada operação.</p>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
     <li>Preencha <span class="ui">Nome completo</span>, o <span class="ui">E-mail</span> (obrigatório para administradores, opcional para os demais), o perfil (<b>Administrador</b>, <b>Estoquista</b> ou <b>Caixa</b>), o <span class="ui">Login (usuário)</span> (ex.: <i>maria.silva</i>) e uma <span class="ui">Senha provisória</span>.</li>
     <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o próprio PIN e lê o termo de uso.</li>
   </ol>
+  <figure class="narrow"><img src="../screenshots/novo-usuario.png" alt=""><figcaption>Cadastro de usuário: o e-mail é obrigatório para administradores</figcaption></figure>
+  <figure><img src="../screenshots/usuarios.png" alt=""><figcaption>Lista de usuários com perfil, situação e último acesso</figcaption></figure>
   <table>
     <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
     <tr><td>Funcionário esqueceu a senha</td><td>Com e-mail cadastrado: ele mesmo usa <span class="ui">Esqueci minha senha</span>. Sem e-mail: <span class="ui">Redefinir senha</span>, e ele recebe uma nova senha provisória.</td></tr>
     <tr><td>Funcionário esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
     <tr><td>Funcionário saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
-    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, use <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 13).</td></tr>
+    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, use <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 14).</td></tr>
   </table>
   <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, cadastros, exclusões e alterações, com data, hora e usuário.</p>
   <p>Cada pessoa pode trocar a própria senha e o PIN em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
 </section>
 
 <section>
-  <h2>11. Configurações</h2>
+  <h2>12. Configurações</h2>
   <p><i>Somente o administrador.</i> Em <span class="ui">Configurações</span>:</p>
   <figure><img src="../screenshots/configuracoes.png" alt=""><figcaption>Configurações do sistema</figcaption></figure>
   <table>
@@ -295,11 +416,12 @@
     <li>Em <span class="ui">Configurações</span> › <span class="ui">Recuperação de senha por e-mail</span>, escolha <b>Gmail</b>, informe o e-mail da conta e cole a senha de app. Clique em <span class="ui">Salvar</span>.</li>
     <li>Clique em <span class="ui">Enviar e-mail de teste</span>. Se a mensagem chegar ao seu e-mail (cadastrado em <span class="ui">Meu perfil</span>), está tudo certo: o selo muda para <b>Ativa</b>.</li>
   </ol>
+  <figure class="half"><img src="../screenshots/config-email.png" alt=""><figcaption>Recuperação de senha por e-mail configurada com Gmail (selo “Ativa”)</figcaption></figure>
   <div class="tip"><b>Segurança</b>Use a <b>senha de app</b>, nunca a senha normal do Gmail. Ela fica guardada criptografada e pode ser revogada a qualquer momento na Conta Google.</div>
 </section>
 
 <section>
-  <h2>12. Backup no Google Drive</h2>
+  <h2>13. Backup no Google Drive</h2>
   <p>O sistema guarda os dados no próprio computador e faz <strong>cópias de segurança automáticas no Google Drive</strong>. Assim, se o computador der defeito, nada se perde.</p>
   <h3>Como ativar (uma vez só)</h3>
   <ol class="steps">
@@ -317,7 +439,7 @@
 </section>
 
 <section>
-  <h2>13. Privacidade e LGPD</h2>
+  <h2>14. Privacidade e LGPD</h2>
   <p>O V&amp;L Estoque trata dados pessoais de quem usa o sistema (nome, login, e-mail e o registro das ações). Ele foi feito para ajudar a empresa a cumprir a <b>Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</b>.</p>
   <h3>Termo de Uso e Política de Privacidade</h3>
   <p>Explica quais dados são tratados, para quê, por quanto tempo e quais são os direitos de cada pessoa. Todo usuário dá ciência dele no primeiro acesso, e ele fica sempre disponível em <span class="ui">Termos e privacidade</span>, no menu lateral, e no link da tela de login. Se o termo for atualizado, o sistema pede uma nova leitura.</p>
@@ -331,6 +453,9 @@
     <tr><td>Eliminação ou anonimização</td><td>O administrador desativa o usuário e usa <span class="ui">Anonimizar dados (LGPD)</span>. Nome, login, e-mail, senha, PIN e endereços IP são apagados; as movimentações continuam no histórico sem identificar a pessoa. Não pode ser desfeito.</td></tr>
   </table>
   <p>O prazo legal para responder aos pedidos é de <b>15 dias</b>.</p>
+  <figure class="half"><img src="../screenshots/perfil-privacidade.png" alt=""><figcaption>Meu perfil › Privacidade (LGPD)</figcaption></figure>
+  <figure class="half"><img src="../screenshots/usuarios-anonimizar.png" alt=""><figcaption>Usuários › menu ⋯ de um usuário desativado › Anonimizar dados (LGPD)</figcaption></figure>
+  <figure class="half"><img src="../screenshots/config-empresa.png" alt=""><figcaption>Configurações › Empresa e privacidade: dados que aparecem no termo</figcaption></figure>
   <h3>O que o sistema faz sozinho</h3>
   <ul>
     <li>Guarda senhas e PINs de forma <b>irreversível</b> (ninguém consegue vê-los).</li>
@@ -341,7 +466,7 @@
 </section>
 
 <section>
-  <h2>14. Celular e uso sem internet</h2>
+  <h2>15. Celular e uso sem internet</h2>
   <h3>Sem internet</h3>
   <p>No computador da loja, o V&amp;L Estoque <strong>funciona normalmente sem internet</strong>: o banco de dados fica no próprio computador. A internet só é usada pelo Google Drive para enviar os backups.</p>
   <h3>Usar no celular (mesma rede Wi-Fi)</h3>
@@ -356,10 +481,10 @@
 </section>
 
 <section>
-  <h2>15. Dúvidas frequentes</h2>
+  <h2>16. Dúvidas frequentes</h2>
   <table>
     <tr><th style="width:36%">Pergunta</th><th>Resposta</th></tr>
-    <tr><td>Esqueci minha senha.</td><td>Use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 2). Sem e-mail cadastrado, peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
+    <tr><td>Esqueci minha senha.</td><td>Use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 3). Sem e-mail cadastrado, peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
     <tr><td>O código de recuperação não chegou.</td><td>Confira a caixa de spam e se o e-mail em <span class="ui">Meu perfil</span> está certo. O administrador pode testar o envio em <span class="ui">Configurações</span> › <span class="ui">Enviar e-mail de teste</span>.</td></tr>
     <tr><td>Aparece a tela do termo de uso ao entrar.</td><td>O termo foi atualizado. Leia, marque “Li e concordo” e clique em <span class="ui">Continuar</span>.</td></tr>
     <tr><td>Errei o PIN e foi bloqueado.</td><td>Depois de 5 PINs errados, aguarde <b>5 minutos</b>. Se esqueceu o PIN, peça ao administrador para redefinir.</td></tr>
