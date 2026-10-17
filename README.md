@@ -57,6 +57,7 @@ O SuaLojaAqui une uma **frente de caixa não fiscal** a um **controle de estoque
 > **Não fiscal:** esta versão não emite NFC-e, SAT nem NF-e e não fala com a SEFAZ. Todo comprovante diz **"Documento Não Fiscal — Sem Valor Fiscal"**.
 
 📄 O documento de requisitos, com a rastreabilidade de cada requisito até o código, está em **[docs/DRS-PDV.md](docs/DRS-PDV.md)**.
+O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financeiro, fiscal e mais) está priorizado no **[DRS v2](docs/DRS-v2.md)**.
 
 | Requisito do DRS | Como foi atendido |
 |---|---|
@@ -879,7 +880,8 @@ npm test
 ├── docs/
 │   ├── Manual-SuaLojaAqui.pdf            # 📘 Manual do usuário (para atualizar: abra manual/manual.html no Edge → Imprimir → Salvar como PDF)
 │   ├── manual/                           # Fonte do manual (HTML + imagens)
-│   ├── DRS-PDV.md                        # Requisitos e rastreabilidade
+│   ├── DRS-PDV.md                        # Requisitos v1 e rastreabilidade
+│   ├── DRS-v2.md                         # Backlog priorizado da próxima versão
 │   └── screenshots/
 └── scripts/setup.mjs
 ```
@@ -898,6 +900,8 @@ npm test
 ---
 
 ## 🧭 Próximas etapas
+
+O backlog completo, com prioridades, fases e critérios de aceite, está no **[DRS v2](docs/DRS-v2.md)**. Destaques:
 
 - [ ] **Módulo fiscal** (NFC-e/SAT) como adaptador separado, mantendo o PDV não fiscal.
 - [ ] **App desktop do PDV** (Electron), com impressão silenciosa sem `--kiosk-printing`.
