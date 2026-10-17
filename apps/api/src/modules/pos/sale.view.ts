@@ -21,6 +21,8 @@ export function toSaleView(sale: SaleWithRelations) {
     status: sale.status,
     session: sale.session,
     operator: sale.operator,
+    customer: sale.customerId ? { id: sale.customerId, name: sale.customerName } : null,
+    customerDocument: sale.customerDocument,
     grossTotal: toNumber(sale.grossTotal),
     itemsDiscount: toNumber(sale.itemsDiscount),
     orderDiscountType: sale.orderDiscountType,
@@ -49,7 +51,12 @@ export function toSaleView(sale: SaleWithRelations) {
       discount: toNumber(item.discount),
       total: toNumber(item.total),
     })),
-    payments: sale.payments.map((p) => ({ method: p.method, amount: toNumber(p.amount) })),
+    payments: sale.payments.map((p) => ({
+      methodId: p.paymentMethodId,
+      name: p.methodName,
+      kind: p.methodKind,
+      amount: toNumber(p.amount),
+    })),
   };
 }
 

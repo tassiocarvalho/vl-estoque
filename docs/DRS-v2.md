@@ -4,7 +4,7 @@
 |---|---|
 | **Produto** | SuaLojaAqui — frente de caixa (PDV não fiscal) e gestão de estoque, white-label |
 | **Versão do documento** | 2.0 |
-| **Status** | Em definição — backlog priorizado, ainda não implementado |
+| **Status** | Em implementação — RF12, RF13, RF14 e RF22 entregues (ver a coluna Situação) |
 | **Base** | Continua o [DRS v1](DRS-PDV.md) (RF01–RF11 e RNF01–RNF04, já implementados) |
 
 ---
@@ -39,32 +39,32 @@ O DRS v1 entregou o caixa, o estoque, o controle de acesso e a impressão. Este 
 
 ## 2. Visão geral do backlog
 
-| ID | Requisito | Prioridade | Fase | Tamanho | Depende de |
-|---|---|:-:|:-:|:-:|---|
-| RF12 | Cadastro de clientes | Alta | 1 | M | — |
-| RF13 | Cliente e CPF na venda | Alta | 1 | P | RF12 |
-| RF14 | Formas de pagamento configuráveis | Alta | 1 | M | — |
-| RF15 | Troca e devolução (parcial e após o fechamento) | Alta | 1 | G | RF12, RF16 |
-| RF16 | Vale-troca / crédito do cliente | Alta | 1 | M | RF12 |
-| RF17 | Fornecedores | Alta | 1 | P | — |
-| RF18 | Entrada de mercadoria por nota (custo médio) | Alta | 1 | G | RF17 |
-| RF19 | Importação de produtos por planilha | Alta | 1 | M | — |
-| RF20 | Campos fiscais no produto e na venda | Alta | 1 | M | RF13 |
-| RF21 | Backup automático (versão web) | Alta | 1 | M | — |
-| RF22 | LGPD: consentimento, exportação e exclusão | Alta | 1 | M | RF12 |
-| RF23 | Fiado / crediário (contas a receber) | Média | 2 | G | RF12, RF14 |
-| RF24 | Contas a pagar | Média | 2 | M | RF17, RF18 |
-| RF25 | Fluxo de caixa e resultado do período | Média | 2 | M | RF23, RF24 |
-| RF26 | Orçamento salvo e conversão em venda | Média | 2 | M | RF12 |
-| RF27 | Promoções e preços diferenciados | Média | 2 | G | RF12 |
-| RF28 | Inventário (contagem e ajuste em lote) | Média | 2 | M | — |
-| RF29 | Lote e validade | Média | 2 | G | RF18 |
-| RF30 | Etiquetas de gôndola e de código de barras | Média | 2 | M | — |
-| RF31 | Histórico de preço e de custo | Média | 2 | P | RF18 |
-| RF32 | Recuperação de senha pelo próprio usuário | Baixa | 3 | M | RNF08 |
-| RF33 | Vendedor na venda, comissão e metas | Baixa | 3 | M | — |
-| RF34 | Variações de produto (grade) | Baixa | 3 | G | — |
-| RF35 | Multi-loja | Baixa | 3 | G | quase todos |
+| ID | Requisito | Prioridade | Fase | Tamanho | Depende de | Situação |
+|---|---|:-:|:-:|:-:|---|:-:|
+| RF12 | Cadastro de clientes | Alta | 1 | M | — | ✅ |
+| RF13 | Cliente e CPF na venda | Alta | 1 | P | RF12 | ✅ |
+| RF14 | Formas de pagamento configuráveis | Alta | 1 | M | — | ✅ |
+| RF15 | Troca e devolução (parcial e após o fechamento) | Alta | 1 | G | RF12, RF16 | — |
+| RF16 | Vale-troca / crédito do cliente | Alta | 1 | M | RF12 | — |
+| RF17 | Fornecedores | Alta | 1 | P | — | — |
+| RF18 | Entrada de mercadoria por nota (custo médio) | Alta | 1 | G | RF17 | — |
+| RF19 | Importação de produtos por planilha | Alta | 1 | M | — | — |
+| RF20 | Campos fiscais no produto e na venda | Alta | 1 | M | RF13 | — |
+| RF21 | Backup automático (versão web) | Alta | 1 | M | — | — |
+| RF22 | LGPD: consentimento, exportação e exclusão | Alta | 1 | M | RF12 | ✅ |
+| RF23 | Fiado / crediário (contas a receber) | Média | 2 | G | RF12, RF14 | — |
+| RF24 | Contas a pagar | Média | 2 | M | RF17, RF18 | — |
+| RF25 | Fluxo de caixa e resultado do período | Média | 2 | M | RF23, RF24 | — |
+| RF26 | Orçamento salvo e conversão em venda | Média | 2 | M | RF12 | — |
+| RF27 | Promoções e preços diferenciados | Média | 2 | G | RF12 | — |
+| RF28 | Inventário (contagem e ajuste em lote) | Média | 2 | M | — | — |
+| RF29 | Lote e validade | Média | 2 | G | RF18 | — |
+| RF30 | Etiquetas de gôndola e de código de barras | Média | 2 | M | — | — |
+| RF31 | Histórico de preço e de custo | Média | 2 | P | RF18 | — |
+| RF32 | Recuperação de senha pelo próprio usuário | Baixa | 3 | M | RNF08 | — |
+| RF33 | Vendedor na venda, comissão e metas | Baixa | 3 | M | — | — |
+| RF34 | Variações de produto (grade) | Baixa | 3 | G | — | — |
+| RF35 | Multi-loja | Baixa | 3 | G | quase todos | — |
 
 ---
 
@@ -72,7 +72,7 @@ O DRS v1 entregou o caixa, o estoque, o controle de acesso e a impressão. Este 
 
 ### 3.1 Clientes e pós-venda
 
-#### RF12 — Cadastro de clientes · Alta · Fase 1
+#### RF12 — Cadastro de clientes · Alta · Fase 1 · ✅ entregue
 Cadastro com nome, CPF/CNPJ (opcional e validado), telefone, e-mail, endereço, data de nascimento e observações. Busca por nome, CPF ou telefone, inclusive no caixa.
 
 - **Critérios de aceite**
@@ -82,7 +82,7 @@ Cadastro com nome, CPF/CNPJ (opcional e validado), telefone, e-mail, endereço, 
   - O detalhe do cliente mostra o histórico de compras, o saldo de crédito (RF16) e o fiado em aberto (RF23).
 - **Permissões:** operador cadastra e consulta; gerente e administrador editam e inativam.
 
-#### RF13 — Cliente e CPF na venda · Alta · Fase 1
+#### RF13 — Cliente e CPF na venda · Alta · Fase 1 · ✅ entregue
 No caixa, um atalho identifica o cliente da venda (por busca) ou digita só o CPF/CNPJ "na nota".
 
 - **Critérios de aceite**
@@ -90,7 +90,7 @@ No caixa, um atalho identifica o cliente da venda (por busca) ou digita só o CP
   - A venda guarda o cliente e uma cópia do documento informado (base para a NFC-e futura).
   - Funciona offline com os clientes salvos no aparelho. Um cadastro feito offline sincroniza depois.
 
-#### RF14 — Formas de pagamento configuráveis · Alta · Fase 1
+#### RF14 — Formas de pagamento configuráveis · Alta · Fase 1 · ✅ entregue
 O cadastro de formas de pagamento substitui a lista fixa atual. Vem pronto com: Dinheiro, PIX, Crédito, Débito, Vale-alimentação, Vale-refeição, Cheque, Crediário/Fiado (RF23), Crédito do cliente (RF16) e "Outros".
 
 - **Critérios de aceite**
@@ -255,7 +255,7 @@ Títulos a pagar com origem manual (despesas: aluguel, energia, salários, por *
 - Alerta no painel se o último backup tiver mais de 48 horas ou se houver falha.
 - Reaproveita a lógica de `apps/desktop/src/backup.mjs`.
 
-#### RF22 — LGPD · Alta · Fase 1 (junto com RF12)
+#### RF22 — LGPD · Alta · Fase 1 (junto com RF12) · ✅ entregue
 - Registro do **consentimento** (data, finalidade, canal) no cadastro do cliente; marketing exige consentimento separado.
 - **Exportação** dos dados de um cliente (JSON/PDF) a pedido do titular.
 - **Exclusão/anonimização:** apaga os dados pessoais e mantém as vendas para fins legais, com o cliente anonimizado.
@@ -280,6 +280,15 @@ Várias lojas na mesma instalação: estoque, caixas e configurações por loja;
 | RNF07 | **Desempenho:** a busca de cliente e o cálculo de promoções no caixa mantêm o registro do item abaixo de 100 ms (RNF01) |
 | RNF08 | **E-mail (quando adotado):** envio por SMTP configurado só no servidor (`.env`), nunca no código nem no repositório. Usado em RF32 e, opcionalmente, para enviar relatórios e alertas |
 | RNF09 | **Auditoria:** devoluções, créditos, fiado, recebimentos, ajustes de inventário, importações, alterações de preço e acesso a dados de clientes são auditados |
+
+### Notas da entrega (RF12, RF13, RF14 e RF22)
+
+- **Atalho do caixa:** a tecla **Ins** identifica o cliente ou o CPF/CNPJ na nota (F11 e F12 são reservadas pelo navegador).
+- **Formas de pagamento:** as oito primeiras formas ativas ganham os atalhos F1–F4 e F6–F9 no pagamento (F5 confirma). Vêm de fábrica: Dinheiro, PIX, Crédito, Débito, Vale-alimentação e Vale-refeição (ativas), além de Cheque e Outros (desativadas). O Crediário/Fiado entra com o RF23.
+- **Troco:** sai sempre da gaveta. Só formas marcadas com "dá troco" (o dinheiro, por padrão) aceitam valor maior que o devido.
+- **Migração:** os pagamentos já registrados foram convertidos para as novas formas, sem perda. Fechamentos antigos continuam legíveis.
+- **Offline:** o caixa guarda no aparelho as formas de pagamento e os clientes ativos (nome, documento e telefone). Os dados dos clientes são apagados do aparelho no logout. O cadastro de cliente novo precisa de conexão; offline, dá para informar só o CPF/CNPJ na nota.
+- **LGPD:** dados pessoais além do nome só com a autorização registrada (data e canal). Gerente e administrador exportam os dados (JSON) e apagam os dados pessoais a pedido do titular; as vendas continuam, sem identificar o cliente. A visualização de clientes **não** é auditada (só criação, alteração, exportação e anonimização), para não poluir a auditoria.
 
 ---
 

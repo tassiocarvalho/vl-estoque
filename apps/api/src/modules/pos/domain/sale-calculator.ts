@@ -7,11 +7,10 @@
  *   total do item  = preço × quantidade − desconto do item
  *   subtotal       = Σ totais dos itens
  *   total da venda = subtotal − desconto no total
- *   troco          = pago − total   (só pode sair do dinheiro)
+ *   troco          = pago − total   (só pode sair de forma que aceita troco, como o dinheiro)
  */
 
 export type DiscountKind = 'AMOUNT' | 'PERCENT';
-export type PaymentMethodKind = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD';
 
 export interface Discount {
   type: DiscountKind;
@@ -93,8 +92,9 @@ export function calculateSale(items: SaleItemInput[], orderDiscount?: Discount |
 }
 
 export interface PaymentInput {
-  method: PaymentMethodKind;
   amount: number;
+  /** A forma aceita receber mais que o devido e dar troco (configurável; padrão: só o dinheiro). */
+  allowsChange: boolean;
 }
 
 export interface Settlement {
@@ -105,7 +105,7 @@ export interface Settlement {
 /**
  * Confere os pagamentos (podem ser vários na mesma venda, ex.: R$ 20 em dinheiro + R$ 30 no PIX):
  *  - a soma precisa cobrir o total;
- *  - só o dinheiro gera troco (PIX e cartão não podem passar do que falta pagar).
+ *  - só formas que aceitam troco (o dinheiro, por padrão) podem passar do que falta pagar.
  */
 export function settlePayments(totalCents: number, payments: PaymentInput[]): Settlement {
   if (payments.length === 0) throw new SaleRuleError('Informe a forma de pagamento');
@@ -115,9 +115,9 @@ export function settlePayments(totalCents: number, payments: PaymentInput[]): Se
   if (paidCents < totalCents) throw new SaleRuleError('O valor pago não cobre o total da venda');
 
   const changeCents = paidCents - totalCents;
-  const cashCents = payments.filter((p) => p.method === 'CASH').reduce((sum, p) => sum + toCents(p.amount), 0);
-  if (changeCents > cashCents) {
-    throw new SaleRuleError('Troco só pode ser dado em dinheiro: o valor em PIX/cartão passa do total');
+  const changeableCents = payments.filter((p) => p.allowsChange).reduce((sum, p) => sum + toCents(p.amount), 0);
+  if (changeCents > changeableCents) {
+    throw new SaleRuleError('Troco só pode ser dado em dinheiro: o valor nas outras formas passa do total');
   }
   return { paidCents, changeCents };
 }

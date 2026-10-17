@@ -9,7 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { errorMessage, http, isCanceled } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatDateTime, formatMoney, parseMoney } from '@/lib/format';
-import { CASH_MOVEMENT_LABELS, PAYMENT_LABELS, PAYMENT_METHODS } from '@/lib/labels';
+import { CASH_MOVEMENT_LABELS } from '@/lib/labels';
 import type { CashMovement, CashMovementType, CashSession } from '@/lib/types';
 import { useBranding } from '../../branding/BrandingProvider';
 import { MoneyInput } from './MoneyInput';
@@ -247,8 +247,8 @@ export function CloseCashModal({
             <Line label="Canceladas" value={String(session.summary.canceledCount)} />
             <Line label="Total vendido" value={formatMoney(session.summary.salesTotal)} strong />
             <hr className="my-2 border-slate-200" />
-            {PAYMENT_METHODS.map((m) => (
-              <Line key={m} label={PAYMENT_LABELS[m]} value={formatMoney(session.summary.byMethod[m])} />
+            {session.summary.methods.map((m) => (
+              <Line key={m.id} label={m.name} value={formatMoney(m.amount)} />
             ))}
             <hr className="my-2 border-slate-200" />
             <Line label="Troco inicial" value={formatMoney(session.summary.openingAmount)} />

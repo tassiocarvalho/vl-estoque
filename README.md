@@ -80,6 +80,8 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | Módulo | O que faz |
 |---|---|
 | 🖥️ **Frente de caixa** | Tela cheia operada pelo teclado e pronta para touchscreen: busca, cupom, descontos, pagamento múltiplo, troco e orçamento |
+| 👤 **Clientes** | Cadastro com CPF/CNPJ validado, histórico de compras e LGPD (consentimento, exportação e exclusão dos dados). No caixa: tecla **Ins** para identificar o cliente ou só o CPF na nota |
+| 💳 **Formas de pagamento** | Configuráveis: dinheiro, PIX, cartões, vale-alimentação/refeição, cheque e outras, com regras de troco, exigência de cliente, taxa e prazo |
 | 💵 **Caixa** | Abertura com troco inicial, sangria, suprimento, leitura parcial e fechamento com conferência |
 | 🛡️ **Autorização do supervisor** | Desconto acima do limite, cancelamento de venda e sangria pedem usuário + PIN de um gerente |
 | 📴 **Venda offline** | Sem internet o caixa continua vendendo, e as vendas sobem sozinhas quando a conexão volta |
@@ -137,10 +139,11 @@ O caixa (`/caixa`) funciona **inteiro pelo teclado**. O leitor de código de bar
 | **F8** | Orçamento em A4 ou PDF (não é venda e não baixa estoque) |
 | **F9** | Trocar operador (usuário + PIN) |
 | **F10** | Fechar caixa |
+| **Ins** | Cliente da venda ou CPF/CNPJ na nota (busca, cadastro rápido) |
 | **Del** | Remover o item selecionado |
 | **Esc** | Cancelar a venda inteira (ou fechar a janela aberta) |
 | **↑ ↓** | Selecionar item do cupom · **+ / −** alteram a quantidade |
-| *No pagamento* | **F1** Dinheiro · **F2** PIX · **F3** Crédito · **F4** Débito · **Enter** lança o valor |
+| *No pagamento* | **F1–F4** e **F6–F9**: as formas de pagamento, na ordem de Configurações · **Enter** lança o valor · **F5** confirma |
 
 > As teclas F nunca acionam o navegador dentro do caixa (o F5 não recarrega a página). A venda em andamento fica salva no computador: se a página fechar ou o PC travar, o cupom continua lá.
 
@@ -710,6 +713,9 @@ Prefixo `/api`. Autenticação por cookie de sessão. Quando a ação exige um s
 | `POST` | `/printing/sales/:id` · `/cash-sessions/:id` · `/cash-movements/:id` | pos:sell | Impressão ESC/POS na térmica de rede |
 | `POST` | `/printing/drawer` · `/printing/test` | pos:sell · settings:manage | Abrir gaveta · página de teste |
 | `GET` | `/settings/branding` | pública | Marca da loja (white-label) |
+| `GET` `POST` `PATCH` | `/customers` · `/customers/:id` | customer:read / customer:write | Clientes (busca por nome, CPF ou telefone) |
+| `GET` `POST` | `/customers/:id/export` · `/customers/:id/anonymize` | customer:manage | LGPD: exportar e apagar dados pessoais |
+| `GET` `POST` `PATCH` `DELETE` | `/payment-methods` | logado / settings:manage | Formas de pagamento |
 
 <details>
 <summary><b>Exemplo: registrar uma venda</b></summary>

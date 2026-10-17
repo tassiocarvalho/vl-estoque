@@ -8,7 +8,7 @@ import { toJson } from '../../common/json';
 import { Paginated, toSkipTake } from '../../common/pagination';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { cashDifference, CashSummary, summarizeCashSession } from './domain/cash-summary';
+import { cashDifference, CashSummary, normalizeCashSummary, summarizeCashSession } from './domain/cash-summary';
 import { CashMovementDto, CloseCashDto, ListCashSessionsQueryDto, OpenCashDto } from './pos.dto';
 import { SupervisorAuthorizationService } from './supervisor-authorization.service';
 
@@ -164,7 +164,7 @@ export class CashService {
     }
     const summary =
       session.status === CashSessionStatus.CLOSED && session.closingSummary
-        ? (session.closingSummary as unknown as CashSummary)
+        ? normalizeCashSummary(session.closingSummary)
         : await this.summarize(session);
     return this.toView(session, summary);
   }
@@ -177,12 +177,18 @@ export class CashService {
   }
 
   private async summarize(session: { id: string; openingAmount: Prisma.Decimal }) {
-    const [sales, movements] = await Promise.all([
+    const [sales, movements, activeMethods] = await Promise.all([
       this.prisma.sale.findMany({
         where: { sessionId: session.id },
-        select: { status: true, total: true, change: true, payments: { select: { method: true, amount: true } } },
+        select: {
+          status: true,
+          total: true,
+          change: true,
+          payments: { select: { paymentMethodId: true, methodName: true, methodKind: true, amount: true } },
+        },
       }),
       this.prisma.cashMovement.findMany({ where: { sessionId: session.id }, select: { type: true, amount: true } }),
+      this.prisma.paymentMethod.findMany({ where: { active: true }, orderBy: [{ position: 'asc' }, { name: 'asc' }] }),
     ]);
     return summarizeCashSession(
       toNumber(session.openingAmount),
@@ -190,9 +196,15 @@ export class CashService {
         canceled: sale.status === SaleStatus.CANCELED,
         total: toNumber(sale.total),
         change: toNumber(sale.change),
-        payments: sale.payments.map((p) => ({ method: p.method, amount: toNumber(p.amount) })),
+        payments: sale.payments.map((p) => ({
+          id: p.paymentMethodId,
+          name: p.methodName,
+          kind: p.methodKind,
+          amount: toNumber(p.amount),
+        })),
       })),
       movements.map((m) => ({ type: m.type, amount: toNumber(m.amount) })),
+      activeMethods.map((m) => ({ id: m.id, name: m.name, kind: m.kind })),
     );
   }
 

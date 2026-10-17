@@ -1,4 +1,4 @@
-import type { CashMovementType, MovementType, PaymentMethod, PurchaseRequestStatus, Role, StockStatus, Unit } from './types';
+import type { CashMovementType, MovementType, PaymentKind, PurchaseRequestStatus, Role, StockStatus, Unit } from './types';
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: 'Administrador',
@@ -99,16 +99,27 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'sale.cancel': 'Cancelou venda',
   'sale.abandon': 'Cancelou o cupom inteiro antes de finalizar',
   'sale.reprint': 'Reimprimiu comprovante',
+  'customer.create': 'Cadastrou cliente',
+  'customer.update': 'Alterou cliente',
+  'customer.export': 'Exportou dados do cliente (LGPD)',
+  'customer.anonymize': 'Apagou dados pessoais do cliente (LGPD)',
+  'payment-method.create': 'Criou forma de pagamento',
+  'payment-method.update': 'Alterou forma de pagamento',
+  'payment-method.delete': 'Excluiu forma de pagamento',
 };
 
-export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+export const PAYMENT_KIND_LABELS: Record<PaymentKind, string> = {
   CASH: 'Dinheiro',
   PIX: 'PIX',
   CREDIT_CARD: 'Cartão de crédito',
   DEBIT_CARD: 'Cartão de débito',
+  VOUCHER: 'Vale (alimentação, refeição...)',
+  CHECK: 'Cheque',
+  OTHER: 'Outros',
 };
 
-export const PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD'];
+/** Teclas das formas de pagamento no caixa (F5 é "confirmar"). */
+export const PAYMENT_SHORTCUTS = ['F1', 'F2', 'F3', 'F4', 'F6', 'F7', 'F8', 'F9'];
 
 export const CASH_MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SUPPLY: 'Suprimento',

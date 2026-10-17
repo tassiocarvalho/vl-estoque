@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   CheckCircle2,
+  UserRound,
   CloudOff,
   FileDown,
   Minus,
@@ -22,16 +23,19 @@ import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber, formatQuantity } from '@/lib/format';
 import { ROLE_LABELS, UNIT_SHORT } from '@/lib/labels';
 import { P } from '@/lib/permissions';
-import type { CashSession, Discount, Sale } from '@/lib/types';
+import { formatDocument } from '@/lib/document';
+import type { CashSession, Discount, Paginated, PaymentMethod, Sale } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { useSupervisorAuthorization } from '../auth/SupervisorAuthProvider';
 import { useBranding } from '../branding/BrandingProvider';
-import type { CatalogItem, SalePayload } from '../offline/offline-store';
+import { customersCache, type CachedCustomer, type CatalogItem, type SalePayload } from '../offline/offline-store';
 import { useOffline } from '../offline/OfflineProvider';
+import { usePaymentMethods } from '../payment-methods/api';
 import { usePrinter } from '../printing/usePrinter';
 import { cashKey, invalidateSalesData, readTerminal, saveTerminal, useCurrentCash } from './api';
 import { cartReducer, loadCart, saveCart, type CartState } from './cart';
 import { CashMovementModal, CloseCashModal, OpenCashScreen } from './components/CashModals';
+import { CustomerPickerModal } from './components/CustomerPickerModal';
 import { PaymentModal } from './components/PaymentModal';
 import { PosSearch } from './components/PosSearch';
 import { SessionSalesModal } from './components/SessionSalesModal';
@@ -49,7 +53,8 @@ type ModalName =
   | 'sales'
   | 'quote'
   | 'cancelSale'
-  | 'complete';
+  | 'complete'
+  | 'customer';
 
 /** Bipe curto do caixa (item lido) e bipe grave (erro). */
 function beep(kind: 'ok' | 'error') {
@@ -70,8 +75,25 @@ function beep(kind: 'ok' | 'error') {
   }
 }
 
+/** Guarda no aparelho os clientes ativos (nome e documento), para identificar o cliente sem internet. */
+async function refreshCustomers() {
+  const items: CachedCustomer[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const result = await http.get<Paginated<CachedCustomer>>('/customers', { page, pageSize: 100, status: 'active' });
+    items.push(...result.items.map(({ id, name, document, phone }) => ({ id, name, document, phone })));
+    if (page * result.pageSize >= result.total) break;
+  }
+  await customersCache.save(items);
+}
+
 /** Monta a venda para exibir/imprimir quando ela foi registrada sem internet. */
-function offlineSale(payload: SalePayload, cart: CartState, session: CashSession, operator: { id: string; name: string }): Sale {
+function offlineSale(
+  payload: SalePayload,
+  cart: CartState,
+  session: CashSession,
+  operator: { id: string; name: string },
+  methods: PaymentMethod[],
+): Sale {
   const totals = calculateSale(cart.items, cart.orderDiscount);
   const paid = payload.payments.reduce((sum, p) => sum + toCents(p.amount), 0);
   return {
@@ -80,6 +102,8 @@ function offlineSale(payload: SalePayload, cart: CartState, session: CashSession
     status: 'COMPLETED',
     session: { id: session.id, terminal: session.terminal, status: 'OPEN' },
     operator,
+    customer: cart.customer ? { id: cart.customer.id, name: cart.customer.name } : null,
+    customerDocument: cart.customerDocument,
     grossTotal: fromCents(totals.grossCents),
     itemsDiscount: fromCents(totals.itemsDiscountCents),
     orderDiscountType: cart.orderDiscount?.type ?? null,
@@ -108,7 +132,10 @@ function offlineSale(payload: SalePayload, cart: CartState, session: CashSession
       discount: fromCents(totals.lines[index].discountCents),
       total: fromCents(totals.lines[index].totalCents),
     })),
-    payments: payload.payments,
+    payments: payload.payments.map((p) => {
+      const method = methods.find((m) => m.id === p.methodId);
+      return { methodId: p.methodId ?? '', name: method?.name ?? 'Pagamento', kind: method?.kind ?? 'OTHER', amount: p.amount };
+    }),
   };
 }
 
@@ -123,6 +150,7 @@ export function PosPage() {
   const { online, pendingSales, enqueueSale, sync, refreshCatalog } = useOffline();
   const requestAuthorization = useSupervisorAuthorization();
   const printer = usePrinter();
+  const { data: paymentMethods = [] } = usePaymentMethods();
   const [terminal, setTerminal] = useState(readTerminal);
   const { data: session, isLoading } = useCurrentCash(terminal);
   const [cart, dispatch] = useReducer(cartReducer, terminal, loadCart);
@@ -139,10 +167,13 @@ export function PosPage() {
     const timer = setInterval(() => setClock(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
-  // Preços e saldos frescos no aparelho ao abrir o caixa (base para vender offline).
+  // Preços, saldos e clientes frescos no aparelho ao abrir o caixa (base para vender offline).
+  const canReadCustomers = can(P.CUSTOMER_READ);
   useEffect(() => {
-    if (online) void refreshCatalog().catch(() => undefined);
-  }, [online, refreshCatalog]);
+    if (!online) return;
+    void refreshCatalog().catch(() => undefined);
+    if (canReadCustomers) void refreshCustomers().catch(() => undefined);
+  }, [online, refreshCatalog, canReadCustomers]);
 
   const totals = useMemo(() => {
     try {
@@ -251,7 +282,9 @@ export function PosPage() {
       occurredAt: new Date().toISOString(),
       items: cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, discount: i.discount ?? undefined })),
       orderDiscount: cart.orderDiscount ?? undefined,
-      payments,
+      payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+      customerId: cart.customer?.id,
+      customerDocument: cart.customerDocument ?? undefined,
       removedItems: cart.removed.length ? cart.removed : undefined,
     };
     const headers = cart.authorization ? { 'X-Supervisor-Token': cart.authorization.token } : undefined;
@@ -261,7 +294,7 @@ export function PosPage() {
     } catch (error) {
       if (isNetworkError(error)) {
         await enqueueSale({ id: payload.id, payload, authorizationToken: cart.authorization?.token, total: fromCents(totals.totalCents) });
-        completeSale(offlineSale(payload, cart, session, { id: user.id, name: user.name }), true);
+        completeSale(offlineSale(payload, cart, session, { id: user.id, name: user.name }, paymentMethods), true);
       } else if (error instanceof ApiError && error.code === 'CASH_CLOSED') {
         toast.error('Este caixa foi fechado. Abra um novo caixa para continuar.');
         setModal(null);
@@ -340,6 +373,7 @@ export function PosPage() {
       setModal('closeCash');
     },
     Delete: removeSelected,
+    Insert: () => setModal('customer'),
     Escape: () => hasItems && setModal('cancelSale'),
   };
   const actionsRef = useRef(actions);
@@ -529,6 +563,25 @@ export function PosPage() {
             )}
           </div>
 
+          <button
+            type="button"
+            onClick={actions.Insert}
+            className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-left shadow-card transition hover:border-brand-300"
+          >
+            <UserRound className={cn('size-5 shrink-0', cart.customer || cart.customerDocument ? 'text-brand-700' : 'text-slate-400')} />
+            <span className="min-w-0 flex-1 leading-tight">
+              {cart.customer || cart.customerDocument ? (
+                <>
+                  <span className="block truncate text-sm font-semibold text-slate-900">{cart.customer?.name ?? 'Consumidor'}</span>
+                  {cart.customerDocument && <span className="block text-xs text-slate-500">CPF/CNPJ {formatDocument(cart.customerDocument)}</span>}
+                </>
+              ) : (
+                <span className="text-sm text-slate-500">Cliente / CPF na nota</span>
+              )}
+            </span>
+            <kbd className="kbd">Ins</kbd>
+          </button>
+
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between text-slate-600">
@@ -566,7 +619,8 @@ export function PosPage() {
             <Shortcut keyName="F9" label="Trocar operador" onClick={actions.F9} />
             <Shortcut keyName="F10" label="Fechar caixa" onClick={actions.F10} />
             <Shortcut keyName="Del" label="Remover item" onClick={actions.Delete} disabled={!selected} tone="danger" />
-            <Shortcut keyName="Esc" label="Cancelar venda" onClick={actions.Escape} disabled={!hasItems} tone="danger" className="col-span-2" />
+            <Shortcut keyName="Esc" label="Cancelar venda" onClick={actions.Escape} disabled={!hasItems} tone="danger" />
+            <Shortcut keyName="Ins" label="Cliente / CPF" onClick={actions.Insert} />
           </div>
         </aside>
       </div>
@@ -574,7 +628,26 @@ export function PosPage() {
       {footer}
 
       {/* Diálogos */}
-      <PaymentModal open={modal === 'payment'} totalCents={totals.totalCents} onClose={closeModal} onConfirm={finalize} />
+      <PaymentModal
+        open={modal === 'payment'}
+        totalCents={totals.totalCents}
+        methods={paymentMethods}
+        hasCustomer={Boolean(cart.customer)}
+        onClose={closeModal}
+        onConfirm={finalize}
+      />
+      <CustomerPickerModal
+        open={modal === 'customer'}
+        current={{ customer: cart.customer, document: cart.customerDocument }}
+        canCreate={can(P.CUSTOMER_WRITE)}
+        onClose={closeModal}
+        onSelect={({ customer, document }) => {
+          dispatch({ type: 'customer', customer, document });
+          if (customer) toast.success(`Cliente: ${customer.name}`);
+          else if (document) toast.success(`CPF/CNPJ na nota: ${formatDocument(document)}`);
+          closeModal();
+        }}
+      />
       <QuantityModal
         open={modal === 'quantity'}
         item={selected}

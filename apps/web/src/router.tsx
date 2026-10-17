@@ -29,6 +29,7 @@ const UsersPage = page(() => import('./features/users/UsersPage'), 'UsersPage');
 const PosPage = page(() => import('./features/pos/PosPage'), 'PosPage');
 const SalesPage = page(() => import('./features/sales/SalesPage'), 'SalesPage');
 const CashSessionsPage = page(() => import('./features/sales/CashSessionsPage'), 'CashSessionsPage');
+const CustomersPage = page(() => import('./features/customers/CustomersPage'), 'CustomersPage');
 
 /** O operador de caixa cai direto na frente de caixa; os demais, no painel. */
 function Home() {
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: 'vendas', element: <RequirePermission permission={P.SALES_READ}><SalesPage /></RequirePermission> },
           { path: 'caixas', element: <RequirePermission permission={P.SALES_READ}><CashSessionsPage /></RequirePermission> },
+          { path: 'clientes', element: <RequirePermission permission={P.CUSTOMER_READ}><CustomersPage /></RequirePermission> },
           { path: 'entrada', element: <RequirePermission permission={P.STOCK_IN}><StockOperationPage mode="entry" /></RequirePermission> },
           { path: 'saida', element: <RequirePermission permission={P.STOCK_OUT}><StockOperationPage mode="exit" /></RequirePermission> },
           { path: 'produtos', element: <RequirePermission permission={P.PRODUCT_READ}><ProductsPage /></RequirePermission> },

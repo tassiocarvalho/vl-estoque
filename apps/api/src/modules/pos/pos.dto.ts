@@ -1,4 +1,4 @@
-import { CashMovementType, DiscountType, PaymentMethod, SaleStatus } from '@prisma/client';
+import { CashMovementType, DiscountType, SaleStatus } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -19,6 +19,7 @@ import {
   MaxDate,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { AUTHORIZABLE_PERMISSIONS, type AuthorizablePermission } from '../../common/auth/permissions';
@@ -121,8 +122,16 @@ export class SaleItemDto {
 }
 
 export class PaymentDto {
-  @IsEnum(PaymentMethod, { message: 'Forma de pagamento inválida' })
-  method: PaymentMethod;
+  /** Forma de pagamento cadastrada. */
+  @ValidateIf((dto: PaymentDto) => !dto.method)
+  @IsUUID('all', { message: 'Forma de pagamento inválida' })
+  methodId?: string;
+
+  /** Código de uma forma de fábrica (CASH, PIX...) — vendas offline feitas antes das formas configuráveis. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  method?: string;
 
   @IsNumber(MONEY, { message: 'Valor de pagamento inválido' })
   @Min(0.01)
@@ -189,6 +198,17 @@ export class CreateSaleDto {
   @MaxDate(inNearFuture, { message: 'Data da venda no futuro' })
   occurredAt: Date;
 
+  /** Cliente identificado (opcional). */
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  /** CPF/CNPJ "na nota" (só números; validado no serviço). */
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\D/g, '') || undefined : value))
+  @Matches(/^(\d{11}|\d{14})$/, { message: 'CPF deve ter 11 números ou CNPJ 14 números' })
+  customerDocument?: string;
+
   /** Venda registrada sem internet e enviada depois. */
   @IsOptional()
   @IsBoolean()
@@ -237,6 +257,10 @@ export class ListSalesQueryDto extends PaginationQueryDto {
   @Type(() => Date)
   @IsDate()
   to?: Date;
+
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
 
   /** Número da venda (cupom). */
   @IsOptional()

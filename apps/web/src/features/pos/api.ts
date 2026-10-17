@@ -32,6 +32,7 @@ export const useCurrentCash = (terminal: string) =>
 
 export interface SaleFilters {
   sessionId?: string;
+  customerId?: string;
   status?: string;
   from?: string;
   to?: string;

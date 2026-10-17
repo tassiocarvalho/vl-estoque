@@ -1,11 +1,13 @@
 import { createStore, del, entries, get, set } from 'idb-keyval';
-import type { Discount, MovementType, PaymentMethod, Product, Unit } from '@/lib/types';
+import type { Customer, Discount, MovementType, Product, Unit } from '@/lib/types';
 
 /**
  * Armazenamento local (IndexedDB) para funcionar sem internet:
  *  - outbox:  movimentações registradas offline, aguardando envio;
  *  - sales:   vendas do caixa feitas offline, aguardando envio;
- *  - catalog: cópia resumida dos produtos (com preço), para vender e bipar offline.
+ *  - catalog: cópia resumida dos produtos (com preço), para vender e bipar offline;
+ *  - customers: nome e documento dos clientes ativos, para identificar o cliente offline
+ *    (dados pessoais: apagados do aparelho no logout).
  */
 const outboxStore = createStore('vl-estoque-outbox', 'movements');
 const salesStore = createStore('pdv-sales-outbox', 'sales');
@@ -34,7 +36,10 @@ export interface SalePayload {
   occurredAt: string;
   items: { productId: string; quantity: number; unitPrice: number; discount?: Discount }[];
   orderDiscount?: Discount;
-  payments: { method: PaymentMethod; amount: number }[];
+  /** methodId: forma cadastrada. method: código de fábrica (vendas offline de versões anteriores). */
+  payments: { methodId?: string; method?: string; amount: number }[];
+  customerId?: string;
+  customerDocument?: string;
   removedItems?: { productId: string; name: string; quantity: number; at: string }[];
 }
 
@@ -91,6 +96,27 @@ export const catalog = {
     const query = term.trim().toLowerCase();
     return (await this.all())
       .filter((p) => p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query) || p.barcode === term)
+      .slice(0, limit);
+  },
+};
+
+export type CachedCustomer = Pick<Customer, 'id' | 'name' | 'document' | 'phone'>;
+
+const CUSTOMERS_KEY = 'customers';
+
+export const customersCache = {
+  save: (items: CachedCustomer[]) => set(CUSTOMERS_KEY, items, catalogStore),
+  clear: () => del(CUSTOMERS_KEY, catalogStore),
+  async search(term: string, limit = 8): Promise<CachedCustomer[]> {
+    const all = (await get<CachedCustomer[]>(CUSTOMERS_KEY, catalogStore)) ?? [];
+    const query = term.trim().toLowerCase();
+    const digits = term.replace(/\D/g, '');
+    return all
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          (digits.length >= 3 && (c.document?.startsWith(digits) || c.phone?.includes(digits))),
+      )
       .slice(0, limit);
   },
 };
