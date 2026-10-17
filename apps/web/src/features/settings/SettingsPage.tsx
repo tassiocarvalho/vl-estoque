@@ -10,6 +10,7 @@ import { DEFAULT_LOGO } from '@/lib/brand';
 import { NON_FISCAL_NOTICE } from '@/lib/labels';
 import type { SystemSettings } from '@/lib/types';
 import { BRANDING_QUERY_KEY } from '../branding/BrandingProvider';
+import { PaymentMethodsCard } from '../payment-methods/PaymentMethodsCard';
 import type { PrintDocument } from '../printing/document';
 import { printHtml, renderHtml } from '../printing/render-html';
 import { SETTINGS_QUERY_KEY, useSystemSettings } from '../printing/usePrinter';
@@ -189,6 +190,8 @@ export function SettingsPage() {
             </div>
           </div>
         </Card>
+
+        <PaymentMethodsCard />
 
         <Card>
           <CardHeader title="Impressão" description="Comprovante não fiscal da venda, sangria e fechamento de caixa" />

@@ -30,9 +30,21 @@ export enum Permission {
   CASH_MOVEMENT = 'cash:movement',
   /** Consultar vendas e caixas de todos os operadores. */
   SALES_READ = 'sales:read',
+
+  // ─── Clientes ───
+  CUSTOMER_READ = 'customer:read',
+  /** Cadastrar e editar (inclusive no caixa). */
+  CUSTOMER_WRITE = 'customer:write',
+  /** Inativar e atender pedidos da LGPD (exportar e anonimizar dados). */
+  CUSTOMER_MANAGE = 'customer:manage',
 }
 
-const CASHIER: Permission[] = [Permission.PRODUCT_READ, Permission.POS_SELL];
+const CASHIER: Permission[] = [
+  Permission.PRODUCT_READ,
+  Permission.POS_SELL,
+  Permission.CUSTOMER_READ,
+  Permission.CUSTOMER_WRITE,
+];
 
 const STOCKIST: Permission[] = [
   Permission.PRODUCT_READ,
@@ -56,6 +68,7 @@ const MANAGER: Permission[] = [
   Permission.REPORT_READ,
   Permission.MOVEMENT_READ,
   Permission.PURCHASE_READ,
+  Permission.CUSTOMER_MANAGE,
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {

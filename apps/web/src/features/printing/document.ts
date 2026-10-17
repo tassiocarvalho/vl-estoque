@@ -4,7 +4,8 @@
  * (bobina térmica 80/58 mm ou folha A4) ou em PDF — o conteúdo é o mesmo em todos os formatos.
  */
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
-import { CASH_MOVEMENT_LABELS, NON_FISCAL_NOTICE, PAYMENT_LABELS, PAYMENT_METHODS, UNIT_SHORT } from '@/lib/labels';
+import { formatDocument } from '@/lib/document';
+import { CASH_MOVEMENT_LABELS, NON_FISCAL_NOTICE, UNIT_SHORT } from '@/lib/labels';
 import type { CashMovement, CashSession, Sale, StoreBranding } from '@/lib/types';
 
 export type Block =
@@ -59,6 +60,10 @@ export function saleDocument(sale: Sale, store: StoreBranding, options: { copy?:
   blocks.push(
     { kind: 'text', text: `${formatDateTime(sale.occurredAt)} · ${sale.session.terminal}`, small: true },
     { kind: 'text', text: `Operador: ${sale.operator.name}`, small: true },
+    ...(sale.customer?.name ? [{ kind: 'text', text: `Cliente: ${sale.customer.name}`, small: true } as Block] : []),
+    ...(sale.customerDocument
+      ? [{ kind: 'text', text: `CPF/CNPJ do consumidor: ${formatDocument(sale.customerDocument)}`, small: true } as Block]
+      : []),
     { kind: 'separator' },
     {
       kind: 'items',
@@ -76,7 +81,7 @@ export function saleDocument(sale: Sale, store: StoreBranding, options: { copy?:
   if (discount > 0) blocks.push({ kind: 'pair', left: 'Descontos', right: `−${formatMoney(discount)}` });
   blocks.push({ kind: 'pair', left: 'TOTAL', right: formatMoney(sale.total), bold: true, large: true });
   for (const payment of sale.payments) {
-    blocks.push({ kind: 'pair', left: PAYMENT_LABELS[payment.method], right: formatMoney(payment.amount) });
+    blocks.push({ kind: 'pair', left: payment.name, right: formatMoney(payment.amount) });
   }
   if (sale.change > 0) blocks.push({ kind: 'pair', left: 'Troco', right: formatMoney(sale.change), bold: true });
   if (sale.status === 'CANCELED' && sale.cancelReason) {
@@ -139,7 +144,7 @@ export function cashReportDocument(session: CashSession, store: StoreBranding, l
     { kind: 'pair', left: 'Vendas canceladas', right: String(summary.canceledCount) },
     { kind: 'pair', left: 'Total vendido', right: formatMoney(summary.salesTotal), bold: true },
     { kind: 'separator' },
-    ...PAYMENT_METHODS.map((method): Block => ({ kind: 'pair', left: PAYMENT_LABELS[method], right: formatMoney(summary.byMethod[method]) })),
+    ...summary.methods.map((method): Block => ({ kind: 'pair', left: method.name, right: formatMoney(method.amount) })),
     { kind: 'separator' },
     { kind: 'pair', left: 'Troco inicial', right: formatMoney(summary.openingAmount) },
     { kind: 'pair', left: 'Suprimentos', right: formatMoney(summary.supplies) },

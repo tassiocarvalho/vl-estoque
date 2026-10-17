@@ -248,11 +248,40 @@ enum DiscountType {
   PERCENT // Percentual
 }
 
-enum PaymentMethod {
-  CASH
+/// Natureza da forma de pagamento: define regras (gaveta, troco) e agrupamentos nos relatórios.
+enum PaymentKind {
+  CASH // Dinheiro: entra na gaveta (dinheiro esperado do caixa)
   PIX
   CREDIT_CARD
   DEBIT_CARD
+  VOUCHER // Vale-alimentação, vale-refeição...
+  CHECK // Cheque
+  OTHER
+}
+
+/// Formas de pagamento da loja (configuráveis). Nunca são apagadas depois de usadas: só desativadas.
+model PaymentMethod {
+  id               String      @id @default(uuid()) @db.Uuid
+  /// Código fixo das formas que vêm de fábrica (CASH, PIX...). Nulo nas criadas pela loja.
+  code             String?     @unique
+  name             String
+  kind             PaymentKind
+  active           Boolean     @default(true)
+  /// Aceita valor maior que o devido, gerando troco (que sai da gaveta).
+  allowsChange     Boolean     @default(false)
+  /// Só pode ser usada em venda com cliente identificado.
+  requiresCustomer Boolean     @default(false)
+  /// Taxa da operadora (%) e prazo de recebimento (dias) — base do fluxo de caixa.
+  feePercent       Decimal     @default(0) @db.Decimal(5, 2)
+  settlementDays   Int         @default(0)
+  /// Ordem no caixa (os primeiros recebem os atalhos F1–F4, F6–F9).
+  position         Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  payments SalePayment[]
+
+  @@map("payment_methods")
 }
 
 /// Venda não fiscal. O id é gerado no caixa: o reenvio offline não duplica a venda.
@@ -264,6 +293,12 @@ model Sale {
   session             CashSession   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
   operatorId          String        @db.Uuid
   operator            User          @relation("SaleOperator", fields: [operatorId], references: [id], onDelete: Restrict)
+  /// Cliente identificado (opcional) e cópia do nome/documento impressos no comprovante.
+  customerId          String?       @db.Uuid
+  customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customerName        String?
+  /// CPF/CNPJ do consumidor, só números ("CPF na nota").
+  customerDocument    String?
   status              SaleStatus    @default(COMPLETED)
   /// Soma dos itens antes de qualquer desconto.
   grossTotal          Decimal       @db.Decimal(12, 2)
@@ -295,6 +330,7 @@ model Sale {
   @@index([sessionId])
   @@index([occurredAt])
   @@index([status, occurredAt])
+  @@index([customerId])
   @@map("sales")
 }
 
@@ -326,12 +362,48 @@ model SalePayment {
   id      String        @id @default(uuid()) @db.Uuid
   saleId  String        @db.Uuid
   sale    Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  method  PaymentMethod
+  paymentMethodId String        @db.Uuid
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+  /// Cópia do nome e da natureza no momento da venda (o comprovante não muda se a forma for renomeada).
+  methodName      String
+  methodKind      PaymentKind
   /// Valor entregue pelo cliente nesta forma de pagamento.
   amount  Decimal       @db.Decimal(12, 2)
 
   @@index([saleId])
+  @@index([paymentMethodId])
   @@map("sale_payments")
+}
+
+// ─── Clientes ─────────────────────────────────────────────────────────────────
+
+/// Cliente da loja. Nunca é apagado se tiver vendas: é inativado ou anonimizado (LGPD).
+model Customer {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String
+  /// CPF (11) ou CNPJ (14), só números.
+  document         String?   @unique
+  phone            String?
+  email            String?
+  birthDate        DateTime? @db.Date
+  address          String?
+  notes            String?
+  active           Boolean   @default(true)
+  /// LGPD: quando e por qual canal o cliente autorizou o cadastro; consentimento de marketing à parte.
+  consentAt        DateTime?
+  consentChannel   String?
+  marketingConsent Boolean   @default(false)
+  /// Preenchido quando os dados pessoais foram apagados a pedido do titular.
+  anonymizedAt     DateTime?
+  createdById      String?   @db.Uuid
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sales Sale[]
+
+  @@index([name])
+  @@index([phone])
+  @@map("customers")
 }
 
 // ─── Configuração e auditoria ─────────────────────────────────────────────────

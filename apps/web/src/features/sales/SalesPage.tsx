@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, EmptyState, ErrorState, LoadingState, PageHeader, Pagination, StatCard, Tabs } from '@/components/ui/Display';
 import { Input, Select } from '@/components/ui/Form';
 import { downloadCsv, formatDateTime, formatMoney, formatNumber, toDateInput } from '@/lib/format';
-import { PAYMENT_LABELS, PAYMENT_METHODS, UNIT_SHORT } from '@/lib/labels';
+import { UNIT_SHORT } from '@/lib/labels';
 import type { Sale } from '@/lib/types';
 import { useSales, useSalesReport } from '../pos/api';
 import { SaleDetailModal, saleNumberLabel, SaleStatusBadge } from './SaleDetailModal';
@@ -61,7 +61,7 @@ export function SalesPage() {
       ['Margem bruta', r.totals.margin],
       [],
       ['Forma de pagamento', 'Valor'],
-      ...PAYMENT_METHODS.map((m) => [PAYMENT_LABELS[m], r.byMethod[m]]),
+      ...r.methods.map((m) => [m.name, m.amount]),
       [],
       ['Dia', 'Vendas', 'Total'],
       ...r.byDay.map((d) => [d.date, d.count, d.total]),
@@ -132,13 +132,14 @@ export function SalesPage() {
             <Card>
               <CardHeader title="Por forma de pagamento" description="Dinheiro já sem o troco" />
               <ul className="divide-y divide-slate-100">
-                {PAYMENT_METHODS.map((m) => {
-                  const value = report.data.byMethod[m];
+                {report.data.methods.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Sem vendas no período</li>}
+                {report.data.methods.map((m) => {
+                  const value = m.amount;
                   const share = totals.net > 0 ? (value / totals.net) * 100 : 0;
                   return (
-                    <li key={m} className="px-5 py-3">
+                    <li key={m.id} className="px-5 py-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">{PAYMENT_LABELS[m]}</span>
+                        <span className="text-slate-600">{m.name}</span>
                         <span className="font-semibold tabular-nums">{formatMoney(value)}</span>
                       </div>
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -268,7 +269,7 @@ export function SalesPage() {
                       <td className="hidden text-slate-600 md:table-cell">
                         {sale.session.terminal} · {sale.operator.name}
                       </td>
-                      <td className="hidden text-slate-600 lg:table-cell">{[...new Set(sale.payments.map((p) => PAYMENT_LABELS[p.method]))].join(' + ')}</td>
+                      <td className="hidden text-slate-600 lg:table-cell">{[...new Set(sale.payments.map((p) => p.name))].join(' + ')}</td>
                       <td>
                         <SaleStatusBadge sale={sale} />
                       </td>

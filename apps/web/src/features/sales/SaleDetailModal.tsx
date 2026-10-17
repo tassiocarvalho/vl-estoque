@@ -8,7 +8,8 @@ import { Field, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { errorMessage, http, isCanceled } from '@/lib/api';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
-import { PAYMENT_LABELS, UNIT_SHORT } from '@/lib/labels';
+import { formatDocument } from '@/lib/document';
+import { UNIT_SHORT } from '@/lib/labels';
 import type { Sale } from '@/lib/types';
 import { invalidateSalesData } from '../pos/api';
 import { usePrinter } from '../printing/usePrinter';
@@ -92,6 +93,12 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
           <SaleStatusBadge sale={current} />
           {current.offline && <Badge tone="amber">Feita sem internet</Badge>}
           {current.discountAuthorizedBy && <Badge tone="violet">Desconto autorizado por {current.discountAuthorizedBy.name}</Badge>}
+          {(current.customer?.name || current.customerDocument) && (
+            <Badge tone="blue">
+              {current.customer?.name ?? 'Consumidor'}
+              {current.customerDocument && ` · ${formatDocument(current.customerDocument)}`}
+            </Badge>
+          )}
         </div>
         {current.status === 'CANCELED' && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -132,7 +139,7 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
           <dl className="space-y-1 text-sm">
             {current.payments.map((p, index) => (
               <div key={index} className="flex justify-between">
-                <dt className="text-slate-500">{PAYMENT_LABELS[p.method]}</dt>
+                <dt className="text-slate-500">{p.name}</dt>
                 <dd className="tabular-nums">{formatMoney(p.amount)}</dd>
               </div>
             ))}

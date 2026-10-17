@@ -34,6 +34,9 @@ export interface CartState {
   selectedKey: string | null;
   /** Autorização de desconto do supervisor, presa a esta venda. */
   authorization: { token: string; supervisor: string } | null;
+  /** Cliente identificado e/ou CPF/CNPJ na nota. */
+  customer: { id: string; name: string; document: string | null } | null;
+  customerDocument: string | null;
 }
 
 export type CartProduct = Pick<CartItem, 'productId' | 'name' | 'sku' | 'barcode' | 'unit' | 'unitPrice'>;
@@ -47,6 +50,7 @@ export type CartAction =
   | { type: 'itemDiscount'; key: string; discount: Discount | null }
   | { type: 'orderDiscount'; discount: Discount | null }
   | { type: 'authorize'; token: string; supervisor: string }
+  | { type: 'customer'; customer: CartState['customer']; document: string | null }
   | { type: 'reset' };
 
 export const emptyCart = (): CartState => ({
@@ -56,6 +60,8 @@ export const emptyCart = (): CartState => ({
   removed: [],
   selectedKey: null,
   authorization: null,
+  customer: null,
+  customerDocument: null,
 });
 
 const roundQuantity = (value: number) => Math.round(value * 1000) / 1000;
@@ -118,6 +124,8 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, orderDiscount: action.discount };
     case 'authorize':
       return { ...state, authorization: { token: action.token, supervisor: action.supervisor } };
+    case 'customer':
+      return { ...state, customer: action.customer, customerDocument: action.document };
     case 'reset':
       return emptyCart();
   }

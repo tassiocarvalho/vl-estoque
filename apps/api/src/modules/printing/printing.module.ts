@@ -100,7 +100,7 @@ class PrintingController {
   ) {
     const sale = await this.sales.findOne(id, user);
     const { store, printer } = await this.settings.get();
-    const openDrawer = !dto.copy && printer.openDrawerOnCash && sale.payments.some((p) => p.method === 'CASH');
+    const openDrawer = !dto.copy && printer.openDrawerOnCash && sale.payments.some((p) => p.kind === 'CASH');
     await this.printing.send(saleReceipt(sale, store, await this.printing.columns(), { copy: dto.copy, openDrawer }));
     if (dto.copy) await this.sales.logReprint(id, user, ip);
     if (openDrawer) await this.logDrawer(user, ip, `venda nº ${sale.number}`);

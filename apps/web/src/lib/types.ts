@@ -199,7 +199,60 @@ export interface AuditLog {
 
 // ─── Frente de caixa ──────────────────────────────────────────────────────────
 
-export type PaymentMethod = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD';
+/** Natureza da forma de pagamento (as formas em si são configuráveis). */
+export type PaymentKind = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'VOUCHER' | 'CHECK' | 'OTHER';
+
+export interface PaymentMethod {
+  id: string;
+  code: string | null;
+  name: string;
+  kind: PaymentKind;
+  active: boolean;
+  allowsChange: boolean;
+  requiresCustomer: boolean;
+  feePercent: number;
+  settlementDays: number;
+  position: number;
+  /** Forma de fábrica (não pode ser excluída). */
+  system: boolean;
+}
+
+/** Forma de pagamento registrada numa venda (cópia do nome no momento da venda). */
+export interface SalePaymentLine {
+  methodId: string;
+  name: string;
+  kind: PaymentKind;
+  amount: number;
+}
+
+export interface MethodTotal {
+  id: string;
+  name: string;
+  kind: PaymentKind;
+  amount: number;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  document: string | null;
+  phone: string | null;
+  email: string | null;
+  birthDate: string | null;
+  address: string | null;
+  notes: string | null;
+  active: boolean;
+  consentAt: string | null;
+  consentChannel: string | null;
+  marketingConsent: boolean;
+  anonymizedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerDetail extends Customer {
+  stats: { purchases: number; total: number; averageTicket: number; lastPurchaseAt: string | null };
+}
 export type DiscountType = 'AMOUNT' | 'PERCENT';
 export type SaleStatus = 'COMPLETED' | 'CANCELED';
 export type CashMovementType = 'SUPPLY' | 'WITHDRAWAL';
@@ -214,7 +267,8 @@ export interface CashSummary {
   salesCount: number;
   canceledCount: number;
   salesTotal: number;
-  byMethod: Record<PaymentMethod, number>;
+  methods: MethodTotal[];
+  cashSales: number;
   supplies: number;
   withdrawals: number;
   expectedCash: number;
@@ -284,6 +338,8 @@ export interface Sale {
   status: SaleStatus;
   session: { id: string; terminal: string; status: 'OPEN' | 'CLOSED' };
   operator: { id: string; name: string };
+  customer: { id: string; name: string | null } | null;
+  customerDocument: string | null;
   grossTotal: number;
   itemsDiscount: number;
   orderDiscountType: DiscountType | null;
@@ -299,7 +355,7 @@ export interface Sale {
   canceledBy: { id: string; name: string } | null;
   cancelReason: string | null;
   items: SaleItem[];
-  payments: { method: PaymentMethod; amount: number }[];
+  payments: SalePaymentLine[];
 }
 
 export interface SalesReport {
@@ -314,7 +370,7 @@ export interface SalesReport {
     cost: number;
     margin: number;
   };
-  byMethod: Record<PaymentMethod, number>;
+  methods: MethodTotal[];
   byOperator: { operator: { id: string; name: string }; count: number; total: number }[];
   byDay: { date: string; count: number; total: number }[];
   topProducts: {

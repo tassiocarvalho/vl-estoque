@@ -3,8 +3,7 @@ import { Prisma, SaleStatus, Unit } from '@prisma/client';
 import { toNumber } from '../../common/decimal';
 import { badRequest } from '../../common/errors';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { PAYMENT_METHODS } from './domain/cash-summary';
-import { fromCents, PaymentMethodKind, toCents } from './domain/sale-calculator';
+import { fromCents, toCents } from './domain/sale-calculator';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_PERIOD_DAYS = 366;
@@ -59,7 +58,7 @@ export class SalesReportService {
           orderDiscount: true,
           change: true,
           operator: { select: { id: true, name: true } },
-          payments: { select: { method: true, amount: true } },
+          payments: { select: { paymentMethodId: true, methodName: true, methodKind: true, amount: true } },
         },
       }),
       this.prisma.sale.count({ where: { ...inPeriod, status: SaleStatus.CANCELED } }),
@@ -82,7 +81,9 @@ export class SalesReportService {
     let totalCents = 0;
     let grossCents = 0;
     let discountCents = 0;
-    const byMethod = Object.fromEntries(PAYMENT_METHODS.map((m) => [m, 0])) as Record<PaymentMethodKind, number>;
+    let changeCents = 0;
+    /** Por forma de pagamento (o troco sai do dinheiro). */
+    const byMethod = new Map<string, { id: string; name: string; kind: string; cents: number }>();
     const byOperator = new Map<string, { operator: { id: string; name: string }; count: number; totalCents: number }>();
     const byDay = new Map<string, { count: number; totalCents: number }>();
 
@@ -91,8 +92,12 @@ export class SalesReportService {
       totalCents += saleCents;
       grossCents += toCents(toNumber(sale.grossTotal));
       discountCents += toCents(toNumber(sale.itemsDiscount)) + toCents(toNumber(sale.orderDiscount));
-      for (const p of sale.payments) byMethod[p.method] += toCents(toNumber(p.amount));
-      byMethod.CASH -= toCents(toNumber(sale.change));
+      for (const p of sale.payments) {
+        const entry = byMethod.get(p.paymentMethodId) ?? { id: p.paymentMethodId, name: p.methodName, kind: p.methodKind, cents: 0 };
+        entry.cents += toCents(toNumber(p.amount));
+        byMethod.set(p.paymentMethodId, entry);
+      }
+      changeCents += toCents(toNumber(sale.change));
 
       const op = byOperator.get(sale.operator.id) ?? { operator: sale.operator, count: 0, totalCents: 0 };
       op.count++;
@@ -121,7 +126,9 @@ export class SalesReportService {
         cost: fromCents(costCents),
         margin: fromCents(totalCents - costCents),
       },
-      byMethod: Object.fromEntries(PAYMENT_METHODS.map((m) => [m, fromCents(byMethod[m])])) as Record<PaymentMethodKind, number>,
+      methods: [...byMethod.values()]
+        .map((m) => ({ id: m.id, name: m.name, kind: m.kind, amount: fromCents(m.kind === 'CASH' ? m.cents - changeCents : m.cents) }))
+        .sort((a, b) => b.amount - a.amount),
       byOperator: [...byOperator.values()]
         .map((o) => ({ operator: o.operator, count: o.count, total: fromCents(o.totalCents) }))
         .sort((a, b) => b.total - a.total),

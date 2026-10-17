@@ -2,7 +2,7 @@
  * Layout dos comprovantes NÃO FISCAIS na bobina térmica (ESC/POS).
  * Todo comprovante traz a menção obrigatória "Documento Não Fiscal — Sem Valor Fiscal".
  */
-import type { PaymentMethod } from '@prisma/client';
+import { formatDocument } from '../../common/document';
 import type { CashSummary } from '../pos/domain/cash-summary';
 import type { SaleView } from '../pos/sale.view';
 import type { StoreBranding } from '../settings/settings.types';
@@ -10,12 +10,6 @@ import { EscPosBuilder } from './escpos';
 
 export const NON_FISCAL_NOTICE = 'DOCUMENTO NÃO FISCAL - SEM VALOR FISCAL';
 
-export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CREDIT_CARD: 'Cartão de crédito',
-  DEBIT_CARD: 'Cartão de débito',
-};
 
 const money = (value: number) => `R$ ${value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
 const quantity = (value: number) => value.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
@@ -48,7 +42,10 @@ export function saleReceipt(
   if (options.copy) doc.align('center').bold(true).line('*** 2ª VIA ***').bold(false).align('left');
   if (sale.status === 'CANCELED') doc.align('center').bold(true).line('*** VENDA CANCELADA ***').bold(false).align('left');
 
-  doc.line(`${dateTime(sale.occurredAt)}  ${sale.session.terminal}`).line(`Operador: ${sale.operator.name}`).separator();
+  doc.line(`${dateTime(sale.occurredAt)}  ${sale.session.terminal}`).line(`Operador: ${sale.operator.name}`);
+  if (sale.customer?.name) doc.wrapped(`Cliente: ${sale.customer.name}`);
+  if (sale.customerDocument) doc.line(`CPF/CNPJ do consumidor: ${formatDocument(sale.customerDocument)}`);
+  doc.separator();
 
   for (const item of sale.items) {
     doc.wrapped(`${String(item.position).padStart(3, '0')} ${item.productName}`);
@@ -61,7 +58,7 @@ export function saleReceipt(
   if (discount > 0) doc.pair('Descontos', `-${money(discount)}`);
   doc.bold(true).large(true).pair('TOTAL', money(sale.total)).large(false).bold(false);
 
-  for (const payment of sale.payments) doc.pair(PAYMENT_LABELS[payment.method], money(payment.amount));
+  for (const payment of sale.payments) doc.pair(payment.name, money(payment.amount));
   if (sale.change > 0) doc.bold(true).pair('Troco', money(sale.change)).bold(false);
 
   footer(doc, store);
@@ -93,9 +90,7 @@ export function cashReport(session: CashReportData, store: StoreBranding, column
   const { summary } = session;
   doc.separator().pair('Vendas', String(summary.salesCount)).pair('Canceladas', String(summary.canceledCount));
   doc.pair('Total vendido', money(summary.salesTotal)).separator();
-  for (const [method, label] of Object.entries(PAYMENT_LABELS)) {
-    doc.pair(label, money(summary.byMethod[method as PaymentMethod]));
-  }
+  for (const method of summary.methods) doc.pair(method.name, money(method.amount));
   doc.separator().pair('Troco inicial', money(summary.openingAmount));
   doc.pair('Suprimentos', money(summary.supplies)).pair('Sangrias', `-${money(summary.withdrawals)}`);
   doc.bold(true).pair('Dinheiro esperado', money(summary.expectedCash)).bold(false);

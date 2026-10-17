@@ -20,6 +20,9 @@ export const P = {
   POS_CANCEL: 'pos:cancel',
   CASH_MOVEMENT: 'cash:movement',
   SALES_READ: 'sales:read',
+  CUSTOMER_READ: 'customer:read',
+  CUSTOMER_WRITE: 'customer:write',
+  CUSTOMER_MANAGE: 'customer:manage',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

@@ -11,7 +11,9 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { CustomersModule } from './modules/customers/customers.module';
 import { IntegrationModule } from './modules/integration/integration.module';
+import { PaymentMethodsModule } from './modules/payment-methods/payment-methods.module';
 import { PosModule } from './modules/pos/pos.module';
 import { PrintingModule } from './modules/printing/printing.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -43,6 +45,8 @@ const staticFiles = existsSync(webDist)
     StockModule,
     PurchaseRequestsModule,
     ReportsModule,
+    CustomersModule,
+    PaymentMethodsModule,
     PosModule,
     PrintingModule,
     IntegrationModule,

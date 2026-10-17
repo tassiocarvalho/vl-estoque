@@ -4,6 +4,7 @@ import { AuthUser } from '../../common/auth/auth-user';
 import { hasPermission, Permission } from '../../common/auth/permissions';
 import { toNumber } from '../../common/decimal';
 import { AppException, badRequest, ErrorCode, notFound } from '../../common/errors';
+import { isValidDocument } from '../../common/document';
 import { deterministicUuid } from '../../common/ids';
 import { toJson } from '../../common/json';
 import { Paginated, toSkipTake } from '../../common/pagination';
@@ -49,12 +50,17 @@ export class SalesService {
 
     const offline = dto.offline === true;
     const divergences = this.checkPrices(dto, byId, offline);
+    const payments = await this.resolvePayments(dto, offline);
+    const customer = await this.resolveCustomer(dto, payments, offline);
 
     let totals: ReturnType<typeof calculateSale>;
     let settlement: ReturnType<typeof settlePayments>;
     try {
       totals = calculateSale(dto.items, dto.orderDiscount);
-      settlement = settlePayments(totals.totalCents, dto.payments);
+      settlement = settlePayments(
+        totals.totalCents,
+        payments.map((p) => ({ amount: p.amount, allowsChange: p.method.allowsChange })),
+      );
     } catch (error) {
       if (error instanceof SaleRuleError) throw badRequest(error.message);
       throw error;
@@ -86,6 +92,9 @@ export class SalesService {
             paidTotal: fromCents(settlement.paidCents),
             change: fromCents(settlement.changeCents),
             discountAuthorizedById,
+            customerId: customer.id,
+            customerName: customer.name,
+            customerDocument: customer.document,
             removedItems: dto.removedItems?.length ? toJson(dto.removedItems) : undefined,
             offline,
             occurredAt: dto.occurredAt,
@@ -109,7 +118,14 @@ export class SalesService {
                 };
               }),
             },
-            payments: { create: dto.payments.map((p) => ({ method: p.method, amount: p.amount })) },
+            payments: {
+              create: payments.map((p) => ({
+                paymentMethodId: p.method.id,
+                methodName: p.method.name,
+                methodKind: p.method.kind,
+                amount: p.amount,
+              })),
+            },
           },
         });
 
@@ -205,6 +221,7 @@ export class SalesService {
     const where: Prisma.SaleWhereInput = {
       ...this.accessFilter(user),
       ...(query.sessionId && { sessionId: query.sessionId }),
+      ...(query.customerId && { customerId: query.customerId }),
       ...(query.status && { status: query.status }),
       ...(query.number && { number: query.number }),
       ...((query.from || query.to) && { occurredAt: { gte: query.from, lte: query.to } }),
@@ -253,6 +270,51 @@ export class SalesService {
   private async findExisting(id: string) {
     const sale = await this.prisma.sale.findUnique({ where: { id }, include: saleInclude });
     return sale ? toSaleView(sale) : null;
+  }
+
+  /**
+   * Formas de pagamento da venda (pelo id ou, em vendas offline antigas, pelo código de fábrica).
+   * Online, a forma precisa estar ativa; offline, a venda já aconteceu e é aceita.
+   */
+  private async resolvePayments(dto: CreateSaleDto, offline: boolean) {
+    const ids = dto.payments.flatMap((p) => (p.methodId ? [p.methodId] : []));
+    const codes = dto.payments.flatMap((p) => (!p.methodId && p.method ? [p.method] : []));
+    const methods = await this.prisma.paymentMethod.findMany({
+      where: { OR: [{ id: { in: ids } }, { code: { in: codes } }] },
+    });
+    return dto.payments.map((payment) => {
+      const method = methods.find((m) => (payment.methodId ? m.id === payment.methodId : m.code === payment.method));
+      if (!method) throw badRequest('Forma de pagamento não encontrada');
+      if (!method.active && !offline) throw badRequest(`A forma de pagamento "${method.name}" está desativada`);
+      return { method, amount: payment.amount };
+    });
+  }
+
+  /** Cliente identificado e/ou CPF na nota. Formas como o fiado exigem cliente. */
+  private async resolveCustomer(
+    dto: CreateSaleDto,
+    payments: { method: { name: string; requiresCustomer: boolean } }[],
+    offline: boolean,
+  ) {
+    if (dto.customerDocument && !isValidDocument(dto.customerDocument)) {
+      throw badRequest('CPF/CNPJ do consumidor inválido: confira os números');
+    }
+    let customer: { id: string; name: string; document: string | null } | null = null;
+    if (dto.customerId) {
+      const found = await this.prisma.customer.findUnique({ where: { id: dto.customerId } });
+      if (!found || found.anonymizedAt) throw notFound('Cliente');
+      if (!found.active && !offline) throw badRequest(`O cliente "${found.name}" está inativo`);
+      customer = found;
+    }
+    const needsCustomer = payments.find((p) => p.method.requiresCustomer);
+    if (needsCustomer && !customer) {
+      throw badRequest(`A forma "${needsCustomer.method.name}" exige identificar o cliente da venda`);
+    }
+    return {
+      id: customer?.id ?? null,
+      name: customer?.name ?? null,
+      document: dto.customerDocument ?? customer?.document ?? null,
+    };
   }
 
   /**

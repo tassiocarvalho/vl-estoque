@@ -4,7 +4,7 @@
  * Dinheiro em CENTAVOS inteiros (sem erro de arredondamento).
  */
 // Caminho relativo (e não '@/'): o teste de paridade da API importa este arquivo.
-import type { Discount, PaymentMethod } from '../../lib/types';
+import type { Discount } from '../../lib/types';
 
 export const toCents = (reais: number) => Math.round(reais * 100);
 export const fromCents = (cents: number) => cents / 100;
@@ -55,21 +55,23 @@ export function calculateSale(items: LineInput[], orderDiscount?: Discount | nul
 }
 
 export interface PaymentLine {
-  method: PaymentMethod;
+  methodId: string;
   amount: number;
+  /** Cópia da regra da forma: aceita valor maior que o devido (troco). */
+  allowsChange: boolean;
 }
 
 /** Situação do pagamento enquanto o operador lança as formas (dinheiro + PIX, por exemplo). */
 export function paymentStatus(totalCents: number, payments: PaymentLine[]) {
   const paidCents = payments.reduce((sum, p) => sum + toCents(p.amount), 0);
-  const cashCents = payments.filter((p) => p.method === 'CASH').reduce((sum, p) => sum + toCents(p.amount), 0);
+  const cashCents = payments.filter((p) => p.allowsChange).reduce((sum, p) => sum + toCents(p.amount), 0);
   const remainingCents = Math.max(totalCents - paidCents, 0);
   const changeCents = Math.max(paidCents - totalCents, 0);
   return {
     paidCents,
     remainingCents,
     changeCents,
-    /** Troco só pode sair do dinheiro. */
+    /** Troco só pode sair de forma que aceita troco (o dinheiro, por padrão). */
     changeFromNonCash: changeCents > cashCents,
     complete: paidCents >= totalCents && changeCents <= cashCents && payments.length > 0,
   };

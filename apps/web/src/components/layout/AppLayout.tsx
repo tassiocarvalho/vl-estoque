@@ -4,6 +4,7 @@ import {
   BarChart3,
   ClipboardList,
   CloudOff,
+  Contact,
   FolderTree,
   History,
   LayoutDashboard,
@@ -56,6 +57,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { to: '/vendas', label: 'Vendas', icon: Receipt, permission: P.SALES_READ },
       { to: '/caixas', label: 'Caixas', icon: Vault, permission: P.SALES_READ },
+      { to: '/clientes', label: 'Clientes', icon: Contact, permission: P.CUSTOMER_READ },
     ],
   },
   {

@@ -4,6 +4,7 @@ import { ApiError, http, registerSessionExpiredHandler } from '@/lib/api';
 import type { Permission } from '@/lib/permissions';
 import type { Profile } from '@/lib/types';
 import { BRANDING_QUERY_KEY } from '../branding/BrandingProvider';
+import { customersCache } from '../offline/offline-store';
 
 interface AuthContextValue {
   user: Profile | null;
@@ -22,6 +23,7 @@ const ME_KEY = ['auth', 'me'];
 /** Limpa as respostas da API guardadas para uso offline (computador compartilhado). */
 async function clearOfflineCache() {
   if ('caches' in window) await caches.delete('api').catch(() => undefined);
+  await customersCache.clear().catch(() => undefined); // dados pessoais de clientes (LGPD)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

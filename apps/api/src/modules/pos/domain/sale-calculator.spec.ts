@@ -66,27 +66,27 @@ describe('calculateSale', () => {
 describe('settlePayments', () => {
   it('aceita vários pagamentos na mesma venda (dinheiro + PIX)', () => {
     expect(settlePayments(5000, [
-      { method: 'CASH', amount: 20 },
-      { method: 'PIX', amount: 30 },
+      { allowsChange: true, amount: 20 },
+      { allowsChange: false, amount: 30 },
     ])).toEqual({ paidCents: 5000, changeCents: 0 });
   });
 
   it('calcula o troco do dinheiro', () => {
-    expect(settlePayments(4320, [{ method: 'CASH', amount: 50 }])).toEqual({ paidCents: 5000, changeCents: 680 });
+    expect(settlePayments(4320, [{ allowsChange: true, amount: 50 }])).toEqual({ paidCents: 5000, changeCents: 680 });
   });
 
   it('dinheiro + cartão com troco só do dinheiro', () => {
     expect(settlePayments(4500, [
-      { method: 'CREDIT_CARD', amount: 30 },
-      { method: 'CASH', amount: 20 },
+      { allowsChange: false, amount: 30 },
+      { allowsChange: true, amount: 20 },
     ])).toEqual({ paidCents: 5000, changeCents: 500 });
   });
 
   it('bloqueia pagamento insuficiente', () => {
-    expect(() => settlePayments(5000, [{ method: 'PIX', amount: 49.99 }])).toThrow(SaleRuleError);
+    expect(() => settlePayments(5000, [{ allowsChange: false, amount: 49.99 }])).toThrow(SaleRuleError);
   });
 
   it('bloqueia troco vindo de PIX ou cartão', () => {
-    expect(() => settlePayments(5000, [{ method: 'DEBIT_CARD', amount: 60 }])).toThrow(/Troco/);
+    expect(() => settlePayments(5000, [{ allowsChange: false, amount: 60 }])).toThrow(/Troco/);
   });
 });
