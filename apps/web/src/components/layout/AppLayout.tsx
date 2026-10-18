@@ -1,33 +1,19 @@
 import {
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  BarChart3,
   BookOpen,
-  ClipboardList,
   CloudOff,
-  Contact,
-  FolderTree,
-  History,
-  LayoutDashboard,
   LogOut,
   Menu,
-  Monitor,
   Moon,
-  Package,
-  Receipt,
+  PanelLeftClose,
+  PanelLeftOpen,
   RefreshCw,
-  Settings,
-  ShieldCheck,
   Scale,
+  Search,
   Sun,
-  Trash2,
   UserCircle,
-  Users,
-  Vault,
   X,
-  type LucideIcon,
 } from 'lucide-react';
-import { Suspense, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LoadingState } from '@/components/ui/Display';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -36,63 +22,33 @@ import { useOffline } from '@/features/offline/OfflineProvider';
 import { cn } from '@/lib/cn';
 import { ROLE_LABELS } from '@/lib/labels';
 import { MANUAL_URL } from '@/lib/manual';
-import { P, type Permission } from '@/lib/permissions';
+import { CommandPalette } from './CommandPalette';
+import { NAV_GROUPS } from './nav';
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: LucideIcon;
-  permission: Permission;
+const COLLAPSED_KEY = 'sidebar-collapsed';
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+const SEARCH_SHORTCUT = isMac ? '⌘K' : 'Ctrl+K';
+
+/** Preferência de cada computador; o armazenamento pode estar bloqueado (aba anônima). */
+function readCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
-const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
-  {
-    title: 'Operação',
-    items: [
-      { to: '/', label: 'Painel', icon: LayoutDashboard, permission: P.PRODUCT_READ },
-      { to: '/caixa', label: 'Frente de caixa', icon: Monitor, permission: P.POS_SELL },
-      { to: '/entrada', label: 'Registrar entrada', icon: ArrowDownToLine, permission: P.STOCK_IN },
-      { to: '/saida', label: 'Registrar saída', icon: ArrowUpFromLine, permission: P.STOCK_OUT },
-    ],
-  },
-  {
-    title: 'Vendas',
-    items: [
-      { to: '/vendas', label: 'Vendas', icon: Receipt, permission: P.SALES_READ },
-      { to: '/caixas', label: 'Caixas', icon: Vault, permission: P.SALES_READ },
-      { to: '/clientes', label: 'Clientes', icon: Contact, permission: P.CUSTOMER_READ },
-    ],
-  },
-  {
-    title: 'Estoque',
-    items: [
-      { to: '/produtos', label: 'Produtos', icon: Package, permission: P.PRODUCT_READ },
-      { to: '/categorias', label: 'Categorias', icon: FolderTree, permission: P.CATEGORY_MANAGE },
-      { to: '/movimentacoes', label: 'Movimentações', icon: History, permission: P.MOVEMENT_READ },
-      { to: '/pedidos', label: 'Solicitações de pedido', icon: ClipboardList, permission: P.PURCHASE_READ },
-      { to: '/relatorios', label: 'Relatórios', icon: BarChart3, permission: P.REPORT_READ },
-    ],
-  },
-  {
-    title: 'Administração',
-    items: [
-      { to: '/usuarios', label: 'Usuários', icon: Users, permission: P.USER_MANAGE },
-      { to: '/lixeira', label: 'Lixeira', icon: Trash2, permission: P.TRASH_MANAGE },
-      { to: '/auditoria', label: 'Auditoria', icon: ShieldCheck, permission: P.AUDIT_READ },
-      { to: '/configuracoes', label: 'Configurações', icon: Settings, permission: P.SETTINGS_MANAGE },
-    ],
-  },
-];
-
-function Brand() {
+function Brand({ collapsed }: { collapsed?: boolean }) {
   const { branding, logo } = useBranding();
   return (
-    <div className="flex items-center gap-2.5">
-      <img src={logo} alt="" className="size-9 rounded-lg bg-white/10 object-contain" />
-      <div className="min-w-0 leading-tight">
-        <p className="truncate text-sm font-semibold text-white">{branding.name}</p>
-        {branding.tagline && <p className="truncate text-[11px] text-white/60">{branding.tagline}</p>}
-      </div>
+    <div className="flex min-w-0 items-center gap-2.5" title={collapsed ? branding.name : undefined}>
+      <img src={logo} alt="" className="size-9 shrink-0 rounded-lg bg-white/10 object-contain" />
+      {!collapsed && (
+        <div className="min-w-0 leading-tight">
+          <p className="truncate text-sm font-semibold text-white">{branding.name}</p>
+          {branding.tagline && <p className="truncate text-[11px] text-white/60">{branding.tagline}</p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -113,7 +69,16 @@ export function ThemeToggle({ className }: { className?: string }) {
   );
 }
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+interface SidebarProps {
+  /** Só no celular: fecha o menu deslizante ao navegar. */
+  onNavigate?: () => void;
+  onSearch: () => void;
+  /** Só no computador: menu recolhido mostra apenas os ícones. */
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
+}
+
+function Sidebar({ onNavigate, onSearch, collapsed = false, onToggleCollapsed }: SidebarProps) {
   const { user, can, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -122,22 +87,60 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     navigate('/login', { replace: true });
   };
 
+  // Recolhido: só o ícone, centralizado, com o nome no "title" (dica ao passar o mouse).
+  const itemClass = cn(
+    'flex items-center rounded-lg py-2 text-sm font-medium transition-colors',
+    collapsed ? 'justify-center px-0' : 'gap-3 px-3',
+  );
+  const footerClass = cn(itemClass, 'text-white/75 hover:bg-white/6 hover:text-white');
+
   return (
     <div className="flex h-full flex-col bg-brand-900 text-white">
-      <div className="flex items-center justify-between gap-2 px-5 py-5">
-        <Brand />
+      <div className={cn('flex items-center gap-2 py-5', collapsed ? 'justify-center px-2' : 'justify-between px-5')}>
+        <Brand collapsed={collapsed} />
         {/* No celular o botão de tema fica no cabeçalho (aqui fica o "fechar menu"). */}
-        {!onNavigate && <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />}
+        {!onNavigate && !collapsed && <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />}
       </div>
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
+
+      <div className={cn('pb-2', collapsed ? 'px-2' : 'px-3')}>
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            onSearch();
+          }}
+          title={collapsed ? `Busca rápida (${SEARCH_SHORTCUT})` : undefined}
+          aria-label="Busca rápida"
+          className={cn(
+            'flex w-full items-center rounded-lg bg-white/8 py-2 text-sm text-white/65 ring-1 ring-white/10 transition-colors hover:bg-white/12 hover:text-white',
+            collapsed ? 'justify-center' : 'gap-2.5 px-3',
+          )}
+        >
+          <Search className="size-4 shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">Buscar…</span>
+              <kbd className="rounded border border-white/20 px-1.5 text-[10px] font-semibold text-white/60">
+                {SEARCH_SHORTCUT}
+              </kbd>
+            </>
+          )}
+        </button>
+      </div>
+
+      <nav className={cn('flex-1 overflow-y-auto py-2', collapsed ? 'space-y-3 px-2' : 'space-y-6 px-3')}>
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter((item) => can(item.permission));
           if (items.length === 0) return null;
           return (
             <div key={group.title}>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-white/45 uppercase">
-                {group.title}
-              </p>
+              {collapsed ? (
+                <div className="mx-2 mb-2 border-t border-white/10" aria-hidden />
+              ) : (
+                <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-white/45 uppercase">
+                  {group.title}
+                </p>
+              )}
               <ul className="space-y-0.5">
                 {items.map(({ to, label, icon: Icon }) => (
                   <li key={to}>
@@ -145,17 +148,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                       to={to}
                       end={to === '/'}
                       onClick={onNavigate}
+                      title={collapsed ? label : undefined}
+                      aria-label={collapsed ? label : undefined}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-white/12 text-white'
-                            : 'text-white/75 hover:bg-white/6 hover:text-white',
+                          itemClass,
+                          isActive ? 'bg-white/12 text-white' : 'text-white/75 hover:bg-white/6 hover:text-white',
                         )
                       }
                     >
                       <Icon className="size-[18px] shrink-0" />
-                      {label}
+                      {!collapsed && label}
                     </NavLink>
                   </li>
                 ))}
@@ -164,42 +167,69 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-      <div className="border-t border-white/10 p-3">
+
+      <div className={cn('border-t border-white/10', collapsed ? 'space-y-0.5 p-2' : 'p-3')}>
         <a
           href={MANUAL_URL}
           target="_blank"
           rel="noopener"
-          className="mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/80 hover:bg-white/6 hover:text-white"
+          title={collapsed ? 'Manual de uso' : undefined}
+          className={cn(footerClass, 'mb-1 text-brand-100/80')}
         >
-          <BookOpen className="size-[18px]" />
-          Manual de uso
+          <BookOpen className="size-[18px] shrink-0" />
+          {!collapsed && 'Manual de uso'}
         </a>
         <Link
           to="/termos"
           onClick={onNavigate}
-          className="mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/80 hover:bg-white/6 hover:text-white"
+          title={collapsed ? 'Termos e privacidade' : undefined}
+          className={cn(footerClass, 'mb-1 text-brand-100/80')}
         >
-          <Scale className="size-[18px]" />
-          Termos e privacidade
+          <Scale className="size-[18px] shrink-0" />
+          {!collapsed && 'Termos e privacidade'}
         </Link>
+        {collapsed && (
+          <div className="flex justify-center">
+            <ThemeToggle className="p-2 text-white/75 hover:bg-white/6 hover:text-white" />
+          </div>
+        )}
         <NavLink
           to="/perfil"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/6"
+          title={collapsed ? `${user?.name ?? ''} — Meu perfil` : undefined}
+          className={cn('flex items-center rounded-lg py-2 hover:bg-white/6', collapsed ? 'justify-center' : 'gap-3 px-3')}
         >
-          <UserCircle className="size-8 text-white/70" />
-          <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-sm font-medium text-white">{user?.name}</span>
-            <span className="block text-xs text-white/55">{user && ROLE_LABELS[user.role]}</span>
-          </span>
+          <UserCircle className={cn('shrink-0 text-white/70', collapsed ? 'size-7' : 'size-8')} />
+          {!collapsed && (
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block truncate text-sm font-medium text-white">{user?.name}</span>
+              <span className="block text-xs text-white/55">{user && ROLE_LABELS[user.role]}</span>
+            </span>
+          )}
         </NavLink>
-        <button
-          onClick={handleLogout}
-          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/6 hover:text-white"
-        >
-          <LogOut className="size-[18px]" />
-          Sair
+        <button onClick={handleLogout} title={collapsed ? 'Sair' : undefined} className={cn(footerClass, 'mt-1 w-full')}>
+          <LogOut className="size-[18px] shrink-0" />
+          {!collapsed && 'Sair'}
         </button>
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            title={collapsed ? 'Expandir menu' : undefined}
+            aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+            aria-expanded={!collapsed}
+            className={cn(footerClass, 'mt-1 w-full text-white/55')}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-[18px] shrink-0" />
+            ) : (
+              <>
+                <PanelLeftClose className="size-[18px] shrink-0" />
+                Recolher menu
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -244,12 +274,20 @@ export function ConnectionBar() {
   );
 }
 
-function MobileBrand() {
+function MobileBrand({ onSearch }: { onSearch: () => void }) {
   const { branding, logo } = useBranding();
   return (
     <>
       <img src={logo} alt="" className="size-7 rounded-md object-contain" />
       <span className="flex-1 truncate text-sm font-semibold">{branding.name}</span>
+      <button
+        type="button"
+        onClick={onSearch}
+        aria-label="Busca rápida"
+        className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+      >
+        <Search className="size-[18px]" />
+      </button>
       <ThemeToggle className="text-slate-500 hover:bg-slate-100" />
     </>
   );
@@ -257,13 +295,44 @@ function MobileBrand() {
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
 
+  const toggleCollapsed = () =>
+    setCollapsed((value) => {
+      try {
+        localStorage.setItem(COLLAPSED_KEY, value ? '0' : '1');
+      } catch {
+        // sem armazenamento: vale só nesta aba
+      }
+      return !value;
+    });
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  // Ctrl+K (⌘K no Mac) abre a busca rápida de qualquer tela.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
-    <div className="min-h-screen lg:pl-64">
-      {/* Menu lateral fixo (computador) */}
-      <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
-        <Sidebar />
+    <div className={cn('min-h-screen transition-[padding] duration-200', collapsed ? 'lg:pl-[72px]' : 'lg:pl-64')}>
+      {/* Menu lateral fixo (computador), recolhível */}
+      <aside
+        className={cn(
+          'no-print fixed inset-y-0 left-0 z-30 hidden transition-[width] duration-200 lg:block',
+          collapsed ? 'w-[72px]' : 'w-64',
+        )}
+      >
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSearch={openSearch} />
       </aside>
 
       {/* Menu deslizante (celular/tablet) */}
@@ -278,7 +347,7 @@ export function AppLayout() {
             >
               <X className="size-5" />
             </button>
-            <Sidebar onNavigate={() => setMobileOpen(false)} />
+            <Sidebar onNavigate={() => setMobileOpen(false)} onSearch={openSearch} />
           </aside>
         </div>
       )}
@@ -291,7 +360,7 @@ export function AppLayout() {
         >
           <Menu className="size-5" />
         </button>
-        <MobileBrand />
+        <MobileBrand onSearch={openSearch} />
       </header>
 
       <ConnectionBar />
@@ -301,6 +370,8 @@ export function AppLayout() {
           <Outlet />
         </Suspense>
       </main>
+
+      <CommandPalette open={searchOpen} onClose={closeSearch} />
     </div>
   );
 }

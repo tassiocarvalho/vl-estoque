@@ -1,5 +1,6 @@
 import { Download, Pencil, Plus, Power, Search, ShieldOff } from 'lucide-react';
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, PageHeader, Pagination, StatCard, Tabs } from '@/components/ui/Display';
 import { Button } from '@/components/ui/Button';
@@ -27,6 +28,15 @@ export function CustomersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+
+  // Busca rápida (Ctrl+K) abre o cliente direto: /clientes?cliente=<id>.
+  const linked = params.get('cliente');
+  useEffect(() => {
+    if (!linked) return;
+    setDetailId(linked);
+    setParams({}, { replace: true });
+  }, [linked, setParams]);
   const deferred = useDeferredValue(search.trim());
   const { data, isLoading, isError, refetch } = useCustomers({ search: deferred || undefined, status, page, pageSize: 20 });
 
