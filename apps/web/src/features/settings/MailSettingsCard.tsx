@@ -125,7 +125,7 @@ export function MailSettingsCard() {
               </Select>
             )}
           </Field>
-          <Field label="Nome do remetente">
+          <Field label="Nome do remetente" hint="Em branco, usa o nome da loja.">
             {(id) => <Input id={id} value={form.fromName} maxLength={60} onChange={(e) => update({ fromName: e.target.value })} />}
           </Field>
         </div>

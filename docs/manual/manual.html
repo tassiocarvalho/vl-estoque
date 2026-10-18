@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Manual de Uso — V&amp;L Estoque</title>
+<title>Manual de Uso — SuaLojaAqui</title>
 <style>
   @page { size: A4; margin: 18mm 16mm 20mm; }
-  :root { --brand: #18664f; --brand-dark: #134337; --brand-soft: #e8f3ef; --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --amber: #b45309; --amber-soft: #fef3c7; }
+  :root { --brand: #0f766e; --brand-dark: #0b4f49; --brand-soft: #e6f4f1; --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --amber: #b45309; --amber-soft: #fef3c7; --red: #b91c1c; --red-soft: #fee2e2; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.55; background: #fff; }
@@ -18,20 +18,27 @@
   li { margin-bottom: 1.2mm; }
   strong { color: var(--brand-dark); }
   .ui { font-weight: 600; color: var(--brand-dark); background: var(--brand-soft); padding: 0 1.5mm; border-radius: 1mm; white-space: nowrap; }
-  kbd { font-family: inherit; font-size: 9pt; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 1mm; padding: 0 1.2mm; background: #f8fafc; }
+  kbd { font-family: Consolas, monospace; font-size: 8.8pt; font-weight: 700; border: 1px solid #94a3b8; border-bottom-width: 2px; border-radius: 1mm; padding: 0 1.2mm; background: #fff; white-space: nowrap; }
+  code { font-family: Consolas, monospace; font-size: 9.2pt; background: #f1f5f9; padding: .2mm 1.2mm; border-radius: 1mm; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 3mm 4mm; border-radius: 2mm; font-size: 9pt; white-space: pre-wrap; break-inside: avoid; margin: 1mm 0 3mm; }
+  pre code { background: none; padding: 0; color: inherit; }
   figure { margin: 4mm 0 5mm; break-inside: avoid; text-align: center; }
-  figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 2mm; box-shadow: 0 1mm 3mm rgba(15, 23, 42, .08); }
+  figure img { max-width: 100%; max-height: 108mm; border: 1px solid var(--line); border-radius: 2mm; box-shadow: 0 1mm 3mm rgba(15, 23, 42, .08); }
   figure.phone img { max-height: 105mm; }
   figure.narrow img { max-width: 62%; }
   figure.half img { max-width: 80%; }
+  figure.receipt img { max-height: 115mm; }
   .pair { display: flex; gap: 4mm; align-items: flex-start; break-inside: avoid; }
   .pair figure { flex: 1; margin: 2mm 0 4mm; }
+  .pair figure img { max-height: 75mm; }
   figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
-  .tip, .warn { break-inside: avoid; border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 10pt; }
+  .tip, .warn, .danger { break-inside: avoid; border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 10pt; }
   .tip { background: var(--brand-soft); border-left: 1.2mm solid var(--brand); }
   .warn { background: var(--amber-soft); border-left: 1.2mm solid var(--amber); }
-  .tip > b:first-child, .warn > b:first-child { display: block; margin-bottom: .5mm; }
-  table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.5pt; break-inside: avoid; }
+  .danger { background: var(--red-soft); border-left: 1.2mm solid var(--red); }
+  .tip > b:first-child, .warn > b:first-child, .danger > b:first-child { display: block; margin-bottom: .5mm; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.5pt; }
+  tr { break-inside: avoid; }
   th { background: var(--brand); color: #fff; text-align: left; font-weight: 600; }
   th, td { padding: 1.8mm 2.5mm; border: 1px solid var(--line); vertical-align: top; }
   tr:nth-child(even) td { background: #f8fafc; }
@@ -41,18 +48,19 @@
   .b-critical { background: #ffedd5; color: #9a3412; } .b-out { background: #fee2e2; color: #991b1b; }
 
   /* Capa */
-  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; padding: 30mm 6mm 6mm; }
-  .cover .logo { width: 30mm; height: 30mm; border-radius: 6mm; }
-  .cover h1 { font-size: 34pt; margin: 10mm 0 3mm; letter-spacing: -.5pt; }
+  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; padding: 22mm 6mm 6mm; }
+  .cover .logo { width: 26mm; height: 26mm; border-radius: 6mm; }
+  .cover h1 { font-size: 34pt; margin: 8mm 0 3mm; letter-spacing: -.5pt; }
   .cover .subtitle { font-size: 15pt; color: var(--muted); margin: 0; }
-  .cover .band { height: 3mm; width: 40mm; background: var(--brand); border-radius: 2mm; margin-top: 10mm; }
+  .cover .band { height: 3mm; width: 40mm; background: var(--brand); border-radius: 2mm; margin-top: 8mm; }
+  .cover img.hero { width: 100%; border-radius: 3mm; border: 1px solid var(--line); box-shadow: 0 2mm 6mm rgba(15, 23, 42, .12); }
   .cover .meta { font-size: 9.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4mm; }
 
   /* Sumário */
-  .toc ol { list-style: none; padding: 0; counter-reset: toc; columns: 1; }
-  .toc li { counter-increment: toc; display: flex; gap: 3mm; padding: 2mm 0; border-bottom: 1px dotted var(--line); font-size: 11pt; }
+  .toc ol { list-style: none; padding: 0; counter-reset: toc; }
+  .toc li { counter-increment: toc; display: flex; gap: 3mm; padding: 1.6mm 0; border-bottom: 1px dotted var(--line); font-size: 10.5pt; margin: 0; }
   .toc li::before { content: counter(toc, decimal-leading-zero); color: var(--brand); font-weight: 700; min-width: 8mm; }
-  .toc li span { color: var(--muted); font-size: 9.5pt; margin-left: auto; }
+  .toc li span { color: var(--muted); font-size: 9.2pt; margin-left: auto; text-align: right; }
   .steps { counter-reset: step; list-style: none; padding: 0; }
   .steps > li { counter-increment: step; position: relative; padding-left: 9mm; margin-bottom: 2.2mm; }
   .steps > li::before { content: counter(step); position: absolute; left: 0; top: .2mm; width: 6mm; height: 6mm; border-radius: 50%; background: var(--brand); color: #fff; font-size: 8.5pt; font-weight: 700; display: flex; align-items: center; justify-content: center; }
@@ -64,11 +72,12 @@
   <div>
     <img class="logo" src="../../apps/web/public/icon.svg" alt="">
     <h1>Manual de Uso</h1>
-    <p class="subtitle">V&amp;L Estoque · Sistema de gestão de estoque</p>
+    <p class="subtitle">Frente de caixa (PDV não fiscal) e gestão de estoque</p>
     <div class="band"></div>
   </div>
+  <img class="hero" src="../screenshots/pdv-caixa.png" alt="">
   <div class="meta">
-    V&amp;L Mercadinho e Panificadora<br>
+    Versão de outubro de 2026. O sistema é <i>white-label</i>: o nome “SuaLojaAqui”, o logotipo e as cores mostrados aqui são os padrões e podem ser trocados em <b>Configurações</b>.<br>
     Este manual também está disponível dentro do sistema, no menu <b>Manual de uso</b>.
   </div>
 </div>
@@ -76,257 +85,430 @@
 <section class="toc">
   <h2>Sumário</h2>
   <ol>
-    <li>Instalar, abrir e atualizar <span>passo a passo</span></li>
+    <li>Instalar, abrir e atualizar <span>aplicativo ou código-fonte</span></li>
     <li>Primeiro acesso <span>senha, PIN, e-mail e termo</span></li>
-    <li>Entrando no sistema <span>login, perfis e senha esquecida</span></li>
-    <li>O painel <span>visão geral do dia</span></li>
-    <li>Cadastrar produtos <span>e os cálculos automáticos</span></li>
-    <li>Registrar entrada <span>mercadoria que chegou</span></li>
-    <li>Registrar saída <span>vendas e perdas</span></li>
-    <li>Alertas e solicitações de pedido <span>reposição</span></li>
-    <li>Relatórios <span>por período e por produto</span></li>
-    <li>Excluir e recuperar produtos <span>lixeira</span></li>
+    <li>Entrando no sistema <span>login, PIN rápido, senha esquecida, perfis</span></li>
+    <li>Configurar a loja <span>marca, pagamentos, impressão, e-mail, empresa</span></li>
     <li>Usuários e permissões <span>administrador</span></li>
-    <li>Configurações <span>administrador</span></li>
-    <li>Backup no Google Drive <span>proteção dos dados</span></li>
+    <li>Produtos e categorias <span>preços e reposição</span></li>
+    <li>Clientes <span>cadastro, histórico e LGPD</span></li>
+    <li>Frente de caixa <span>abrir, vender, receber, fechar</span></li>
+    <li>Entradas e saídas de estoque <span>bipagem</span></li>
+    <li>Alertas e solicitações de pedido <span>reposição</span></li>
+    <li>Relatórios de estoque <span>por período e por produto</span></li>
+    <li>Gerência: vendas e caixas <span>relatório e conferência</span></li>
+    <li>Excluir e recuperar produtos <span>lixeira</span></li>
+    <li>Impressoras <span>térmica, A4 e PDF</span></li>
+    <li>Backup <span>proteção dos dados</span></li>
     <li>Privacidade e LGPD <span>termo e direitos</span></li>
     <li>Celular e uso sem internet</li>
     <li>Dúvidas frequentes</li>
+    <li>Glossário</li>
   </ol>
 </section>
 
+<!-- 1 -->
 <section>
   <h2>1. Instalar, abrir e atualizar o sistema</h2>
-  <p>O V&amp;L Estoque é um programa para Windows que já traz <strong>tudo embutido</strong>: o banco de dados, o servidor e as telas. Não é preciso instalar mais nada nem ter internet para usar. Este capítulo explica, passo a passo, como colocar o sistema para funcionar e onde fica cada arquivo.</p>
+  <p>O sistema roda num computador da loja (o “computador principal”) e já traz <strong>tudo embutido</strong>: o banco de dados, o servidor e as telas. Os caixas, o escritório, tablets e celulares da mesma rede usam o sistema pelo navegador. Há duas formas de instalar.</p>
 
   <h3>1.1 O que é necessário</h3>
   <table>
     <tr><th style="width:34%">Item</th><th>Mínimo</th></tr>
     <tr><td><b>Sistema</b></td><td>Windows 10 ou 11, 64 bits</td></tr>
     <tr><td><b>Memória (RAM)</b></td><td>4 GB (recomendado 8 GB)</td></tr>
-    <tr><td><b>Espaço em disco</b></td><td>cerca de 1 GB para o programa, mais o espaço dos dados (poucos MB por ano)</td></tr>
+    <tr><td><b>Espaço em disco</b></td><td>cerca de 1 GB para o programa, mais o espaço dos dados (poucos GB em anos de uso)</td></tr>
     <tr><td><b>Leitor de código de barras</b></td><td>Qualquer leitor USB que funcione como teclado (o comum nas lojas)</td></tr>
-    <tr><td><b>Internet</b></td><td>Não é necessária para usar. Só é usada pelo Google Drive (backup) e pelo envio do código de recuperação de senha</td></tr>
+    <tr><td><b>Impressora (opcional)</b></td><td>Térmica de 80 ou 58 mm (USB, serial ou rede) ou impressora comum A4 (capítulo 14)</td></tr>
+    <tr><td><b>Internet</b></td><td>Não é necessária para vender. É usada pelo backup no Google Drive e pelo envio do código de recuperação de senha</td></tr>
   </table>
 
-  <h3>1.2 Duas formas de usar</h3>
+  <h3>1.2 Duas formas de instalar</h3>
   <table>
-    <tr><th style="width:22%"></th><th style="width:39%">A) Instalado (recomendado para a loja)</th><th>B) Sem instalar (pasta do projeto)</th></tr>
-    <tr><td><b>Como abre</b></td><td>Atalho <span class="ui">VL Estoque</span> na Área de Trabalho e no Menu Iniciar</td><td>Dois cliques no arquivo <i>VL Estoque.exe</i> dentro da pasta do projeto</td></tr>
-    <tr><td><b>Onde fica</b></td><td><i>C:\Users\<b>seu-usuário</b>\AppData\Local\Programs\vl-estoque</i></td><td><i>…\sistema-estoque\apps\desktop\release\win-unpacked</i></td></tr>
-    <tr><td><b>Indicado para</b></td><td>Computador do caixa e uso diário</td><td>Quem está desenvolvendo ou testando novas versões</td></tr>
-    <tr><td><b>Dados</b></td><td colspan="2">As duas formas usam <b>os mesmos dados</b> (<i>%LOCALAPPDATA%\VLEstoque</i>). Dá para trocar de uma para a outra sem perder nada.</td></tr>
+    <tr><th style="width:20%"></th><th style="width:40%">A) Aplicativo para Windows</th><th>B) Pelo código-fonte</th></tr>
+    <tr><td><b>Como abre</b></td><td>Atalho do aplicativo na Área de Trabalho e no Menu Iniciar</td><td>Dois cliques em <i>iniciar-sistema.bat</i>, na pasta do projeto</td></tr>
+    <tr><td><b>Endereço</b></td><td>Janela própria; no navegador: <b>http://localhost:3030</b></td><td>Navegador: <b>http://localhost:3000</b></td></tr>
+    <tr><td><b>Precisa instalar</b></td><td>Só o aplicativo</td><td>O Node.js (versão 22 ou mais nova)</td></tr>
+    <tr><td><b>Indicado para</b></td><td>Loja que usa um computador só</td><td>Quem atualiza o sistema pelo código ou testa novas versões</td></tr>
   </table>
+  <div class="warn"><b>Versão do instalador</b>O instalador publicado no GitHub (1.3.1) é a versão só de estoque. Para o aplicativo com a frente de caixa, gere um instalador novo com <code>npm run dist</code> na pasta do projeto, ou use a forma B.</div>
 
-  <h3>1.3 Instalar (forma A)</h3>
+  <h3>1.3 Forma A: instalar o aplicativo</h3>
   <ol class="steps">
-    <li>Copie o instalador <b>VL-Estoque-Setup-<i>versão</i>.exe</b> para o computador (por pen drive, e-mail ou pelo link de download) e dê dois cliques nele.</li>
+    <li>Copie o instalador (<b>…-Setup-<i>versão</i>.exe</b>) para o computador e dê dois cliques nele.</li>
     <li>Se aparecer a tela azul <b>“O Windows protegeu o computador”</b>, clique em <span class="ui">Mais informações</span> e depois em <span class="ui">Executar assim mesmo</span>. O aviso aparece porque o instalador ainda não tem assinatura digital paga; ele não indica vírus.</li>
-    <li>Na tela de instalação, mantenha a pasta sugerida (ou escolha outra) e clique em <span class="ui">Instalar</span>. Leva menos de um minuto.</li>
-    <li>Ao terminar, deixe marcada a opção de executar o VL Estoque e clique em <span class="ui">Concluir</span>.</li>
-    <li>Pronto: o atalho <span class="ui">VL Estoque</span> aparece na Área de Trabalho e no Menu Iniciar.</li>
+    <li>Mantenha a pasta sugerida e clique em <span class="ui">Instalar</span>. Leva menos de um minuto e não pede senha de administrador do Windows.</li>
+    <li>Ao terminar, deixe marcada a opção de executar e clique em <span class="ui">Concluir</span>. O atalho aparece na Área de Trabalho e no Menu Iniciar.</li>
   </ol>
-  <div class="tip"><b>Instalação por usuário</b>O programa é instalado só para o usuário do Windows que está logado e não pede senha de administrador do Windows. Em outro usuário do Windows, é preciso instalar de novo.</div>
+  <p>Ao abrir, a tela de carregamento mostra cada etapa: <i>Iniciando o banco de dados</i>, <i>Atualizando o banco de dados</i> (depois de uma atualização, sem perder dados) e <i>Iniciando o sistema</i>. Leva de 10 a 30 segundos. Na <b>primeira abertura</b>, o aplicativo já entra sozinho como administrador para você criar a sua senha (capítulo 2). Clicar no atalho com o sistema aberto só traz a janela para a frente.</p>
+  <p><b>Fechar:</b> clique no <b>X</b> da janela. O sistema salva um último backup e desliga o banco de dados com segurança. Evite encerrar pelo Gerenciador de Tarefas.</p>
 
-  <h3>1.4 Usar sem instalar (forma B)</h3>
+  <h3>1.4 Forma B: pelo código-fonte</h3>
   <ol class="steps">
-    <li>Abra a pasta <i>…\sistema-estoque\apps\desktop\release\win-unpacked</i> no Explorador de Arquivos.</li>
-    <li>Dê dois cliques em <b>VL Estoque.exe</b> (o arquivo com o ícone verde).</li>
-    <li><b>Atalho opcional:</b> clique com o botão direito em <b>VL Estoque.exe</b> › <span class="ui">Enviar para</span> › <span class="ui">Área de trabalho (criar atalho)</span>. No Windows 11, clique antes em <span class="ui">Mostrar mais opções</span>.</li>
+    <li>Instale o <b>Node.js</b> (nodejs.org, versão LTS) clicando em “Avançar” até o fim. Para conferir, abra o <i>Prompt de Comando</i> (tecla Windows, digite <code>cmd</code>, Enter) e rode <code>node -v</code>.</li>
+    <li>No Prompt de Comando, entre na pasta do projeto e rode a instalação (alguns minutos na primeira vez):
+      <pre>cd "C:\caminho\para\o\projeto"
+npm.cmd run setup</pre>
+      No final aparece a <b>senha provisória do usuário admin</b>. Anote: ela também fica no arquivo <i>apps\api\.env</i>, na linha <code>ADMIN_INITIAL_PASSWORD</code>.</li>
+    <li>(Opcional) Carregue produtos de exemplo para treinar: <code>npm.cmd run db:demo -w @vl/api</code></li>
+    <li>Gere a versão de uso: <code>npm.cmd run build</code></li>
+    <li>Ligue o sistema com dois cliques em <b>iniciar-sistema.bat</b>. Abre a janela preta do sistema e, em seguida, o navegador em <b>http://localhost:3000</b>. Entre com <b>admin</b> e a senha provisória (capítulo 2).</li>
   </ol>
-  <div class="warn"><b>Atenção</b>Essa pasta é <b>apagada e recriada</b> sempre que uma nova versão do instalador é gerada. Não guarde arquivos seus dentro dela e não abra o programa enquanto uma nova versão estiver sendo gerada.</div>
+  <div class="tip"><b>Por que “npm.cmd”?</b>No PowerShell, o comando <code>npm</code> pode dar o erro <i>“a execução de scripts foi desabilitada neste sistema”</i>. Escrever <code>npm.cmd</code> evita o problema. Para liberar o <code>npm</code> de vez, rode uma vez no PowerShell <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> e responda <b>S</b>.</div>
+  <div class="warn"><b>Não feche a janela preta durante o expediente</b>Ela é o “motor” do sistema. Para desligar, feche essa janela: o banco de dados é desligado com segurança. Para ligar junto com o Windows, aperte <kbd>Windows</kbd>+<kbd>R</kbd>, digite <code>shell:startup</code> e coloque nessa pasta um atalho para o <i>iniciar-sistema.bat</i>.</div>
 
-  <h3>1.5 O que acontece ao abrir</h3>
-  <figure class="narrow"><img src="../screenshots/splash.png" alt=""><figcaption>Tela de carregamento</figcaption></figure>
-  <p>Primeiro aparece a tela de carregamento verde, que mostra cada etapa:</p>
+  <h3>1.5 Atualizar para uma nova versão</h3>
+  <ol class="steps">
+    <li>Feche o sistema.</li>
+    <li><b>Aplicativo:</b> execute o instalador da nova versão <b>por cima</b> da atual, sem desinstalar. <b>Código-fonte:</b> atualize os arquivos e rode <code>npm.cmd install</code>, <code>npm.cmd run db:deploy -w @vl/api</code> e <code>npm.cmd run build</code>.</li>
+    <li>Abra o sistema. O banco de dados é ajustado para a nova versão automaticamente; os dados são mantidos.</li>
+    <li>Se a nova versão trouxer um Termo de Uso atualizado, cada usuário lê e aceita de novo no próximo acesso.</li>
+  </ol>
+
+  <h3>1.6 Onde fica cada arquivo</h3>
+  <p>Para abrir uma pasta que começa com <i>%LOCALAPPDATA%</i>, aperte <kbd>Windows</kbd>+<kbd>R</kbd>, cole o caminho e tecle <kbd>Enter</kbd>.</p>
   <table>
-    <tr><th style="width:40%">Mensagem</th><th>O que o sistema está fazendo</th></tr>
-    <tr><td><i>Iniciando o banco de dados...</i></td><td>Liga o banco de dados no próprio computador.</td></tr>
-    <tr><td><i>Atualizando o banco de dados...</i></td><td>Ajusta o banco para a versão do programa (necessário após atualizar). Os dados são mantidos.</td></tr>
-    <tr><td><i>Restaurando o backup...</i></td><td>Só numa instalação nova, se você escolher restaurar um backup (capítulo 13).</td></tr>
-    <tr><td><i>Iniciando o sistema...</i></td><td>Liga o servidor e abre a janela do sistema.</td></tr>
+    <tr><th style="width:30%">O quê</th><th style="width:35%">Aplicativo (A)</th><th>Código-fonte (B)</th></tr>
+    <tr><td><b>Dados</b> (não mexa)</td><td><i>%LOCALAPPDATA%\VLEstoque\pgdata</i></td><td>Pasta de <code>DB_DATA_DIR</code> no <i>.env</i> (padrão <i>%LOCALAPPDATA%\vl-estoque\pgdata</i>)</td></tr>
+    <tr><td>Configuração e chaves</td><td><i>%LOCALAPPDATA%\VLEstoque\config.json</i></td><td><i>apps\api\.env</i></td></tr>
+    <tr><td>Registros (logs)</td><td><i>%LOCALAPPDATA%\VLEstoque\logs</i></td><td>Na janela preta</td></tr>
+    <tr><td>Backups</td><td colspan="2">Capítulo 15</td></tr>
   </table>
-  <p>Em seguida, a janela do V&amp;L Estoque abre <b>maximizada e sem barra de endereço</b>, como um programa comum. Tudo leva de <b>10 a 30 segundos</b>, conforme o computador. Na primeira abertura, o sistema já entra sozinho como administrador para você criar a sua senha (capítulo 2).</p>
-  <div class="tip"><b>Já está aberto?</b>Clicar no atalho de novo não abre uma segunda cópia: o sistema só traz a janela que já está aberta para a frente.</div>
+  <div class="danger"><b>Não compartilhe os arquivos de configuração</b><i>config.json</i> e <i>.env</i> guardam as chaves de segurança do sistema. Nunca envie esses arquivos a ninguém nem os coloque em pastas compartilhadas.</div>
 
-  <h3>1.6 Abrir no navegador do mesmo computador</h3>
-  <p>Com o programa aberto, o sistema também pode ser usado no navegador (Chrome, Edge), no endereço <b>http://localhost:3030</b>. É útil, por exemplo, para ter duas telas abertas. O navegador pede login normalmente. Para usar no celular, veja o capítulo 15.</p>
-  <div class="warn"><b>Importante</b>O endereço só funciona <b>enquanto o programa estiver aberto</b>, porque é ele que liga o banco de dados e o servidor.</div>
-
-  <h3>1.7 Fechar corretamente</h3>
-  <ol class="steps">
-    <li>Clique no <b>X</b> da janela do V&amp;L Estoque.</li>
-    <li>O sistema salva um último backup e desliga o banco de dados com segurança. Leva poucos segundos.</li>
-  </ol>
-  <div class="warn"><b>Evite</b>Encerrar o programa pelo Gerenciador de Tarefas ou desligar o computador da tomada com ele aberto. O banco resiste a quedas de energia, mas o fechamento normal garante o backup mais recente.</div>
-
-  <h3>1.8 Atualizar para uma nova versão</h3>
-  <ol class="steps">
-    <li>Feche o V&amp;L Estoque (clique no X).</li>
-    <li><b>Instalado:</b> execute o instalador da nova versão <b>por cima</b> da atual, sem desinstalar. <b>Sem instalar:</b> basta usar a nova pasta <i>win-unpacked</i> gerada.</li>
-    <li>Abra o sistema. Na tela de carregamento aparece <i>“Atualizando o banco de dados...”</i>: os seus dados são ajustados para a nova versão automaticamente.</li>
-    <li>Se a nova versão trouxer um termo de uso atualizado, cada usuário lê e aceita de novo no próximo acesso.</li>
-  </ol>
-  <div class="tip"><b>Seus dados estão seguros</b>Produtos, movimentações, usuários e backups ficam em uma pasta separada do programa e <b>nunca</b> são apagados pela atualização.</div>
-
-  <h3>1.9 Desinstalar</h3>
-  <ol class="steps">
-    <li>Abra <span class="ui">Configurações do Windows</span> › <span class="ui">Aplicativos</span> › <span class="ui">Aplicativos instalados</span>.</li>
-    <li>Procure <b>VL Estoque</b>, clique em <b>⋯</b> e em <span class="ui">Desinstalar</span>.</li>
-  </ol>
-  <p>A desinstalação remove só o programa. Os dados continuam em <i>%LOCALAPPDATA%\VLEstoque</i> e voltam a aparecer se você instalar de novo. Para apagar tudo de vez, apague também essa pasta (faça um backup antes).</p>
-
-  <h3>1.10 Onde fica cada arquivo</h3>
-  <p>Para abrir uma pasta que começa com <i>%LOCALAPPDATA%</i>, aperte <kbd>Windows</kbd> + <kbd>R</kbd>, cole o caminho e tecle <kbd>Enter</kbd>.</p>
+  <h3>1.7 Se o sistema não abrir</h3>
   <table>
-    <tr><th style="width:30%">O quê</th><th>Onde</th></tr>
-    <tr><td>Programa instalado</td><td><i>%LOCALAPPDATA%\Programs\vl-estoque</i></td></tr>
-    <tr><td>Programa sem instalar</td><td><i>…\sistema-estoque\apps\desktop\release\win-unpacked</i></td></tr>
-    <tr><td><b>Dados do estoque</b></td><td><i>%LOCALAPPDATA%\VLEstoque\pgdata</i> (não mexa nesta pasta)</td></tr>
-    <tr><td>Configuração e chaves de segurança</td><td><i>%LOCALAPPDATA%\VLEstoque\config.json</i> (não compartilhe este arquivo)</td></tr>
-    <tr><td>Registros de funcionamento (logs)</td><td><i>%LOCALAPPDATA%\VLEstoque\logs</i></td></tr>
-    <tr><td>Backups no Google Drive</td><td><i>Meu Drive › VL Estoque - Backups</i> (capítulo 13)</td></tr>
-    <tr><td>Backups locais (sem Drive)</td><td><i>%LOCALAPPDATA%\VLEstoque\backups</i></td></tr>
-    <tr><td>Este manual</td><td>Menu lateral › <span class="ui">Manual de uso</span></td></tr>
-  </table>
-
-  <h3>1.11 Se o sistema não abrir</h3>
-  <table>
-    <tr><th style="width:36%">O que aparece</th><th>O que fazer</th></tr>
-    <tr><td>“O Windows protegeu o computador”</td><td><span class="ui">Mais informações</span> › <span class="ui">Executar assim mesmo</span> (item 1.3).</td></tr>
-    <tr><td>“Não foi possível iniciar o V&amp;L Estoque”</td><td>Feche e abra de novo. Se repetir, reinicie o computador. A mensagem mostra o caminho do arquivo de log com os detalhes: envie esse arquivo para o suporte.</td></tr>
-    <tr><td>A tela de carregamento não sai do lugar</td><td>Aguarde até 1 minuto (antivírus podem atrasar a primeira abertura). Se não abrir, reinicie o computador.</td></tr>
-    <tr><td>O antivírus bloqueou o programa</td><td>Adicione a pasta do programa às exceções do antivírus.</td></tr>
-    <tr><td>Outro programa usa a porta 3030</td><td>O sistema precisa das portas <b>3030</b> e <b>5434</b> do computador. Feche o programa que as usa ou reinicie o computador.</td></tr>
-    <tr><td>O Windows pergunta sobre o Firewall</td><td>Clique em <span class="ui">Permitir</span> em redes privadas, para o celular conseguir acessar pelo Wi-Fi.</td></tr>
+    <tr><th style="width:38%">O que aparece</th><th>O que fazer</th></tr>
+    <tr><td>“O Windows protegeu o computador”</td><td><span class="ui">Mais informações</span> › <span class="ui">Executar assim mesmo</span>.</td></tr>
+    <tr><td>“A execução de scripts foi desabilitada”</td><td>Use <code>npm.cmd</code> em vez de <code>npm</code> (item 1.4).</td></tr>
+    <tr><td>“Authentication failed” (senha do banco)</td><td>O <i>.env</i> tem uma senha diferente da do banco que já existe no computador. Use o <i>.env</i> antigo ou aponte <code>DB_DATA_DIR</code> para uma pasta nova (banco novo).</td></tr>
+    <tr><td>Porta ocupada (3000, 3030 ou 5434)</td><td>O sistema já está aberto em outra janela. Feche-a ou reinicie o computador.</td></tr>
+    <tr><td>Carregamento demorado</td><td>Antivírus podem atrasar a primeira abertura: aguarde até 1 minuto ou adicione a pasta às exceções.</td></tr>
+    <tr><td>O Windows pergunta sobre o Firewall</td><td>Clique em <span class="ui">Permitir</span> em redes privadas, para os caixas e o celular acessarem pela rede.</td></tr>
   </table>
 </section>
 
+<!-- 2 -->
 <section>
   <h2>2. Primeiro acesso</h2>
-  <p>Na primeira vez que o V&amp;L Estoque é aberto depois da instalação, ele <strong>entra sozinho</strong> com o usuário administrador (<span class="ui">admin</span>) e mostra a tela <span class="ui">Bem-vindo</span>. Não é preciso digitar nenhuma senha provisória.</p>
-  <figure class="narrow"><img src="../screenshots/primeiro-acesso-preenchido.png" alt=""><figcaption>Tela de primeiro acesso preenchida</figcaption></figure>
+  <p>No aplicativo, a primeira abertura <strong>entra sozinha</strong> como administrador (<span class="ui">admin</span>). Pelo código-fonte, entre com <b>admin</b> e a senha provisória da instalação. Em seguida aparece a tela <span class="ui">Bem-vindo</span>:</p>
+  <figure class="narrow"><img src="img/primeiro-acesso.png" alt=""><figcaption>Tela de primeiro acesso</figcaption></figure>
   <ol class="steps">
     <li>Em <span class="ui">Nova senha</span>, crie a sua senha pessoal: <strong>mínimo de 8 caracteres, com letras e números</strong>. Repita em <span class="ui">Confirme a nova senha</span>.</li>
-    <li>Crie também o seu <strong>PIN</strong>: um código de <strong>4 a 6 números</strong>, usado para confirmar operações como vendas, entradas e exclusões. Repita em <span class="ui">Confirme o PIN</span>.</li>
-    <li>Informe o seu <strong>e-mail</strong> em <span class="ui">E-mail para recuperar a senha</span>. Ele é obrigatório para administradores e serve <b>somente</b> para receber um código se você esquecer a senha (capítulo 3).</li>
-    <li>Leia o <span class="ui">Termo de Uso e a Política de Privacidade</span> (clique no link para abrir) e marque <b>“Li e concordo”</b>. O capítulo 14 explica o que ele diz.</li>
-    <li>Clique em <span class="ui">Salvar e continuar</span>. Pronto: o sistema abre no painel.</li>
+    <li>Crie também o seu <strong>PIN</strong>: <strong>4 a 6 números</strong>. Ele confirma operações sensíveis, permite trocar de operador no caixa e, para gerentes, autorizar descontos e cancelamentos.</li>
+    <li>Informe o seu <strong>e-mail</strong>. É obrigatório para administradores e serve <b>somente</b> para receber um código se você esquecer a senha (capítulo 3).</li>
+    <li>Leia o <span class="ui">Termo de Uso e Política de Privacidade</span> (clique no link) e marque <b>“Li e concordo”</b>.</li>
+    <li>Clique em <span class="ui">Salvar e continuar</span>.</li>
   </ol>
-  <figure class="half"><img src="../screenshots/termo-modal.png" alt=""><figcaption>O termo abre numa janela, sem sair da tela de primeiro acesso</figcaption></figure>
-  <div class="warn"><b>Guarde bem a senha e o PIN</b>Daqui pra frente, para entrar, use o usuário <b>admin</b> e a senha que você criou. Se esquecer a senha, use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 3).</div>
-  <div class="tip"><b>Sobre o backup</b>Logo depois, o sistema avisa se encontrou o Google Drive para guardar os backups. Se ainda não estiver instalado, veja o capítulo 13.</div>
-  <p>Os funcionários que você cadastrar passam pelo mesmo processo: no primeiro login com a senha provisória que você definir, o sistema pede que cada um crie a própria senha e o próprio PIN.</p>
+  <figure class="half"><img src="img/termo-modal.png" alt=""><figcaption>O termo abre numa janela, sem sair da tela de primeiro acesso</figcaption></figure>
+  <p>Os funcionários que você cadastrar passam pelo mesmo processo no primeiro login com a senha provisória que você definir. O operador de caixa, depois disso, cai direto na frente de caixa.</p>
+  <div class="tip"><b>Depois do primeiro acesso</b>Siga para o capítulo 4 e configure a loja: nome e logotipo, formas de pagamento, impressora e a conta de e-mail da recuperação de senha. Depois cadastre os funcionários (capítulo 5) e os produtos (capítulo 6).</div>
 </section>
 
+<!-- 3 -->
 <section>
   <h2>3. Entrando no sistema</h2>
-  <figure><img src="../screenshots/login.png" alt=""><figcaption>Tela de login</figcaption></figure>
+  <figure><img src="img/login.png" alt=""><figcaption>Tela de login com a marca da loja</figcaption></figure>
   <ol class="steps">
-    <li>Abra o atalho <span class="ui">VL Estoque</span> na área de trabalho. Aguarde a tela de carregamento (alguns segundos).</li>
+    <li>Abra o sistema (atalho do aplicativo ou <b>http://localhost:3000</b> no navegador).</li>
     <li>Digite o seu <span class="ui">usuário</span> e a sua <span class="ui">senha</span> e clique em <span class="ui">Entrar</span>.</li>
   </ol>
-  <div class="warn"><b>Segurança</b>Depois de <b>5 senhas erradas</b>, o usuário fica bloqueado por <b>15 minutos</b>. Para sair, use <span class="ui">Sair</span> no fim do menu lateral, principalmente em computadores compartilhados.</div>
+  <p><b>PIN rápido:</b> a aba <span class="ui">PIN rápido</span> permite entrar só com o usuário e o PIN, útil na troca de turno do caixa.</p>
+  <div class="warn"><b>Segurança</b>Depois de <b>5 senhas ou PINs errados</b>, o usuário fica bloqueado por <b>15 minutos</b>. Para sair, use <span class="ui">Sair</span> no fim do menu lateral, principalmente em computadores compartilhados.</div>
+
   <h3>Esqueci minha senha</h3>
   <ol class="steps">
     <li>Na tela de login, clique em <span class="ui">Esqueci minha senha</span>.</li>
     <li>Digite o seu <b>usuário ou e-mail</b> e clique em <span class="ui">Enviar código</span>.</li>
-    <li>Abra o seu e-mail: chega uma mensagem do <b>V&amp;L Estoque</b> com um <b>código de 6 números</b> (veja também a caixa de spam).</li>
-    <li>Digite o código, crie a nova senha e clique em <span class="ui">Salvar nova senha</span>. Depois, entre normalmente.</li>
+    <li>Abra o seu e-mail: chega uma mensagem com o nome da loja e um <b>código de 6 números</b> (veja também a caixa de spam).</li>
+    <li>Digite o código, crie a nova senha e clique em <span class="ui">Salvar nova senha</span>.</li>
   </ol>
   <div class="pair">
-    <figure><img src="../screenshots/esqueci-senha.png" alt=""><figcaption>1. Informe o usuário ou e-mail</figcaption></figure>
-    <figure><img src="../screenshots/codigo-recuperacao.png" alt=""><figcaption>3. Digite o código e a nova senha</figcaption></figure>
+    <figure><img src="img/esqueci-senha.png" alt=""><figcaption>1. Informe o usuário ou e-mail</figcaption></figure>
+    <figure><img src="img/codigo-recuperacao.png" alt=""><figcaption>3. Digite o código e a nova senha</figcaption></figure>
   </div>
-  <figure class="half"><img src="../screenshots/email-codigo.png" alt=""><figcaption>2. Exemplo do e-mail com o código</figcaption></figure>
-  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro, e são no máximo 3 pedidos por hora. Ao redefinir, o sistema encerra as sessões abertas em outros aparelhos. Quem não tem e-mail cadastrado, ou se a recuperação por e-mail ainda não foi configurada (capítulo 12), deve pedir a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
+  <figure class="half"><img src="img/email-codigo.png" alt=""><figcaption>2. O e-mail com o código</figcaption></figure>
+  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro; são no máximo 3 pedidos por hora. Ao redefinir, as sessões abertas em outros aparelhos são encerradas. Quem não tem e-mail cadastrado, ou se a recuperação ainda não foi configurada (capítulo 4), pede a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
+
   <h3>Perfis de acesso</h3>
-  <p>Cada pessoa vê apenas o que o seu perfil permite:</p>
   <table>
     <tr><th style="width:24%">Perfil</th><th>O que pode fazer</th></tr>
-    <tr><td><b>Administrador</b></td><td>Acesso total: usuários, configurações, lixeira e auditoria.</td></tr>
-    <tr><td><b>Estoquista</b></td><td>Cadastra produtos, registra entradas e saídas, pedidos e relatórios.</td></tr>
-    <tr><td><b>Caixa</b></td><td>Consulta produtos e registra saídas (vendas).</td></tr>
+    <tr><td><b>Operador de caixa</b></td><td>Abre e fecha o caixa, vende, cadastra clientes, consulta produtos e reimprime comprovantes do turno. Entra direto na frente de caixa.</td></tr>
+    <tr><td><b>Gerente</b></td><td>Tudo do operador, mais: descontos sem limite, cancelamento de vendas, sangria e suprimento, <b>autorizar</b> essas ações para o operador com o próprio PIN, relatórios de vendas e caixas, exportar e apagar dados de clientes (LGPD).</td></tr>
+    <tr><td><b>Estoquista</b></td><td>Cadastra produtos e preços, registra entradas e saídas, solicitações de pedido e relatórios de estoque.</td></tr>
+    <tr><td><b>Administrador</b></td><td>Acesso total: usuários, configurações, ajustes de estoque, lixeira e auditoria.</td></tr>
   </table>
 </section>
 
+<!-- 4 -->
 <section>
-  <h2>4. O painel</h2>
-  <p>É a primeira tela depois do login. Mostra, num relance, como está o estoque:</p>
-  <figure><img src="../screenshots/painel.png" alt=""><figcaption>Painel com indicadores, alertas de reposição e últimas movimentações</figcaption></figure>
+  <h2>4. Configurar a loja</h2>
+  <p><i>Somente o administrador.</i> Tudo fica no menu <span class="ui">Configurações</span>. Depois de alterar, clique em <span class="ui">Salvar alterações</span>, no topo (os quadros de formas de pagamento, e-mail e empresa têm botões próprios).</p>
+
+  <h3>4.1 Identidade da loja</h3>
+  <figure><img src="../screenshots/configuracoes.png" alt=""><figcaption>Configurações › Identidade da loja</figcaption></figure>
   <table>
-    <tr><th style="width:32%">Indicador</th><th>O que significa</th></tr>
-    <tr><td><b>Produtos ativos</b></td><td>Total de produtos cadastrados (e quantos estão com estoque normal).</td></tr>
-    <tr><td><b>Precisam de reposição</b></td><td>Produtos que chegaram no ponto de pedido (e quantos estão em nível crítico).</td></tr>
-    <tr><td><b>Sem estoque (ruptura)</b></td><td>Produtos com saldo zerado.</td></tr>
-    <tr><td><b>Pedidos em aberto</b></td><td>Solicitações de pedido ainda não recebidas, e o número de entradas e saídas de hoje.</td></tr>
+    <tr><th style="width:32%">Campo</th><th>Onde aparece</th></tr>
+    <tr><td><b>Nome da loja e slogan</b></td><td>Menu, login, aba do navegador, rodapé do caixa, comprovantes e e-mails</td></tr>
+    <tr><td><b>Logotipo</b> (PNG, JPEG, WebP ou SVG até 150 KB)</td><td>Menu, login e cabeçalho dos comprovantes</td></tr>
+    <tr><td><b>Cor principal</b></td><td>O sistema inteiro: os tons são derivados dessa cor</td></tr>
+    <tr><td><b>Tema padrão</b></td><td>Claro, escuro ou seguir o Windows. Cada computador pode trocar no botão de sol/lua</td></tr>
+    <tr><td><b>CNPJ/CPF, endereço, telefone, cabeçalho extra</b></td><td>Cabeçalho do comprovante</td></tr>
+    <tr><td><b>Mensagem no rodapé</b></td><td>Rodapé do comprovante (ex.: “Obrigado pela preferência!”)</td></tr>
   </table>
-  <p>Os botões <span class="ui">Entrada</span> e <span class="ui">Saída</span>, no topo, levam direto ao registro de movimentações. No menu lateral, <span class="ui">Manual de uso</span> abre este manual a qualquer momento.</p>
+
+  <h3>4.2 Formas de pagamento</h3>
+  <figure><img src="img/formas-pagamento.png" alt=""><figcaption>Configurações › Formas de pagamento</figcaption></figure>
+  <p>Já vêm prontas: Dinheiro, PIX, Cartão de crédito, Cartão de débito, Vale-alimentação e Vale-refeição (ativas), além de Cheque e Outros (desativadas). Em <span class="ui">Nova forma</span> você cria outras. Para cada forma:</p>
+  <table>
+    <tr><th style="width:32%">Opção</th><th>O que faz</th></tr>
+    <tr><td><b>Ordem</b> (setas ↑ ↓)</td><td>Ordem no caixa. As oito primeiras ativas ganham os atalhos <kbd>F1</kbd>–<kbd>F4</kbd> e <kbd>F6</kbd>–<kbd>F9</kbd> na tela de pagamento (<kbd>F5</kbd> confirma).</td></tr>
+    <tr><td><b>Ativa</b></td><td>Desativada, não aparece no caixa; o histórico continua. Formas já usadas não podem ser excluídas, só desativadas.</td></tr>
+    <tr><td><b>Dá troco</b></td><td>Aceita valor maior que o devido (normalmente só o dinheiro). O troco sai sempre da gaveta.</td></tr>
+    <tr><td><b>Exige cliente</b></td><td>Só aceita a forma com o cliente da venda identificado (ex.: crediário).</td></tr>
+    <tr><td><b>Taxa e prazo</b></td><td>Taxa da operadora e dias para receber (ex.: crédito D+30), guardados para o controle financeiro.</td></tr>
+  </table>
+  <p>A forma <b>Dinheiro</b> é a única que entra na gaveta e não pode ser desativada.</p>
+
+  <h3>4.3 Impressão e frente de caixa</h3>
+  <figure><img src="img/configuracoes-impressao.png" alt=""><figcaption>Impressão, regras do caixa e PIN</figcaption></figure>
+  <table>
+    <tr><th style="width:38%">Configuração</th><th>Para que serve</th></tr>
+    <tr><td><b>Papel e conexão da impressora</b></td><td>Bobina de 80 mm, 58 mm ou A4; impressora do Windows ou térmica de rede (capítulo 14). Use <span class="ui">Imprimir página de teste</span>.</td></tr>
+    <tr><td><b>Imprimir automaticamente</b></td><td>O comprovante sai sozinho ao finalizar a venda.</td></tr>
+    <tr><td><b>Desconto máximo do operador sem autorização (%)</b></td><td>Até esse percentual, o operador dá desconto sozinho. Acima, um gerente autoriza com o PIN. <b>0</b> exige autorização em qualquer desconto.</td></tr>
+    <tr><td><b>Bloquear venda de item sem estoque</b></td><td>Desligado (padrão): o caixa vende e só avisa. Ligado: não deixa vender.</td></tr>
+    <tr><td><b>PIN exigido para…</b></td><td>Quais operações de estoque pedem o PIN do funcionário.</td></tr>
+    <tr><td><b>Reposição e lixeira</b></td><td>Dias de cobertura do pedido sugerido (padrão 7), estoque negativo nas saídas manuais e dias na lixeira (padrão 15).</td></tr>
+  </table>
+
+  <h3>4.4 Recuperação de senha por e-mail (Gmail)</h3>
+  <ol class="steps">
+    <li>Na Conta Google da loja, ative a <b>Verificação em duas etapas</b> (myaccount.google.com › Segurança).</li>
+    <li>Abra <b>myaccount.google.com/apppasswords</b>, crie uma <b>senha de app</b> com o nome do sistema (ex.: “Caixa da loja”) e copie os 16 caracteres.</li>
+    <li>Em <span class="ui">Configurações</span> › <span class="ui">Recuperação de senha por e-mail</span>, escolha <b>Gmail</b>, informe o e-mail da conta e cole a senha de app. O <b>nome do remetente</b> pode ficar em branco: usa o nome da loja. Clique em <span class="ui">Salvar</span>.</li>
+    <li>Clique em <span class="ui">Enviar e-mail de teste</span>. Se chegar ao seu e-mail (cadastrado em <span class="ui">Meu perfil</span>), o selo muda para <b>Ativa</b>.</li>
+  </ol>
+  <figure class="half"><img src="img/config-email.png" alt=""><figcaption>Recuperação de senha por e-mail</figcaption></figure>
+  <div class="tip"><b>Segurança</b>Use sempre a <b>senha de app</b>, nunca a senha normal do Gmail. Ela fica guardada <b>criptografada</b> no sistema, não aparece em nenhuma tela e pode ser revogada a qualquer momento na Conta Google. Outros provedores funcionam pela opção SMTP.</div>
+
+  <h3>4.5 Empresa e privacidade (LGPD)</h3>
+  <p>Razão social, CNPJ, endereço e o <b>encarregado de dados</b> (nome e e-mail). Aparecem no Termo de Uso. Se a razão social ficar em branco, o termo usa o nome da loja.</p>
+  <figure class="half"><img src="img/config-empresa.png" alt=""><figcaption>Configurações › Empresa e privacidade</figcaption></figure>
 </section>
 
+<!-- 5 -->
 <section>
-  <h2>5. Cadastrar produtos</h2>
+  <h2>5. Usuários e permissões</h2>
+  <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: o sistema registra quem fez cada operação.</p>
   <ol class="steps">
-    <li>No menu, clique em <span class="ui">Produtos</span> e depois em <span class="ui">Novo produto</span>.</li>
-    <li>Preencha os campos (veja a tabela abaixo). Para o código de barras, clique no campo e <strong>bipe o produto</strong> com o leitor.</li>
-    <li>Clique em <span class="ui">Cadastrar produto</span> e confirme com o seu PIN.</li>
+    <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
+    <li>Preencha o <span class="ui">Nome completo</span>, o <span class="ui">E-mail</span> (obrigatório para administradores), o perfil, o <span class="ui">Login</span> (ex.: <i>maria.silva</i>), uma <span class="ui">Senha provisória</span> e, se quiser, o <b>PIN</b>.</li>
+    <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o PIN e lê o termo.</li>
   </ol>
-  <figure><img src="../screenshots/novo-produto.png" alt=""><figcaption>Cadastro de produto: os indicadores são calculados enquanto você digita</figcaption></figure>
+  <figure class="narrow"><img src="img/usuario-novo.png" alt=""><figcaption>Cadastro de usuário: escolha o perfil</figcaption></figure>
+  <div class="tip"><b>Todo operador e gerente deve ter PIN</b>O PIN serve para trocar de operador no caixa e, no caso dos gerentes, para autorizar descontos, cancelamentos e sangrias.</div>
+  <figure><img src="img/usuarios.png" alt=""><figcaption>Lista de usuários</figcaption></figure>
+  <table>
+    <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
+    <tr><td>Esqueceu a senha</td><td>Com e-mail cadastrado: o próprio funcionário usa <span class="ui">Esqueci minha senha</span>. Sem e-mail: <span class="ui">Redefinir senha</span> (nova senha provisória).</td></tr>
+    <tr><td>Esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
+    <tr><td>Saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado na hora e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
+    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 16).</td></tr>
+  </table>
+  <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, vendas, descontos (e quem autorizou), itens removidos do cupom, cancelamentos, sangrias, cadastros, exclusões e alterações. Cada pessoa troca a própria senha, PIN e e-mail em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
+  <figure><img src="img/auditoria.png" alt=""><figcaption>Auditoria</figcaption></figure>
+</section>
+
+<!-- 6 -->
+<section>
+  <h2>6. Produtos e categorias</h2>
+  <p><b>Categorias:</b> menu <span class="ui">Categorias</span>. O sistema já vem com categorias de mercadinho e padaria, em dois níveis (categoria e subcategoria). Crie, renomeie ou exclua conforme a loja.</p>
+  <h3>Cadastrar um produto</h3>
+  <ol class="steps">
+    <li>Menu <span class="ui">Produtos</span> › <span class="ui">Novo produto</span>.</li>
+    <li>Preencha os campos. Para o código de barras, clique no campo e <strong>bipe o produto</strong>.</li>
+    <li>Clique em <span class="ui">Cadastrar produto</span> e confirme com o PIN.</li>
+  </ol>
   <table>
     <tr><th style="width:30%">Campo</th><th>O que colocar</th></tr>
-    <tr><td><b>Nome do produto</b></td><td>Descrição clara e padronizada: marca, tipo, tamanho. Ex.: <i>Arroz Tio João Tipo 1 5kg</i>.</td></tr>
-    <tr><td><b>SKU (código interno)</b></td><td>Código criado pela loja para identificar o item.</td></tr>
-    <tr><td><b>Código de barras (EAN)</b></td><td>O código impresso na embalagem. Basta bipar.</td></tr>
-    <tr><td><b>Categoria / Subcategoria</b></td><td>Organiza o catálogo e os relatórios. Novas categorias são criadas em <span class="ui">Categorias</span>.</td></tr>
-    <tr><td><b>Unidade de medida</b></td><td>Como o item é vendido ou contado: unidade, kg, g, litro, ml, metro, caixa, pacote ou dúzia.</td></tr>
-    <tr><td><b>Consumo médio/dia</b></td><td>Quanto sai, em média, por dia.</td></tr>
-    <tr><td><b>Consumo máximo/dia</b></td><td>Quanto sai num dia de muito movimento.</td></tr>
-    <tr><td><b>Prazo de entrega (dias)</b></td><td>Quantos dias o fornecedor leva para entregar depois do pedido.</td></tr>
-    <tr><td><b>Estoque inicial</b></td><td>Quantidade que já existe hoje na loja (só no cadastro).</td></tr>
+    <tr><td><b>Nome</b></td><td>Marca, tipo e tamanho. Ex.: <i>Arroz Tio João Tipo 1 5kg</i>.</td></tr>
+    <tr><td><b>SKU</b></td><td>Código interno, sem espaços (ex.: <i>ARROZ-TJ-5KG</i>). Também serve para vender no caixa.</td></tr>
+    <tr><td><b>Código de barras (EAN)</b></td><td>Bipe a embalagem. Pão e frios podem ficar sem: vendem pelo SKU ou pelo nome.</td></tr>
+    <tr><td><b>Categoria e unidade</b></td><td>A unidade define como é vendido: UN, KG (por peso), L, CX, PCT…</td></tr>
+    <tr><td><b>Preço de venda</b></td><td>O valor cobrado no caixa. <b>Sem preço, o produto não pode ser vendido no caixa.</b></td></tr>
+    <tr><td><b>Preço de custo</b></td><td>Usado na margem do relatório de vendas.</td></tr>
+    <tr><td><b>Estoque inicial</b></td><td>O que já existe na loja hoje (só no cadastro).</td></tr>
   </table>
-  <h3>Cálculos automáticos</h3>
-  <p>Com o consumo e o prazo de entrega, o sistema calcula sozinho três indicadores:</p>
+  <h3>Controlar consumo e reposição (opcional)</h3>
+  <div class="pair">
+    <figure><img src="img/produto-reposicao-ligada.png" alt=""><figcaption>Ligado: consumo, prazo e indicadores</figcaption></figure>
+    <figure><img src="img/produto-reposicao-desligada.png" alt=""><figcaption>Desligado: sem pedido automático</figcaption></figure>
+  </div>
+  <p><b>Ligado</b> (padrão): informe o consumo médio por dia, o consumo máximo por dia e o prazo de entrega. O sistema calcula:</p>
   <table>
-    <tr><th style="width:30%">Indicador</th><th style="width:42%">Fórmula</th><th>Para que serve</th></tr>
+    <tr><th style="width:30%">Indicador</th><th style="width:40%">Fórmula</th><th>Para que serve</th></tr>
     <tr><td><b>Estoque mínimo (EM)</b></td><td><span class="formula">consumo médio × prazo</span></td><td>O que se consome enquanto a entrega não chega.</td></tr>
-    <tr><td><b>Estoque de segurança (ES)</b></td><td><span class="formula">(consumo máximo − médio) × prazo</span></td><td>Proteção contra dias de pico.</td></tr>
+    <tr><td><b>Estoque de segurança (ES)</b></td><td><span class="formula">(máximo − médio) × prazo</span></td><td>Proteção contra dias de pico.</td></tr>
     <tr><td><b>Ponto de pedido (PP)</b></td><td><span class="formula">EM + ES</span></td><td>Ao chegar nele, o sistema gera a solicitação de pedido.</td></tr>
   </table>
-  <div class="tip"><b>Exemplo</b>Pão de forma: consumo médio de 10 por dia, máximo de 16, entrega em 3 dias. EM = 10 × 3 = <b>30</b>. ES = (16 − 10) × 3 = <b>18</b>. PP = 30 + 18 = <b>48</b>. Quando o estoque cair para 48 ou menos, o sistema pede reposição.</div>
-  <h3>Encontrar e editar um produto</h3>
-  <p>Em <span class="ui">Produtos</span>, digite parte do nome, o SKU ou bipe o código de barras na busca. Clique no produto para ver os detalhes, o histórico e o botão <span class="ui">Editar</span>.</p>
-  <figure><img src="../screenshots/produtos.png" alt=""><figcaption>Lista de produtos com busca, filtros e situação do estoque</figcaption></figure>
+  <p><b>Desligado:</b> para itens que não se repõem por previsão (sacolas, itens sazonais). Continuam com estoque e preço, só não geram pedido automático.</p>
+  <div class="tip"><b>Exemplo</b>Pão de forma: média 10 por dia, máximo 16, entrega em 3 dias. EM = 10 × 3 = <b>30</b>; ES = (16 − 10) × 3 = <b>18</b>; PP = <b>48</b>. Com 48 ou menos, o sistema pede reposição.</div>
+  <p><b>Encontrar e editar:</b> em <span class="ui">Produtos</span>, busque por nome, SKU ou código. As abas filtram por situação. Clique no produto para ver os detalhes, o histórico e o botão <span class="ui">Editar</span>.</p>
+  <figure><img src="../screenshots/produtos.png" alt=""><figcaption>Lista de produtos</figcaption></figure>
 </section>
 
+<!-- 7 -->
 <section>
-  <h2>6. Registrar entrada</h2>
-  <p>Use quando chega mercadoria de um pedido ou quando um item volta para o estoque.</p>
+  <h2>7. Clientes</h2>
+  <p>O cadastro de clientes é opcional. Ele permite identificar o cliente na venda, imprimir o CPF/CNPJ no comprovante e ver o histórico de compras. Menu <span class="ui">Clientes</span>, ou direto no caixa pela tecla <kbd>Ins</kbd> (capítulo 8).</p>
+  <figure><img src="img/clientes.png" alt=""><figcaption>Lista de clientes</figcaption></figure>
+  <h3>Cadastrar</h3>
   <ol class="steps">
-    <li>No menu, clique em <span class="ui">Registrar entrada</span>.</li>
-    <li>Clique no campo <span class="ui">Clique aqui e bipe o produto</span> e bipe o código de barras. Também dá para digitar o nome ou o SKU.</li>
-    <li>Escolha o <span class="ui">Tipo de movimentação</span>: <b>Pedido recebido</b>, <b>Retorno ao estoque</b> ou <b>Ajuste (entrada)</b>.</li>
-    <li>Informe a quantidade (use os botões <kbd>−</kbd> e <kbd>+</kbd> ou digite) e confirme. O sistema pede o seu PIN.</li>
+    <li><span class="ui">Novo cliente</span>. Informe o nome e, se o cliente quiser, CPF ou CNPJ (validado pelos dígitos), telefone, e-mail, nascimento e endereço.</li>
+    <li><b>Privacidade (LGPD):</b> para guardar qualquer dado além do nome, ligue <span class="ui">O cliente autorizou o cadastro dos dados pessoais</span> e escolha como ele autorizou (balcão, telefone…). Sem isso o sistema não salva.</li>
+    <li>“Aceita receber ofertas” é um consentimento separado, só para comunicação de marketing.</li>
   </ol>
-  <div class="tip"><b>Registro rápido</b>Ligando a opção <span class="ui">Registro rápido</span>, cada bipagem registra <b>1 unidade</b> na hora, sem precisar confirmar. É ideal para conferir uma caixa item por item.</div>
-  <p>O saldo do produto é somado automaticamente, e a movimentação fica gravada no histórico (<span class="ui">Movimentações</span>), com data, hora e quem registrou.</p>
+  <figure class="narrow"><img src="img/cliente-form.png" alt=""><figcaption>Cadastro com a autorização do cliente (LGPD)</figcaption></figure>
+  <h3>Consultar e atender pedidos do cliente</h3>
+  <p>Clique no cliente para ver o resumo (número de compras, total e ticket médio), os dados e as compras. Gerente e administrador também têm:</p>
+  <table>
+    <tr><th style="width:30%">Botão</th><th>Quando usar</th></tr>
+    <tr><td><span class="ui">Inativar</span></td><td>Cliente que não compra mais: some das buscas do caixa, o histórico continua.</td></tr>
+    <tr><td><span class="ui">Exportar dados</span></td><td>O cliente pediu uma cópia dos dados: baixa um arquivo com o cadastro e as compras para entregar a ele.</td></tr>
+    <tr><td><span class="ui">Apagar dados (LGPD)</span></td><td>O cliente pediu a exclusão: nome, CPF, telefone, e-mail, endereço e observações são apagados <b>definitivamente</b>. As compras continuam registradas, sem identificar a pessoa. Se ele pediu também a cópia, exporte antes.</td></tr>
+  </table>
 </section>
 
+<!-- 8 -->
 <section>
-  <h2>7. Registrar saída</h2>
-  <p>Use para vendas e para tudo que sai do estoque.</p>
-  <figure><img src="../screenshots/saida.png" alt=""><figcaption>Registro de saída com o alerta de reposição</figcaption></figure>
+  <h2>8. Frente de caixa</h2>
+  <p>A frente de caixa ocupa a tela inteira e funciona <strong>toda pelo teclado</strong>; as teclas também aparecem como botões para telas touch. O operador de caixa entra direto nela; os demais perfis usam o menu <span class="ui">Frente de caixa</span>.</p>
+
+  <h3>8.1 Abrir o caixa</h3>
   <ol class="steps">
-    <li>No menu, clique em <span class="ui">Registrar saída</span>.</li>
-    <li>Bipe ou busque o produto.</li>
-    <li>Escolha o tipo: <b>Venda</b>, <b>Perda / quebra / vencimento</b> ou <b>Ajuste (saída)</b>.</li>
-    <li>Informe a quantidade e confirme com o seu PIN.</li>
+    <li>Confira o nome do <b>terminal</b> (ex.: <i>Caixa 01</i>). Cada computador de caixa tem um nome diferente, que fica salvo nele.</li>
+    <li>Conte o dinheiro de troco colocado na gaveta e digite em <span class="ui">Troco inicial</span>.</li>
+    <li>Clique em <span class="ui">Abrir caixa</span>. A abertura precisa de conexão com o computador principal.</li>
   </ol>
-  <p>Se, depois da saída, o produto atingir o <b>ponto de pedido</b>, aparece um <strong>alerta de reposição</strong> e o sistema cria automaticamente uma <strong>solicitação de pedido</strong> (capítulo 8).</p>
-  <div class="warn"><b>Estoque insuficiente</b>Por padrão, o sistema não deixa a saída ser maior que o saldo. Se isso acontecer, confira o estoque físico e registre um ajuste. O administrador pode mudar essa regra em <span class="ui">Configurações</span>.</div>
+  <figure class="half"><img src="img/caixa-abrir.png" alt=""><figcaption>Abertura do caixa</figcaption></figure>
+
+  <h3>8.2 Registrar uma venda</h3>
+  <figure><img src="img/caixa-com-cliente.png" alt=""><figcaption>Esquerda: busca e itens. Direita: item selecionado, cliente, total e atalhos. Rodapé: caixa, operador e conexão.</figcaption></figure>
+  <ol class="steps">
+    <li><b>Bipe</b> o produto. Ele entra no cupom com um bipe curto; bipar de novo soma a quantidade.</li>
+    <li>Sem código: digite parte do <b>nome</b> ou o <b>SKU</b>, escolha com <kbd>↑</kbd> <kbd>↓</kbd> e tecle <kbd>Enter</kbd>.</li>
+    <li><b>Várias unidades:</b> quantidade, asterisco e código: <code>3*7891234567890</code>.</li>
+    <li><b>Quantidade e peso:</b> <kbd>F2</kbd> (aceita <code>0,455</code> kg) ou <kbd>+</kbd> / <kbd>−</kbd>.</li>
+    <li><b>Remover item:</b> <kbd>Del</kbd>. <b>Cancelar o cupom inteiro:</b> <kbd>Esc</kbd>. Os dois ficam na auditoria.</li>
+    <li>Ao terminar, tecle <kbd>F5</kbd> (Finalizar venda).</li>
+  </ol>
+  <div class="pair">
+    <figure><img src="img/caixa-busca.png" alt=""><figcaption>Busca por nome, com preço e estoque</figcaption></figure>
+    <figure><img src="img/caixa-quantidade.png" alt=""><figcaption>Quantidade ou peso (F2)</figcaption></figure>
+  </div>
+
+  <h3>8.3 Cliente e CPF na nota (<kbd>Ins</kbd>)</h3>
+  <ol class="steps">
+    <li>Tecle <kbd>Ins</kbd> e busque o cliente por nome, CPF ou telefone. <kbd>Enter</kbd> escolhe.</li>
+    <li>Só o <b>CPF/CNPJ na nota</b>, sem cadastro: digite o documento e tecle <kbd>Enter</kbd> (ou <span class="ui">Usar só o documento</span>).</li>
+    <li><span class="ui">Cadastrar cliente</span> faz um cadastro rápido, com a autorização do cliente (LGPD).</li>
+  </ol>
+  <figure class="half"><img src="img/caixa-cliente-busca.png" alt=""><figcaption>Cliente da venda</figcaption></figure>
+  <p>O cliente e o documento saem no comprovante. Sem internet, a busca usa os clientes salvos no computador do caixa; o cadastro de cliente novo precisa de conexão.</p>
+
+  <h3>8.4 Descontos e autorização do gerente</h3>
+  <p><kbd>F3</kbd>: desconto no item selecionado. <kbd>F4</kbd>: no total. Escolha <b>%</b> ou <b>R$</b>. Acima do limite do operador, abre a <span class="ui">Autorização do supervisor</span>: o gerente digita o próprio usuário e PIN ali mesmo.</p>
+  <div class="pair">
+    <figure><img src="img/caixa-desconto.png" alt=""><figcaption>Desconto no total</figcaption></figure>
+    <figure><img src="img/caixa-supervisor.png" alt=""><figcaption>Gerente autorizando com o PIN</figcaption></figure>
+  </div>
+
+  <h3>8.5 Pagamento e troco</h3>
+  <ol class="steps">
+    <li>Escolha a forma de pagamento pelas teclas mostradas em cada botão (<kbd>F1</kbd> a <kbd>F4</kbd>, <kbd>F6</kbd> a <kbd>F9</kbd>, conforme a ordem em Configurações).</li>
+    <li>Digite o valor e tecle <kbd>Enter</kbd>. O sistema sugere o valor que falta.</li>
+    <li>Para <b>misturar</b> formas (ex.: R$ 20 no PIX + o resto em dinheiro), lance uma, depois a outra.</li>
+    <li>No dinheiro, o <b>troco</b> aparece em verde enquanto você digita. Use os botões de notas.</li>
+    <li>Quando fechar, tecle <kbd>F5</kbd> para confirmar.</li>
+  </ol>
+  <figure><img src="img/pagamento-formas.png" alt=""><figcaption>Pagamento com as formas cadastradas</figcaption></figure>
+  <div class="tip"><b>Regras</b>Troco só sai de forma que “dá troco” (o dinheiro). Formas marcadas como “exige cliente” só ficam disponíveis com o cliente identificado (<kbd>Ins</kbd>).</div>
+
+  <h3>8.6 Comprovante, PDF e orçamento</h3>
+  <p>Ao confirmar, aparece <b>Venda concluída</b> com o número e o troco. Escolha <span class="ui">Imprimir</span> ou <span class="ui">PDF</span>; <kbd>Esc</kbd> começa a próxima venda.</p>
+  <div class="pair">
+    <figure><img src="../screenshots/pdv-venda-concluida.png" alt=""><figcaption>Venda concluída</figcaption></figure>
+    <figure class="receipt"><img src="../screenshots/pdv-comprovante-80mm.png" alt=""><figcaption>Comprovante não fiscal de 80 mm</figcaption></figure>
+  </div>
+  <p><b>Orçamento (<kbd>F8</kbd>):</b> com itens no cupom, gera um orçamento em A4 ou PDF. Não é venda e não baixa estoque.</p>
+  <figure class="half"><img src="img/caixa-orcamento.png" alt=""><figcaption>Orçamento</figcaption></figure>
+
+  <h3>8.7 Sangria e suprimento (<kbd>F6</kbd>)</h3>
+  <p><b>Sangria</b> é retirar dinheiro da gaveta; <b>suprimento</b>, colocar. A justificativa é obrigatória, o operador precisa da autorização de um gerente e sai um comprovante para assinatura. A sangria não pode passar do dinheiro esperado na gaveta.</p>
+  <figure class="half"><img src="img/caixa-sangria.png" alt=""><figcaption>Sangria para o cofre</figcaption></figure>
+
+  <h3>8.8 Reimprimir e cancelar vendas (<kbd>F7</kbd>)</h3>
+  <p><kbd>F7</kbd> lista as vendas do caixa aberto. Clique numa venda para <span class="ui">Reimprimir</span> (2ª via), gerar <span class="ui">PDF</span> ou <span class="ui">Cancelar venda</span> com motivo: os produtos <b>voltam ao estoque</b>. O operador precisa da autorização do gerente; só dá para cancelar vendas do caixa ainda aberto.</p>
+  <div class="pair">
+    <figure><img src="img/caixa-vendas.png" alt=""><figcaption>Vendas deste caixa</figcaption></figure>
+    <figure><img src="img/caixa-venda-detalhe.png" alt=""><figcaption>Reimprimir, PDF ou cancelar</figcaption></figure>
+  </div>
+
+  <h3>8.9 Trocar de operador (<kbd>F9</kbd>)</h3>
+  <p>Com o cupom vazio, o próximo operador digita o usuário e o PIN. O caixa continua aberto e as vendas seguintes ficam no nome dele.</p>
+  <figure class="half"><img src="img/caixa-trocar-operador.png" alt=""><figcaption>Troca de operador</figcaption></figure>
+
+  <h3>8.10 Fechar o caixa (<kbd>F10</kbd>)</h3>
+  <ol class="steps">
+    <li>Com o cupom vazio, tecle <kbd>F10</kbd>. Aparece o resumo: vendas, totais por forma de pagamento, troco inicial, sangrias, suprimentos e o <b>dinheiro esperado na gaveta</b>.</li>
+    <li><b>Conte o dinheiro</b> e digite em <span class="ui">Dinheiro contado</span>. O sistema mostra se <b>confere</b>, tem <b>falta</b> ou <b>sobra</b>.</li>
+    <li>Clique em <span class="ui">Fechar caixa e imprimir</span>. O relatório sai para assinatura.</li>
+  </ol>
+  <figure class="half"><img src="../screenshots/pdv-fechamento.png" alt=""><figcaption>Fechamento com a conferência do dinheiro</figcaption></figure>
+
+  <h3>8.11 Tabela de atalhos</h3>
+  <table>
+    <tr><th style="width:20%">Tecla</th><th>Ação</th></tr>
+    <tr><td><kbd>F1</kbd></td><td>Busca de produto</td></tr>
+    <tr><td><kbd>F2</kbd></td><td>Quantidade do item selecionado</td></tr>
+    <tr><td><kbd>F3</kbd> / <kbd>F4</kbd></td><td>Desconto no item / no total</td></tr>
+    <tr><td><kbd>F5</kbd></td><td>Finalizar venda (no pagamento: confirmar)</td></tr>
+    <tr><td><kbd>F6</kbd></td><td>Sangria / suprimento</td></tr>
+    <tr><td><kbd>F7</kbd></td><td>Vendas do caixa (reimprimir, cancelar)</td></tr>
+    <tr><td><kbd>F8</kbd></td><td>Orçamento</td></tr>
+    <tr><td><kbd>F9</kbd></td><td>Trocar operador</td></tr>
+    <tr><td><kbd>F10</kbd></td><td>Fechar caixa</td></tr>
+    <tr><td><kbd>Ins</kbd></td><td>Cliente da venda / CPF na nota</td></tr>
+    <tr><td><kbd>Del</kbd> · <kbd>Esc</kbd></td><td>Remover item · fechar janela ou cancelar a venda</td></tr>
+    <tr><td><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>+</kbd> <kbd>−</kbd></td><td>Selecionar item · mudar quantidade</td></tr>
+    <tr><td>No pagamento</td><td><kbd>F1</kbd>–<kbd>F4</kbd>, <kbd>F6</kbd>–<kbd>F9</kbd>: formas de pagamento · <kbd>Enter</kbd> lança o valor</td></tr>
+  </table>
+  <div class="tip"><b>A venda em andamento não se perde</b>Se a página fechar ou o computador travar no meio de uma venda, o cupom continua lá ao abrir o caixa de novo.</div>
 </section>
 
+<!-- 9 -->
 <section>
-  <h2>8. Alertas e solicitações de pedido</h2>
+  <h2>9. Entradas e saídas de estoque</h2>
+  <p>As vendas do caixa já baixam o estoque sozinhas. Estas telas são para o que <b>não</b> passa pelo caixa.</p>
+  <h3>Registrar entrada</h3>
+  <ol class="steps">
+    <li>Menu <span class="ui">Registrar entrada</span>. Escolha <b>Pedido recebido</b> ou <b>Retorno ao estoque</b>.</li>
+    <li>Bipe o produto (ou digite o nome ou SKU), informe a quantidade e confirme com o PIN.</li>
+  </ol>
+  <figure><img src="img/entrada.png" alt=""><figcaption>Registrar entrada pela bipagem</figcaption></figure>
+  <div class="tip"><b>Registro rápido</b>Ligado, cada bipagem registra 1 unidade na hora, sem confirmar. Ideal para conferir uma caixa item por item.</div>
+  <h3>Registrar saída (perdas)</h3>
+  <p>Menu <span class="ui">Registrar saída</span>, tipo <b>Perda / quebra / vencimento</b>, para produtos estragados, quebrados ou vencidos.</p>
+  <div class="warn"><b>Ajustes de inventário</b>Os tipos <b>Ajuste (entrada)</b> e <b>Ajuste (saída)</b>, usados depois de contar o estoque, só aparecem para o <b>administrador</b>.</div>
+  <h3>Movimentações</h3>
+  <p>Menu <span class="ui">Movimentações</span>: histórico completo, com filtros por tipo e período. As vendas aparecem como <i>Venda</i> e os cancelamentos como <i>Estorno de venda cancelada</i>.</p>
+  <figure><img src="img/movimentacoes.png" alt=""><figcaption>Histórico de movimentações</figcaption></figure>
+</section>
+
+<!-- 10 -->
+<section>
+  <h2>10. Alertas e solicitações de pedido</h2>
   <h3>Situação de cada produto</h3>
   <table>
     <tr><th style="width:24%">Situação</th><th>Quando aparece</th></tr>
@@ -336,164 +518,194 @@
     <tr><td><span class="badge b-out">Sem estoque</span></td><td>Saldo zerado (ruptura).</td></tr>
   </table>
   <h3>Solicitações de pedido</h3>
-  <p>Quando um produto chega ao ponto de pedido, o sistema gera uma solicitação com o <b>SKU</b>, os dados do item e a <b>quantidade sugerida</b>, que aparece em <span class="ui">Solicitações de pedido</span> para a gestão.</p>
-  <figure><img src="../screenshots/pedidos.png" alt=""><figcaption>Solicitações de pedido geradas automaticamente</figcaption></figure>
+  <p>Quando um produto com reposição ligada chega ao ponto de pedido, o sistema cria uma solicitação com a <b>quantidade sugerida</b> em <span class="ui">Solicitações de pedido</span>.</p>
+  <figure><img src="../screenshots/pedidos.png" alt=""><figcaption>Solicitações de pedido</figcaption></figure>
   <ol class="steps">
-    <li><b>Pendente</b>: a solicitação foi gerada. Ao fazer o pedido ao fornecedor, clique em <span class="ui">Pedido feito</span>. Se não for pedir, clique em <span class="ui">Cancelar</span>.</li>
-    <li><b>Pedido feito</b>: quando a mercadoria chegar, clique em <span class="ui">Recebido</span>.</li>
-    <li>Em seguida, <strong>registre a entrada</strong> da mercadoria (capítulo 6) para o saldo ser atualizado.</li>
+    <li><b>Pendente:</b> ao pedir ao fornecedor, clique em <span class="ui">Pedido feito</span> (ou <span class="ui">Cancelar</span>).</li>
+    <li><b>Pedido feito:</b> quando a mercadoria chegar, clique em <span class="ui">Recebido</span>.</li>
+    <li>Registre a entrada da mercadoria (capítulo 9) para atualizar o saldo.</li>
   </ol>
-  <div class="tip"><b>Como a quantidade é sugerida</b><span class="formula">ES + consumo médio × (prazo + dias de cobertura) − saldo atual</span>. Os <i>dias de cobertura</i> (padrão: 7) são ajustados em <span class="ui">Configurações</span>.</div>
+  <div class="tip"><b>Quantidade sugerida</b><span class="formula">ES + consumo médio × (prazo + dias de cobertura) − saldo atual</span>. Os dias de cobertura (padrão 7) ficam em <span class="ui">Configurações</span>.</div>
 </section>
 
+<!-- 11 -->
 <section>
-  <h2>9. Relatórios</h2>
+  <h2>11. Relatórios de estoque</h2>
   <figure><img src="../screenshots/relatorios.png" alt=""><figcaption>Relatório de movimentações por período</figcaption></figure>
-  <ol class="steps">
-    <li>No menu, clique em <span class="ui">Relatórios</span>.</li>
-    <li>Escolha o período: <b>Hoje</b>, <b>7 dias</b>, <b>30 dias</b>, <b>Este mês</b> ou <b>Personalizado</b> (de/até).</li>
-    <li>O relatório é <b>geral</b>. Para ver <b>um item específico</b>, digite o nome ou o SKU no campo <span class="ui">Filtrar produto...</span>, acima da tabela.</li>
-  </ol>
+  <p>Menu <span class="ui">Relatórios</span>. Escolha o período e, se quiser, filtre um produto.</p>
   <table>
     <tr><th style="width:30%">Aba</th><th>O que mostra</th></tr>
     <tr><td><b>Por produto</b></td><td>Entradas, saídas e saldo de cada produto no período.</td></tr>
     <tr><td><b>Estoque parado</b></td><td>Produtos sem nenhuma saída no período.</td></tr>
-    <tr><td><b>Rupturas</b></td><td>Produtos que estão sem estoque.</td></tr>
-    <tr><td><b>Solicitações de pedido</b></td><td>Todas as solicitações emitidas no período.</td></tr>
+    <tr><td><b>Rupturas</b></td><td>Produtos sem estoque.</td></tr>
+    <tr><td><b>Solicitações de pedido</b></td><td>As solicitações emitidas no período.</td></tr>
   </table>
-  <p>Use <span class="ui">Imprimir</span> para gerar uma versão em papel (ou PDF) e <span class="ui">Exportar Excel (CSV)</span> para abrir a planilha no Excel.</p>
+  <p><span class="ui">Imprimir</span> gera papel ou PDF; <span class="ui">Exportar Excel (CSV)</span> abre no Excel.</p>
 </section>
 
+<!-- 12 -->
 <section>
-  <h2>10. Excluir e recuperar produtos</h2>
-  <p>Quando um produto deixa de ser vendido, ele pode ser excluído. A exclusão tem uma <strong>“reciclagem”</strong> para os casos de engano:</p>
+  <h2>12. Gerência: vendas e caixas</h2>
+  <h3>Relatório de vendas</h3>
+  <p>Menu <span class="ui">Vendas</span>. Escolha o período (<i>Hoje, 7 dias, 30 dias</i> ou datas) para ver o <b>total vendido</b>, o número de vendas, o <b>ticket médio</b>, os <b>descontos</b>, a <b>margem bruta</b> (com o custo cadastrado), os valores por <b>forma de pagamento</b>, os <b>produtos mais vendidos</b> e as vendas por operador. Abaixo fica a lista de vendas: busque pelo número ou filtre as canceladas, e clique numa venda para reimprimir, gerar PDF ou cancelar. <span class="ui">Exportar CSV</span> abre no Excel.</p>
+  <figure><img src="../screenshots/vendas.png" alt=""><figcaption>Relatório de vendas do período</figcaption></figure>
+  <h3>Caixas</h3>
+  <p>Menu <span class="ui">Caixas</span>: todos os turnos, com quem abriu e fechou, o dinheiro esperado, o contado e a <b>diferença</b> (falta em vermelho, sobra em amarelo). Reimprima ou baixe em PDF o relatório de qualquer fechamento.</p>
+  <figure><img src="../screenshots/caixas.png" alt=""><figcaption>Conferência dos caixas</figcaption></figure>
+  <h3>Painel</h3>
+  <p>A tela inicial mostra as vendas de hoje (gerente e administrador), os indicadores de estoque, os alertas de reposição e as últimas movimentações. No primeiro uso, um aviso de boas-vindas leva a este manual.</p>
+  <figure><img src="img/painel.png" alt=""><figcaption>Painel</figcaption></figure>
+</section>
+
+<!-- 13 -->
+<section>
+  <h2>13. Excluir e recuperar produtos</h2>
   <ol class="steps">
-    <li>Abra o produto e clique em <span class="ui">Excluir</span> e depois em <span class="ui">Mover para a lixeira</span> (o PIN é pedido).</li>
-    <li>O produto vai para a <span class="ui">Lixeira</span> e some das listas, mas pode ser recuperado com <span class="ui">Restaurar</span> durante o prazo (padrão: <b>15 dias</b>).</li>
-    <li>Passado o prazo, ele é <strong>apagado definitivamente</strong>, junto com todo o histórico de movimentações e solicitações. O administrador também pode usar <span class="ui">Excluir definitivamente</span> antes do prazo.</li>
+    <li>Abra o produto e clique em <span class="ui">Excluir</span> › <span class="ui">Mover para a lixeira</span> (o PIN é pedido).</li>
+    <li>O produto some das listas, mas pode voltar com <span class="ui">Restaurar</span> durante o prazo (padrão: <b>15 dias</b>), em <span class="ui">Lixeira</span>.</li>
+    <li>Passado o prazo, ele é <b>apagado definitivamente</b>, com o histórico. Produtos que já foram <b>vendidos no caixa</b> nunca são apagados de vez: o histórico de vendas é preservado.</li>
   </ol>
   <div class="warn"><b>Atenção</b>A exclusão definitiva não pode ser desfeita.</div>
 </section>
 
+<!-- 14 -->
 <section>
-  <h2>11. Usuários e permissões</h2>
-  <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: assim o sistema registra quem fez cada operação.</p>
+  <h2>14. Impressoras</h2>
+  <p>O sistema imprime comprovante de venda, orçamento, sangria/suprimento e fechamento de caixa. Todo comprovante traz <b>“Documento Não Fiscal — Sem Valor Fiscal”</b>.</p>
+  <h3>Térmica USB ou serial (mais comum)</h3>
   <ol class="steps">
-    <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
-    <li>Preencha <span class="ui">Nome completo</span>, o <span class="ui">E-mail</span> (obrigatório para administradores, opcional para os demais), o perfil (<b>Administrador</b>, <b>Estoquista</b> ou <b>Caixa</b>), o <span class="ui">Login (usuário)</span> (ex.: <i>maria.silva</i>) e uma <span class="ui">Senha provisória</span>.</li>
-    <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o próprio PIN e lê o termo de uso.</li>
+    <li>Instale o <b>driver do fabricante</b> (Epson, Elgin, Bematech, Daruma, Tanca…) e imprima uma página de teste pelo Windows.</li>
+    <li>Em Configurações, escolha <b>Bobina 80 mm</b> (ou 58 mm) e <b>Impressora do Windows</b>.</li>
+    <li>Na primeira impressão, escolha a térmica, <i>Margens: nenhuma</i> e desmarque <i>Cabeçalhos e rodapés</i>. O navegador lembra a escolha.</li>
   </ol>
-  <figure class="narrow"><img src="../screenshots/novo-usuario.png" alt=""><figcaption>Cadastro de usuário: o e-mail é obrigatório para administradores</figcaption></figure>
-  <figure><img src="../screenshots/usuarios.png" alt=""><figcaption>Lista de usuários com perfil, situação e último acesso</figcaption></figure>
-  <table>
-    <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
-    <tr><td>Funcionário esqueceu a senha</td><td>Com e-mail cadastrado: ele mesmo usa <span class="ui">Esqueci minha senha</span>. Sem e-mail: <span class="ui">Redefinir senha</span>, e ele recebe uma nova senha provisória.</td></tr>
-    <tr><td>Funcionário esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
-    <tr><td>Funcionário saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
-    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, use <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 14).</td></tr>
-  </table>
-  <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, cadastros, exclusões e alterações, com data, hora e usuário.</p>
-  <p>Cada pessoa pode trocar a própria senha e o PIN em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
+  <div class="tip"><b>Imprimir sem a janela de confirmação</b>Crie um atalho com o destino:<pre>"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --kiosk-printing --app=http://localhost:3000/caixa</pre>e defina a térmica como impressora padrão do Windows. A gaveta de dinheiro ligada à impressora USB abre pelo driver (opção “abrir gaveta”).</div>
+  <h3>Térmica de rede (ESC/POS)</h3>
+  <ol class="steps">
+    <li>Ligue a impressora na rede e descubra o IP dela (folha de autoteste).</li>
+    <li>Em Configurações, escolha <b>Térmica de rede direta</b>, informe o IP e a porta (normalmente 9100) e salve.</li>
+    <li><span class="ui">Imprimir página de teste</span> e confira os acentos. Se quiser, ligue <b>Abrir a gaveta nas vendas em dinheiro</b>.</li>
+  </ol>
+  <p>Nesse modo a impressão é imediata, sem janela. Se a impressora não responder, o sistema avisa e imprime pelo navegador.</p>
+  <h3>A4 e PDF</h3>
+  <p>Escolha <b>Folha A4</b> para impressoras comuns. O orçamento sai sempre em A4. Em qualquer comprovante, o botão <span class="ui">PDF</span> gera o arquivo, mesmo sem internet.</p>
 </section>
 
+<!-- 15 -->
 <section>
-  <h2>12. Configurações</h2>
-  <p><i>Somente o administrador.</i> Em <span class="ui">Configurações</span>:</p>
-  <figure><img src="../screenshots/configuracoes.png" alt=""><figcaption>Configurações do sistema</figcaption></figure>
-  <table>
-    <tr><th style="width:36%">Opção</th><th>O que faz</th></tr>
-    <tr><td><b>PIN exigido para…</b></td><td>Escolhe quais operações pedem o PIN: registrar saída, registrar entrada, cadastrar ou editar produto e excluir produto. Por padrão, todas pedem.</td></tr>
-    <tr><td><b>Dias de cobertura do pedido sugerido</b></td><td>Para quantos dias a quantidade sugerida deve durar depois da entrega (padrão: 7).</td></tr>
-    <tr><td><b>Permitir estoque negativo</b></td><td>Se ligado, permite registrar saída maior que o saldo (padrão: desligado).</td></tr>
-    <tr><td><b>Dias até a exclusão definitiva</b></td><td>Por quanto tempo os produtos excluídos ficam na lixeira (padrão: 15).</td></tr>
-    <tr><td><b>Recuperação de senha por e-mail</b></td><td>Conta de e-mail que envia os códigos de “Esqueci minha senha” (veja abaixo).</td></tr>
-    <tr><td><b>Empresa e privacidade (LGPD)</b></td><td>Razão social, CNPJ, endereço e o <b>encarregado de dados</b> (nome e e-mail). Aparecem no termo de uso.</td></tr>
-  </table>
-  <h3>Ativar a recuperação de senha com uma conta Gmail</h3>
+  <h2>15. Backup</h2>
+  <h3>Aplicativo: automático no Google Drive</h3>
   <ol class="steps">
-    <li>Na Conta Google da loja, ative a <b>Verificação em duas etapas</b> (myaccount.google.com › Segurança).</li>
-    <li>Abra <b>myaccount.google.com/apppasswords</b>, crie uma <b>senha de app</b> chamada “V&amp;L Estoque” e copie os 16 caracteres.</li>
-    <li>Em <span class="ui">Configurações</span> › <span class="ui">Recuperação de senha por e-mail</span>, escolha <b>Gmail</b>, informe o e-mail da conta e cole a senha de app. Clique em <span class="ui">Salvar</span>.</li>
-    <li>Clique em <span class="ui">Enviar e-mail de teste</span>. Se a mensagem chegar ao seu e-mail (cadastrado em <span class="ui">Meu perfil</span>), está tudo certo: o selo muda para <b>Ativa</b>.</li>
+    <li>Instale o <b>Google Drive para computador</b> e entre com a conta Google da loja.</li>
+    <li>Feche e abra o sistema. Ele encontra a pasta <b>Meu Drive</b> e avisa: <i>“Backup automático no Google Drive ativado”</i>.</li>
   </ol>
-  <figure class="half"><img src="../screenshots/config-email.png" alt=""><figcaption>Recuperação de senha por e-mail configurada com Gmail (selo “Ativa”)</figcaption></figure>
-  <div class="tip"><b>Segurança</b>Use a <b>senha de app</b>, nunca a senha normal do Gmail. Ela fica guardada criptografada e pode ser revogada a qualquer momento na Conta Google.</div>
+  <p>Uma cópia é salva <b>ao abrir, a cada 4 horas e ao fechar</b>, na pasta <b>Meu Drive › VL Estoque - Backups</b>. Ficam os <b>últimos 30 dias</b>. Sem o Drive, os backups ficam em <i>%LOCALAPPDATA%\VLEstoque\backups</i>.</p>
+  <p><b>Computador novo ou com defeito:</b> instale o Google Drive (mesma conta) e o aplicativo. Na primeira abertura, o sistema encontra o backup e pergunta se deseja restaurar: clique em <span class="ui">Restaurar dados</span>.</p>
+  <h3>Código-fonte: cópia manual</h3>
+  <ol class="steps">
+    <li>Desligue o sistema (feche a janela preta).</li>
+    <li>Copie a pasta do banco (<code>DB_DATA_DIR</code>) <b>e</b> o arquivo <i>apps\api\.env</i> para um pen drive ou HD externo. Sem o <i>.env</i>, o banco copiado não abre.</li>
+    <li>Faça pelo menos uma vez por semana e guarde fora da loja.</li>
+  </ol>
+  <div class="danger"><b>Nunca coloque a pasta viva do banco no OneDrive ou no Google Drive</b>A sincronização pode corromper o banco enquanto o sistema está ligado. Só os arquivos de backup podem ir para a nuvem.</div>
 </section>
 
+<!-- 16 -->
 <section>
-  <h2>13. Backup no Google Drive</h2>
-  <p>O sistema guarda os dados no próprio computador e faz <strong>cópias de segurança automáticas no Google Drive</strong>. Assim, se o computador der defeito, nada se perde.</p>
-  <h3>Como ativar (uma vez só)</h3>
-  <ol class="steps">
-    <li>Instale o <b>Google Drive para computador</b> (google.com/drive/download) e entre com a conta Google da loja.</li>
-    <li>Feche e abra o V&amp;L Estoque. Ele encontra a pasta <b>Meu Drive</b> sozinho e avisa: <i>“Backup automático no Google Drive ativado”</i>.</li>
-  </ol>
-  <p>A partir daí, uma cópia é salva <b>ao abrir, a cada 4 horas e ao fechar</b> o sistema, na pasta <b>Meu Drive › VL Estoque - Backups</b>. Ficam guardados os backups dos <b>últimos 30 dias</b>.</p>
-  <h3>Computador novo ou com defeito</h3>
-  <ol class="steps">
-    <li>No computador novo, instale o Google Drive (com a mesma conta) e o V&amp;L Estoque.</li>
-    <li>Na primeira abertura, o sistema encontra o backup e pergunta: <i>“Deseja restaurar os produtos, movimentações e usuários?”</i>. Clique em <span class="ui">Restaurar dados</span>.</li>
-    <li>Entre com os usuários e senhas de sempre.</li>
-  </ol>
-  <div class="warn"><b>Importante</b>Se o Google Drive estiver fechado ou sem internet, o backup é guardado no próprio computador e enviado ao Drive quando ele voltar. Mantenha o Google Drive sempre aberto.</div>
-</section>
-
-<section>
-  <h2>14. Privacidade e LGPD</h2>
-  <p>O V&amp;L Estoque trata dados pessoais de quem usa o sistema (nome, login, e-mail e o registro das ações). Ele foi feito para ajudar a empresa a cumprir a <b>Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</b>.</p>
+  <h2>16. Privacidade e LGPD</h2>
+  <p>O sistema trata dados pessoais de quem o usa (nome, login, e-mail e registro das ações) e, na frente de caixa, dos <b>clientes cadastrados</b>. Ele ajuda a empresa a cumprir a <b>LGPD (Lei nº 13.709/2018)</b>.</p>
   <h3>Termo de Uso e Política de Privacidade</h3>
-  <p>Explica quais dados são tratados, para quê, por quanto tempo e quais são os direitos de cada pessoa. Todo usuário dá ciência dele no primeiro acesso, e ele fica sempre disponível em <span class="ui">Termos e privacidade</span>, no menu lateral, e no link da tela de login. Se o termo for atualizado, o sistema pede uma nova leitura.</p>
-  <div class="warn"><b>Para o administrador</b>Preencha os dados da empresa e do <b>encarregado de dados</b> em <span class="ui">Configurações</span> › <span class="ui">Empresa e privacidade</span>. O encarregado é a pessoa que responde aos pedidos dos funcionários sobre os seus dados.</div>
-  <h3>Direitos de cada pessoa</h3>
+  <p>Explica quais dados são tratados, para quê, por quanto tempo e os direitos de cada pessoa, inclusive dos clientes. Todo usuário dá ciência no primeiro acesso; o termo fica sempre em <span class="ui">Termos e privacidade</span>, no menu, e no link da tela de login. Se o termo mudar, o sistema pede nova leitura (e, enquanto isso, guarda as vendas offline do usuário sem perdê-las).</p>
+  <div class="warn"><b>Para o administrador</b>Preencha os dados da empresa e do <b>encarregado de dados</b> em <span class="ui">Configurações</span> › <span class="ui">Empresa e privacidade</span>. O texto do termo é um modelo: revise com um profissional jurídico.</div>
+  <h3>Direitos dos usuários (funcionários)</h3>
   <table>
-    <tr><th style="width:36%">Direito</th><th>Como exercer no sistema</th></tr>
-    <tr><td>Ver os próprios dados (acesso e portabilidade)</td><td><span class="ui">Meu perfil</span> › <span class="ui">Baixar meus dados</span>: gera um arquivo com o cadastro, o registro de auditoria e as operações feitas com o usuário.</td></tr>
-    <tr><td>Corrigir o e-mail</td><td><span class="ui">Meu perfil</span> › <span class="ui">E-mail para recuperar a senha</span>, confirmando com a senha atual.</td></tr>
-    <tr><td>Corrigir o nome</td><td>Pedir a um administrador (<span class="ui">Usuários</span> › <span class="ui">Editar</span>).</td></tr>
-    <tr><td>Eliminação ou anonimização</td><td>O administrador desativa o usuário e usa <span class="ui">Anonimizar dados (LGPD)</span>. Nome, login, e-mail, senha, PIN e endereços IP são apagados; as movimentações continuam no histórico sem identificar a pessoa. Não pode ser desfeito.</td></tr>
+    <tr><th style="width:34%">Direito</th><th>Como exercer</th></tr>
+    <tr><td>Ver os próprios dados</td><td><span class="ui">Meu perfil</span> › <span class="ui">Baixar meus dados</span>: cadastro, auditoria, operações de estoque, vendas feitas e caixas abertos.</td></tr>
+    <tr><td>Corrigir o e-mail</td><td><span class="ui">Meu perfil</span>, confirmando com a senha atual.</td></tr>
+    <tr><td>Corrigir o nome</td><td>Pedir a um administrador.</td></tr>
+    <tr><td>Eliminação ou anonimização</td><td>O administrador desativa o usuário e usa <span class="ui">Anonimizar dados (LGPD)</span>. As operações continuam no histórico sem identificar a pessoa.</td></tr>
   </table>
+  <figure class="half"><img src="img/perfil-privacidade.png" alt=""><figcaption>Meu perfil › Privacidade</figcaption></figure>
+  <h3>Direitos dos clientes</h3>
+  <p>O cliente pede a um gerente ou administrador, que no cadastro dele usa <span class="ui">Exportar dados</span> ou <span class="ui">Apagar dados (LGPD)</span> (capítulo 7). Dados pessoais de clientes só são guardados com a <b>autorização registrada</b>, e ofertas exigem consentimento separado.</p>
   <p>O prazo legal para responder aos pedidos é de <b>15 dias</b>.</p>
-  <figure class="half"><img src="../screenshots/perfil-privacidade.png" alt=""><figcaption>Meu perfil › Privacidade (LGPD)</figcaption></figure>
-  <figure class="half"><img src="../screenshots/usuarios-anonimizar.png" alt=""><figcaption>Usuários › menu ⋯ de um usuário desativado › Anonimizar dados (LGPD)</figcaption></figure>
-  <figure class="half"><img src="../screenshots/config-empresa.png" alt=""><figcaption>Configurações › Empresa e privacidade: dados que aparecem no termo</figcaption></figure>
   <h3>O que o sistema faz sozinho</h3>
   <ul>
-    <li>Guarda senhas e PINs de forma <b>irreversível</b> (ninguém consegue vê-los).</li>
-    <li>Apaga o <b>endereço IP</b> dos registros de auditoria depois de <b>12 meses</b>.</li>
-    <li>Apaga os <b>códigos de recuperação de senha</b> em até 1 dia.</li>
-    <li>Registra na auditoria quem aceitou o termo, quem baixou os próprios dados e quem anonimizou um usuário.</li>
+    <li>Guarda senhas e PINs de forma <b>irreversível</b>.</li>
+    <li>Guarda a senha da conta de e-mail de envio <b>criptografada</b>.</li>
+    <li>Apaga o <b>endereço IP</b> da auditoria depois de <b>12 meses</b> e os códigos de recuperação em até 1 dia.</li>
+    <li>Apaga do computador do caixa a cópia dos clientes ao sair do sistema.</li>
+    <li>Registra na auditoria aceites do termo, exportações e anonimizações.</li>
   </ul>
 </section>
 
+<!-- 17 -->
 <section>
-  <h2>15. Celular e uso sem internet</h2>
-  <h3>Sem internet</h3>
-  <p>No computador da loja, o V&amp;L Estoque <strong>funciona normalmente sem internet</strong>: o banco de dados fica no próprio computador. A internet só é usada pelo Google Drive para enviar os backups.</p>
-  <h3>Usar no celular (mesma rede Wi-Fi)</h3>
+  <h2>17. Celular e uso sem internet</h2>
+  <h3>Outros computadores, tablets e celulares</h3>
   <ol class="steps">
-    <li>Com o sistema aberto no computador da loja, descubra o endereço IP do computador (ex.: <i>192.168.0.10</i>).</li>
-    <li>No celular, conectado ao <b>mesmo Wi-Fi</b>, abra o navegador e acesse <b>http://IP-DO-COMPUTADOR:3030</b>.</li>
-    <li>No menu do navegador, toque em <b>Instalar app</b> (ou <i>Adicionar à tela inicial</i>) para criar um atalho.</li>
+    <li>No computador principal, descubra o IP (no <code>cmd</code>, rode <code>ipconfig</code>; ex.: <i>192.168.0.10</i>).</li>
+    <li>No outro aparelho, no <b>mesmo Wi-Fi</b>, abra <b>http://IP:3000</b> (código-fonte) ou <b>http://IP:3030</b> (aplicativo).</li>
+    <li>No menu do navegador, toque em <b>Instalar app</b> (ou <i>Adicionar à tela inicial</i>).</li>
   </ol>
-  <figure class="phone"><img src="../screenshots/celular-painel.png" alt=""><figcaption>Painel no celular</figcaption></figure>
-  <div class="tip"><b>Se o Wi-Fi cair</b>No celular, as entradas e saídas registradas sem conexão ficam guardadas e são enviadas sozinhas quando a conexão voltar. Um aviso no topo da tela mostra quantas estão aguardando.</div>
-  <div class="warn"><b>Primeira vez</b>O Windows pode perguntar se o V&amp;L Estoque pode se comunicar na rede. Clique em <b>Permitir</b> (redes privadas) para o celular conseguir acessar.</div>
+  <div class="pair">
+    <figure class="phone"><img src="../screenshots/celular-painel.png" alt=""><figcaption>Painel no celular</figcaption></figure>
+    <figure class="phone"><img src="../screenshots/celular-menu.png" alt=""><figcaption>Menu no celular</figcaption></figure>
+  </div>
+  <h3>Sem internet</h3>
+  <p>No computador principal, o sistema funciona sem internet. Nos outros aparelhos, se a rede cair:</p>
+  <ul>
+    <li>O <b>caixa continua vendendo</b>: o rodapé mostra <i>“Offline — vendendo neste computador”</i>, cada venda fica guardada no aparelho e o comprovante sai normalmente (o número aparece depois).</li>
+    <li>Entradas e saídas de estoque também ficam guardadas.</li>
+    <li>Quando a conexão volta, tudo é <b>enviado sozinho, sem duplicar</b>.</li>
+  </ul>
+  <div class="warn"><b>Precisa de conexão</b>Abrir e fechar o caixa, sangria e suprimento, cancelar vendas, autorização do gerente para descontos acima do limite e cadastro de cliente novo. O fechamento fica bloqueado enquanto houver vendas offline não enviadas.</div>
 </section>
 
+<!-- 18 -->
 <section>
-  <h2>16. Dúvidas frequentes</h2>
+  <h2>18. Dúvidas frequentes</h2>
   <table>
-    <tr><th style="width:36%">Pergunta</th><th>Resposta</th></tr>
-    <tr><td>Esqueci minha senha.</td><td>Use <span class="ui">Esqueci minha senha</span> na tela de login (capítulo 3). Sem e-mail cadastrado, peça a um administrador para usar <span class="ui">Redefinir senha</span> em <span class="ui">Usuários</span>.</td></tr>
-    <tr><td>O código de recuperação não chegou.</td><td>Confira a caixa de spam e se o e-mail em <span class="ui">Meu perfil</span> está certo. O administrador pode testar o envio em <span class="ui">Configurações</span> › <span class="ui">Enviar e-mail de teste</span>.</td></tr>
-    <tr><td>Aparece a tela do termo de uso ao entrar.</td><td>O termo foi atualizado. Leia, marque “Li e concordo” e clique em <span class="ui">Continuar</span>.</td></tr>
-    <tr><td>Errei o PIN e foi bloqueado.</td><td>Depois de 5 PINs errados, aguarde <b>5 minutos</b>. Se esqueceu o PIN, peça ao administrador para redefinir.</td></tr>
-    <tr><td>Aparece “Você ainda não cadastrou um PIN”.</td><td>Vá em <span class="ui">Meu perfil</span> e crie o PIN em <span class="ui">PIN de confirmação</span>.</td></tr>
-    <tr><td>O leitor de código de barras não funciona.</td><td>Clique primeiro no campo de busca ou de bipagem; o leitor “digita” o código onde o cursor estiver.</td></tr>
-    <tr><td>Registrei uma quantidade errada.</td><td>Faça um <b>ajuste</b> (entrada ou saída) com a diferença. O histórico guarda as duas operações.</td></tr>
-    <tr><td>O produto sumiu da lista.</td><td>Ele pode ter sido excluído: confira a <span class="ui">Lixeira</span> (administrador).</td></tr>
-    <tr><td>O sistema não abre.</td><td>Feche e abra de novo. Se persistir, reinicie o computador. Os detalhes do erro ficam em <i>%LOCALAPPDATA%\VLEstoque\logs</i>.</td></tr>
+    <tr><th style="width:38%">Situação</th><th>O que fazer</th></tr>
+    <tr><td>Esqueci minha senha</td><td><span class="ui">Esqueci minha senha</span> no login (capítulo 3). Sem e-mail, peça ao administrador para usar <span class="ui">Redefinir senha</span>.</td></tr>
+    <tr><td>O código de recuperação não chegou</td><td>Confira o spam e o e-mail em <span class="ui">Meu perfil</span>. O administrador testa em <span class="ui">Configurações</span> › <span class="ui">Enviar e-mail de teste</span>.</td></tr>
+    <tr><td>Aparece o termo de uso ao entrar</td><td>O termo foi atualizado. Leia, marque “Li e concordo” e continue.</td></tr>
+    <tr><td>Errei o PIN e fui bloqueado</td><td>Depois de 5 PINs errados ao confirmar uma operação, aguarde <b>5 minutos</b>. Se esqueceu o PIN, peça ao administrador para redefinir.</td></tr>
+    <tr><td>O leitor não lança o produto</td><td>Tecle <kbd>F1</kbd> (ou clique na busca) e bipe de novo. Teste o leitor no Bloco de Notas.</td></tr>
+    <tr><td>“Produto sem preço de venda”</td><td>Cadastre o preço em <span class="ui">Produtos</span> › <span class="ui">Editar</span>.</td></tr>
+    <tr><td>“O preço de X mudou”</td><td>Remova o item (<kbd>Del</kbd>) e bipe de novo.</td></tr>
+    <tr><td>A forma de pagamento está apagada no caixa</td><td>Ela exige cliente: identifique-o com <kbd>Ins</kbd>.</td></tr>
+    <tr><td>Desconto pede autorização</td><td>Passou do limite do operador: um gerente digita usuário e PIN.</td></tr>
+    <tr><td>Não consigo fechar o caixa</td><td>Há vendas offline pendentes: verifique a conexão e clique em “aguardando envio” no rodapé.</td></tr>
+    <tr><td>Diferença no fechamento</td><td>Confira sangrias, suprimentos, trocos e se alguma venda foi lançada na forma errada (relatório do caixa).</td></tr>
+    <tr><td>O comprovante sai cortado</td><td>Na janela de impressão, <i>Margens: nenhuma</i> e o papel da bobina.</td></tr>
+    <tr><td>Registrei uma quantidade errada no estoque</td><td>O administrador faz um ajuste com a diferença; o histórico guarda as duas operações.</td></tr>
+    <tr><td>O produto sumiu da lista</td><td>Confira a <span class="ui">Lixeira</span> (administrador).</td></tr>
+    <tr><td>Tela antiga depois de atualizar</td><td>Fora do caixa, <kbd>Ctrl</kbd>+<kbd>F5</kbd>.</td></tr>
   </table>
+</section>
+
+<!-- 19 -->
+<section>
+  <h2>19. Glossário</h2>
+  <table>
+    <tr><th style="width:30%">Termo</th><th>Significado</th></tr>
+    <tr><td>Bipar</td><td>Passar o produto no leitor de código de barras.</td></tr>
+    <tr><td>Cupom</td><td>A lista de itens da venda em andamento no caixa.</td></tr>
+    <tr><td>Terminal</td><td>Cada computador de caixa (ex.: “Caixa 01”).</td></tr>
+    <tr><td>Troco inicial</td><td>Dinheiro colocado na gaveta ao abrir o caixa.</td></tr>
+    <tr><td>Sangria / suprimento</td><td>Retirada / colocação de dinheiro na gaveta durante o turno.</td></tr>
+    <tr><td>PIN</td><td>Senha curta (4 a 6 números) pessoal de cada usuário.</td></tr>
+    <tr><td>SKU</td><td>Código interno do produto.</td></tr>
+    <tr><td>EM, ES, PP</td><td>Estoque mínimo, estoque de segurança e ponto de pedido (capítulo 6).</td></tr>
+    <tr><td>Margem bruta</td><td>Valor vendido menos o custo dos produtos vendidos.</td></tr>
+    <tr><td>Ticket médio</td><td>Total vendido ÷ número de vendas.</td></tr>
+    <tr><td>Orçamento</td><td>Documento com itens e preços; não é venda e não baixa estoque.</td></tr>
+    <tr><td>2ª via</td><td>Reimpressão de um comprovante já emitido.</td></tr>
+    <tr><td>Documento não fiscal</td><td>Comprovante sem valor fiscal: não substitui a NFC-e ou a nota fiscal.</td></tr>
+    <tr><td>Encarregado (DPO)</td><td>Pessoa que responde aos pedidos sobre dados pessoais (LGPD).</td></tr>
+    <tr><td>Anonimizar</td><td>Apagar os dados pessoais mantendo os registros sem identificar a pessoa.</td></tr>
+  </table>
+  <div class="warn"><b>Sistema não fiscal</b>Esta versão não emite NFC-e, SAT nem nota fiscal. Na maioria dos estados, quem vende ao consumidor é obrigado a emitir documento fiscal: confirme a situação da loja com o contador.</div>
 </section>
 
 </body>

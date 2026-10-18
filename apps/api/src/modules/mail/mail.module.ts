@@ -53,9 +53,10 @@ class UpdateMailDto {
   @MaxLength(200)
   password?: string;
 
+  /** Em branco: usa o nome da loja. */
   @Transform(trim)
   @IsString()
-  @Length(1, 60)
+  @MaxLength(60)
   fromName: string;
 }
 
