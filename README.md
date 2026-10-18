@@ -94,6 +94,13 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | 📋 **Pedidos e relatórios de estoque** | Fluxo Pendente → Pedido feito → Recebido, estoque parado e rupturas |
 | 👥 **Usuários** | Administrador, Gerente, Estoquista e Operador de caixa, com senha, PIN e bloqueio |
 | 🛡️ **Auditoria** | Quem fez o quê e quando, inclusive itens removidos do cupom e abertura de gaveta |
+| 🗂️ **Categorias** | Categorias e subcategorias (vêm prontas para mercadinho e padaria) |
+| 🗑️ **Lixeira** | Recupera produtos excluídos dentro do prazo, depois apaga automaticamente |
+| 🔑 **Esqueci minha senha** | Código de 6 números por e-mail (Gmail com senha de app ou outro SMTP), válido por 15 min |
+| ⚖️ **LGPD** | Termo de Uso e Política de Privacidade com aceite versionado, “Baixar meus dados”, anonimização e retenção automática |
+| ⚙️ **Configurações** | Regras ajustáveis sem programação |
+| 📴 **Estoque offline** | Entradas e saídas registradas sem internet sincronizam quando a conexão volta |
+| 🔌 **Integração PDV** | O caixa consulta o estoque e envia as vendas automaticamente |
 
 ---
 
@@ -687,6 +694,30 @@ stateDiagram-v2
 | Mass assignment / SQL injection | DTOs com *whitelist* e consultas parametrizadas |
 | Logotipo malicioso | Só imagens (PNG/JPEG/WebP/SVG) via data URL, até 150 KB, exibidas como `<img>` |
 | Rastreabilidade | **Auditoria** de vendas, descontos, itens removidos, cancelamentos, sangrias, gaveta, reimpressões, autorizações, logins e configurações |
+| Senha padrão / fraca | Senhas aleatórias na instalação, troca obrigatória no 1º acesso, política mínima |
+| Enumeração de usuários | Mensagem genérica e tempo de resposta igualado |
+| Clickjacking, sniffing | Helmet: `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy` |
+| Configuração insegura | A API não sobe sem segredo forte (validação com Zod) |
+| Banco exposto | PostgreSQL só escuta em `127.0.0.1` |
+| Computador compartilhado | O cache offline é apagado no logout |
+| Recuperação de senha | Código de 6 dígitos guardado como hash, 15 min de validade, uso único, 5 tentativas, 3 pedidos/hora, resposta genérica e sessões encerradas ao redefinir |
+| Senha do e-mail de envio | Criptografada no banco com **AES-256-GCM** (chave derivada do `JWT_SECRET`); nunca sai da API; TLS obrigatório |
+
+### ⚖️ LGPD (Lei nº 13.709/2018)
+
+| Requisito | Como o sistema atende |
+|---|---|
+| Transparência (art. 6º, VI, e art. 9º) | **Termo de Uso e Política de Privacidade** em `/termos`, com controlador, encarregado, finalidades, bases legais, compartilhamento e retenção |
+| Ciência do titular | Aceite obrigatório no 1º acesso, **versionado** (`TERMS_VERSION`): se o texto mudar, todos aceitam de novo. A API bloqueia o uso até o aceite |
+| Clientes (PDV) | Dados pessoais do cliente só com o **consentimento registrado** (data e canal); exportação (JSON) e anonimização a pedido do titular, mantendo as vendas sem identificá-lo; cache de clientes do caixa apagado no logout |
+| Minimização (art. 6º, III) | Só nome, login, e-mail (opcional, exceto admin) e auditoria. IP apagado da auditoria após **12 meses**; códigos de recuperação após 1 dia |
+| Acesso e portabilidade (art. 18, II e V) | “Baixar meus dados” em Meu perfil (JSON com cadastro, auditoria e operações) |
+| Correção (art. 18, III) | O próprio usuário corrige o e-mail; o administrador corrige o nome |
+| Eliminação/anonimização (art. 18, IV e VI) | “Anonimizar dados” para usuários desativados: apaga nome, login, e-mail, credenciais e IPs, mantendo o histórico do estoque sem identificação |
+| Encarregado (art. 41) | Nome e e-mail configuráveis em Configurações › Empresa e privacidade |
+| Segurança (art. 46) | Medidas da tabela acima |
+
+> O texto do termo fica em [`TermsContent.tsx`](apps/web/src/features/legal/TermsContent.tsx). Ele é um modelo e deve ser revisado por um profissional jurídico antes do uso definitivo.
 
 ---
 
@@ -698,6 +729,33 @@ Prefixo `/api`. Autenticação por cookie de sessão. Quando a ação exige um s
 
 | Método | Rota | Permissão | Descrição |
 |---|---|---|---|
+| `POST` | `/auth/login` | pública | Login (cria o cookie de sessão) |
+| `POST` | `/auth/logout` | logado | Encerra e revoga sessões |
+| `GET` | `/auth/me` | logado | Perfil e permissões |
+| `POST` | `/auth/change-password` · `/auth/pin` | logado | Troca a senha / define o PIN (no 1º acesso: + e-mail e aceite do termo) |
+| `GET` | `/auth/recovery` | pública | Se a recuperação por e-mail está ativa |
+| `POST` | `/auth/forgot-password` · `/auth/reset-password` | pública | Envia o código por e-mail / redefine a senha com o código |
+| `POST` | `/auth/accept-terms` | logado | Aceite da versão atual do termo |
+| `PATCH` | `/auth/profile` | logado | Corrige o próprio e-mail (com a senha atual) |
+| `GET` | `/auth/my-data` | logado | Exporta os próprios dados pessoais (LGPD) |
+| `GET` | `/legal` | pública | Versão do termo e dados da empresa |
+| `GET` | `/products` | product:read | Lista (busca, situação, categoria, paginação) |
+| `GET` | `/products/lookup?code=` | product:read | Busca exata por SKU ou EAN (bipagem) |
+| `POST` `PATCH` | `/products` · `/products/:id` | product:write + PIN | Cadastrar / editar |
+| `DELETE` | `/products/:id` | product:delete + PIN | Enviar para a lixeira |
+| `GET` `POST` `DELETE` | `/trash` · `/trash/:id/restore` · `/trash/:id` | trash:manage | Lixeira |
+| `POST` | `/stock/entries` · `/stock/exits` | stock:in / stock:out + PIN | Registrar movimentação |
+| `GET` | `/stock/movements` | movement:read | Histórico com filtros |
+| `GET` `POST` `PATCH` | `/purchase-requests` · `/:id/status` | purchase:* | Solicitações de pedido |
+| `GET` | `/reports/dashboard` · `/reports/movements` | product:read / report:read | Painel e relatório por período |
+| `GET` `POST` `PATCH` | `/users` · `/users/:id/reset-password` · `/reset-pin` | user:manage | Usuários |
+| `GET` `PATCH` | `/settings` | settings:manage | Configurações |
+| `GET` `PUT` · `POST` | `/settings/mail` · `/settings/mail/test` | settings:manage | E-mail de envio (senha criptografada) / teste |
+| `PUT` | `/settings/company` | settings:manage | Dados da empresa e do encarregado |
+| `POST` | `/users/:id/anonymize` | user:manage | Anonimiza um usuário desativado (LGPD) |
+| `GET` | `/audit` | audit:read | Auditoria |
+| `GET` | `/integration/pdv/products/:code/availability` | X-API-Key | PDV consulta estoque |
+| `POST` | `/integration/pdv/sales` | X-API-Key | PDV envia venda (idempotente por `externalId`) |
 | `POST` | `/auth/pin-login` | pública | Troca rápida de operador (usuário + PIN) |
 | `POST` | `/pos/authorize` | pos:sell | Supervisor libera uma ação (usuário + PIN) → token |
 | `GET` | `/cash/current?terminal=` | pos:sell | Turno aberto do terminal com o resumo |
@@ -764,9 +822,80 @@ Reenviar o mesmo `id` devolve a mesma venda, sem duplicar.
 
 ## 🚀 Como rodar
 
-> 📘 **Manual do usuário completo (PDF, 33 páginas, com telas):** [docs/Manual-SuaLojaAqui.pdf](docs/Manual-SuaLojaAqui.pdf). Ele cobre instalação, configuração da loja, caixa, estoque, gerência, impressoras e solução de problemas.
 
-### O que você precisa
+> 📘 O passo a passo completo, com telas, está no **[Manual de Uso (PDF)](apps/web/public/manual-de-uso.pdf)**, que também abre pelo menu lateral do sistema.
+
+### Opção A · Aplicativo para Windows
+
+O app abre em **janela própria** (sem barra de endereço) e já traz tudo embutido: banco PostgreSQL, API e telas. Não é preciso instalar Node.js nem nada além dele.
+
+| Requisito | Mínimo |
+|---|---|
+| Sistema | Windows 10 ou 11, 64 bits |
+| Memória | 4 GB de RAM (recomendado 8 GB) |
+| Disco | ~1 GB para o programa |
+| Leitor de código de barras | Qualquer leitor USB que funcione como teclado |
+| Internet | Não é necessária (só para o backup no Google Drive e o e-mail de recuperação) |
+
+#### Duas formas de usar
+
+| | A) Instalado (recomendado) | B) Sem instalar |
+|---|---|---|
+| Como abre | Atalho **VL Estoque** na Área de Trabalho e no Menu Iniciar | Dois cliques em `VL Estoque.exe` |
+| Onde fica | `%LOCALAPPDATA%\Programs\vl-estoque` | `apps\desktop\release\win-unpacked` (recriada a cada `npm run dist`) |
+| Indicado para | Computador da loja | Desenvolvimento e testes |
+| Dados | As duas usam os **mesmos dados** (`%LOCALAPPDATA%\VLEstoque`) | ← |
+
+#### Instalar
+
+1. Baixe o instalador **[VL-Estoque-Setup-1.3.1.exe](https://github.com/tassiocarvalho/vl-estoque/releases/latest/download/VL-Estoque-Setup-1.3.1.exe)** (ou gere com `npm run dist`) e dê dois cliques.
+2. Se aparecer **“O Windows protegeu o computador”**, clique em **Mais informações → Executar assim mesmo**. O aviso aparece porque o instalador não tem assinatura digital paga.
+3. Mantenha a pasta sugerida, clique em **Instalar** e depois em **Concluir**. Não precisa de senha de administrador do Windows (instalação por usuário).
+
+#### Usar sem instalar
+
+1. Abra `sistema-estoque\apps\desktop\release\win-unpacked` e dê dois cliques em **VL Estoque.exe**.
+2. Atalho opcional: botão direito no arquivo → **Enviar para → Área de trabalho (criar atalho)**.
+
+#### Ao abrir
+
+1. Aparece a tela de carregamento verde: *Iniciando o banco de dados → Atualizando o banco de dados → Iniciando o sistema* (10 a 30 segundos).
+2. **Primeira abertura:** o app **entra sozinho como `admin`** e pede a **senha pessoal, o PIN, o e-mail de recuperação e o aceite do termo de uso**. Ninguém precisa ver a senha provisória.
+3. O **Manual de uso** fica no menu lateral e aparece num aviso de boas-vindas no painel.
+4. Enquanto o app está aberto, o sistema também funciona no navegador em **http://localhost:3030** e no celular (mesma rede) em `http://IP-DO-COMPUTADOR:3030`.
+5. Para fechar, clique no **X**: o app faz o último backup e desliga o banco com segurança. Clicar no atalho com o app aberto só traz a janela para a frente.
+
+#### Atualizar e desinstalar
+
+- **Atualizar:** feche o app e instale a versão nova **por cima** (ou use a nova pasta `win-unpacked`). Ao abrir, *Atualizando o banco de dados...* ajusta os dados sozinho.
+- **Desinstalar:** Configurações do Windows → Aplicativos → **VL Estoque** → Desinstalar. Os dados em `%LOCALAPPDATA%\VLEstoque` são mantidos.
+
+| Item | Onde fica |
+|---|---|
+| Programa instalado | `%LOCALAPPDATA%\Programs\vl-estoque` |
+| Dados do estoque | `%LOCALAPPDATA%\VLEstoque\pgdata` (preservados ao desinstalar) |
+| Segredos gerados na instalação | `%LOCALAPPDATA%\VLEstoque\config.json` (a senha provisória é apagada após o primeiro acesso) |
+| Logs | `%LOCALAPPDATA%\VLEstoque\logs` |
+| Backups automáticos | `Meu Drive\VL Estoque - Backups` no Google Drive (ou `%LOCALAPPDATA%\VLEstoque\backups` sem o Drive) |
+| Portas usadas | `3030` (sistema) e `5434` (banco, só no próprio computador) |
+
+#### Se não abrir
+
+| Sintoma | Solução |
+|---|---|
+| “Não foi possível iniciar o V&L Estoque” | Abra de novo ou reinicie o computador. A mensagem mostra o arquivo de log com os detalhes |
+| Carregamento demorado | Antivírus podem atrasar a primeira abertura: aguarde até 1 minuto ou adicione a pasta do programa às exceções |
+| Porta 3030 ou 5434 ocupada | Feche o programa que usa a porta ou reinicie o computador |
+| Celular não acessa | No aviso do Firewall do Windows, clique em **Permitir** (redes privadas) |
+
+
+> ℹ️ O instalador publicado (1.3.1) é a versão só de estoque. Para o aplicativo com a frente de caixa, gere um instalador novo desta branch com `npm run dist`.
+
+Para atualizar o manual, edite [`docs/manual/manual.html`](docs/manual/manual.html) e rode `npm run manual`.
+
+### Opção B · Pelo código-fonte
+
+#### O que você precisa
 
 | Item | Detalhe |
 |---|---|
@@ -775,7 +904,7 @@ Reenviar o mesmo `id` devolve a mesma venda, sem duplicar.
 | Banco de dados | Nada a instalar: o PostgreSQL vem embutido |
 | Navegador | Edge ou Chrome |
 
-### Instalação (uma vez só)
+#### Instalação (uma vez só)
 
 Abra o **Prompt de Comando** (tecla Windows → `cmd` → Enter) na pasta do projeto e rode:
 
@@ -884,8 +1013,7 @@ npm test
 │   │       └── features/…                # estoque, usuários, configurações...
 │   └── desktop/                          # App Windows (versão anterior, só estoque)
 ├── docs/
-│   ├── Manual-SuaLojaAqui.pdf            # 📘 Manual do usuário (para atualizar: abra manual/manual.html no Edge → Imprimir → Salvar como PDF)
-│   ├── manual/                           # Fonte do manual (HTML + imagens)
+│   ├── manual/                           # 📘 Fonte do manual (HTML); o PDF sai em apps/web/public/manual-de-uso.pdf (npm run manual)
 │   ├── DRS-PDV.md                        # Requisitos v1 e rastreabilidade
 │   ├── DRS-v2.md                         # Backlog priorizado da próxima versão
 │   └── screenshots/

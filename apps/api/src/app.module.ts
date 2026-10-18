@@ -19,6 +19,8 @@ import { PrintingModule } from './modules/printing/printing.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PurchaseRequestsModule } from './modules/purchase-requests/purchase-requests.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { LegalModule } from './modules/legal/legal.module';
+import { MailModule } from './modules/mail/mail.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { StockModule } from './modules/stock/stock.module';
@@ -38,6 +40,8 @@ const staticFiles = existsSync(webDist)
     PrismaModule,
     AuditModule,
     SettingsModule,
+    MailModule,
+    LegalModule,
     AuthModule,
     UsersModule,
     CategoriesModule,

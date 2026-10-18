@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
 import { badRequest, conflict, notFound } from '../../common/errors';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { randomBytes } from 'node:crypto';
 import { hashSecret } from '../../common/security/password';
 import { AuditService } from '../audit/audit.service';
 import { CreateUserDto, UpdateUserDto } from './users.dto';
@@ -16,14 +17,19 @@ const toUserView = (user: User) => ({
   id: user.id,
   name: user.name,
   username: user.username,
+  email: user.email,
   role: user.role,
   active: user.active,
   hasPin: user.pinHash !== null,
   mustChangePassword: user.mustChangePassword,
   locked: user.lockedUntil !== null && user.lockedUntil > new Date(),
   lastLoginAt: user.lastLoginAt,
+  termsAcceptedAt: user.termsAcceptedAt,
+  anonymized: user.anonymizedAt !== null,
   createdAt: user.createdAt,
 });
+
+const ADMIN_EMAIL_REQUIRED = 'Administradores precisam de um e-mail (usado para recuperar a senha)';
 
 @Injectable()
 export class UsersService {
@@ -40,11 +46,15 @@ export class UsersService {
   async create(dto: CreateUserDto, actor: Actor) {
     const exists = await this.prisma.user.findUnique({ where: { username: dto.username } });
     if (exists) throw conflict('Já existe um usuário com esse login');
+    const email = dto.email || null;
+    if (dto.role === Role.ADMIN && !email) throw badRequest(ADMIN_EMAIL_REQUIRED);
+    if (email) await this.assertEmailAvailable(email);
 
     const user = await this.prisma.user.create({
       data: {
         name: dto.name,
         username: dto.username,
+        email,
         role: dto.role,
         passwordHash: await hashSecret(dto.password),
         pinHash: dto.pin ? await hashSecret(dto.pin) : null,
@@ -58,16 +68,21 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto, actor: Actor) {
     const user = await this.findOrFail(id);
 
+    if (user.anonymizedAt) throw badRequest('Este usuário foi anonimizado e não pode mais ser alterado');
     if (id === actor.id && (dto.active === false || (dto.role && dto.role !== user.role))) {
       throw badRequest('Você não pode desativar nem alterar o perfil do seu próprio usuário');
     }
     const losesAdmin = user.role === Role.ADMIN && (dto.active === false || (dto.role && dto.role !== Role.ADMIN));
     if (losesAdmin) await this.assertAnotherActiveAdmin(id);
 
+    const email = dto.email === undefined ? user.email : dto.email || null;
+    if ((dto.role ?? user.role) === Role.ADMIN && !email) throw badRequest(ADMIN_EMAIL_REQUIRED);
+    if (email && email !== user.email) await this.assertEmailAvailable(email, id);
+
     const revokeSessions = dto.active === false || (dto.role !== undefined && dto.role !== user.role);
     const updated = await this.prisma.user.update({
       where: { id },
-      data: { ...dto, ...(revokeSessions && { tokenVersion: { increment: 1 } }) },
+      data: { ...dto, email, ...(revokeSessions && { tokenVersion: { increment: 1 } }) },
     });
     await this.log(actor, 'user.update', id, { ...dto });
     return toUserView(updated);
@@ -93,6 +108,43 @@ export class UsersService {
     await this.findOrFail(id);
     await this.prisma.user.update({ where: { id }, data: { pinHash: await hashSecret(pin) } });
     await this.log(actor, 'user.reset-pin', id);
+  }
+
+  /**
+   * Anonimiza um usuário desativado (LGPD, art. 18, IV e VI): apaga nome, login, e-mail, credenciais e IPs.
+   * As movimentações continuam no histórico do estoque, mas sem identificar a pessoa.
+   */
+  async anonymize(id: string, actor: Actor) {
+    const user = await this.findOrFail(id);
+    if (id === actor.id) throw badRequest('Você não pode anonimizar o seu próprio usuário');
+    if (user.active) throw badRequest('Desative o usuário antes de anonimizar');
+    if (user.anonymizedAt) throw badRequest('Este usuário já foi anonimizado');
+
+    const tag = randomBytes(4).toString('hex');
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id },
+        data: {
+          name: `Usuário removido ${tag}`,
+          username: `removido-${tag}`,
+          email: null,
+          pinHash: null,
+          passwordHash: await hashSecret(randomBytes(32).toString('base64')),
+          lastLoginAt: null,
+          anonymizedAt: new Date(),
+          tokenVersion: { increment: 1 },
+        },
+      }),
+      this.prisma.auditLog.updateMany({ where: { userId: id }, data: { ip: null } }),
+      this.prisma.passwordReset.deleteMany({ where: { userId: id } }),
+    ]);
+    await this.log(actor, 'user.anonymize', id);
+    return toUserView(updated);
+  }
+
+  private async assertEmailAvailable(email: string, exceptId?: string) {
+    const owner = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (owner && owner.id !== exceptId) throw conflict('Este e-mail já está em uso por outro usuário');
   }
 
   private async findOrFail(id: string) {

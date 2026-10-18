@@ -24,9 +24,12 @@ export interface Profile {
   id: string;
   name: string;
   username: string;
+  email: string | null;
   role: Role;
   mustChangePassword: boolean;
   hasPin: boolean;
+  /** Ciência da versão atual do Termo de Uso e Política de Privacidade. */
+  termsAccepted: boolean;
   permissions: string[];
 }
 
@@ -112,6 +115,9 @@ export interface UserAccount {
   mustChangePassword: boolean;
   locked: boolean;
   lastLoginAt: string | null;
+  email: string | null;
+  termsAcceptedAt: string | null;
+  anonymized: boolean;
   createdAt: string;
 }
 
@@ -144,6 +150,29 @@ export interface PrinterSettings {
 export interface PosSettings {
   maxDiscountPercent: number;
   blockSaleWithoutStock: boolean;
+}
+
+export interface CompanyInfo {
+  name: string;
+  cnpj: string;
+  address: string;
+  dpoName: string;
+  dpoEmail: string;
+}
+
+export interface LegalInfo {
+  termsVersion: string;
+  company: CompanyInfo;
+}
+
+export interface MailSettings {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  fromName: string;
+  hasPassword: boolean;
+  configured: boolean;
 }
 
 export interface SystemSettings {

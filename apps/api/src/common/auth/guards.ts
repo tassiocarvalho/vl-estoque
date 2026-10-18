@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppException, ErrorCode } from '../errors';
 import { verifySecret } from '../security/password';
+import { TERMS_VERSION } from '../../modules/legal/terms';
 import { SettingsService } from '../../modules/settings/settings.service';
 import type { PinProtectedOperation } from '../../modules/settings/settings.types';
 import { AuthenticatedRequest, SESSION_COOKIE, SessionPayload } from './auth-user';
@@ -53,8 +54,10 @@ export class AuthGuard implements CanActivate {
       name: user.name,
       username: user.username,
       role: user.role,
+      email: user.email,
       mustChangePassword: user.mustChangePassword,
       hasPin: user.pinHash !== null,
+      termsAccepted: user.termsVersion === TERMS_VERSION,
     };
 
     const allowPending = this.reflector.getAllAndOverride<boolean>(ALLOW_PENDING_PASSWORD, [
@@ -66,6 +69,13 @@ export class AuthGuard implements CanActivate {
         HttpStatus.FORBIDDEN,
         'Troque sua senha para continuar',
         ErrorCode.PASSWORD_CHANGE_REQUIRED,
+      );
+    }
+    if (!request.user.termsAccepted && !allowPending) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        'Leia e aceite o Termo de Uso e a Política de Privacidade para continuar',
+        ErrorCode.TERMS_ACCEPTANCE_REQUIRED,
       );
     }
     return true;

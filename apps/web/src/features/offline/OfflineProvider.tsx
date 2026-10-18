@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { errorMessage, http, isCanceled, isNetworkError } from '@/lib/api';
+import { ApiError, errorMessage, http, isCanceled, isNetworkError } from '@/lib/api';
 import type { Paginated, Product } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { catalog, outbox, salesOutbox, type PendingMovement, type PendingSale } from './offline-store';
@@ -22,6 +22,13 @@ interface OfflineContextValue {
 }
 
 const OfflineContext = createContext<OfflineContextValue | null>(null);
+
+/**
+ * Recusas que dependem do usuário (termo de uso pendente, senha provisória), não da venda:
+ * a fila espera e tenta de novo depois, em vez de marcar a venda com erro.
+ */
+const isPendingAccountStep = (error: unknown) =>
+  error instanceof ApiError && (error.code === 'TERMS_ACCEPTANCE_REQUIRED' || error.code === 'PASSWORD_CHANGE_REQUIRED');
 const SYNC_INTERVAL_MS = 30_000;
 
 /** Baixa o catálogo completo de produtos para consulta offline. */
@@ -57,7 +64,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const sync = useCallback(async () => {
-    if (syncingRef.current || !user) return;
+    // Só envia com a conta liberada (termo aceito e senha definitiva).
+    if (syncingRef.current || !user || user.mustChangePassword || !user.termsAccepted) return;
     syncingRef.current = true;
     setSyncing(true);
     let sent = 0;
@@ -74,7 +82,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           await salesOutbox.remove(sale.id);
           salesSent++;
         } catch (error) {
-          if (isNetworkError(error)) throw error;
+          if (isNetworkError(error) || isPendingAccountStep(error)) throw error;
           await salesOutbox.markError(sale.id, errorMessage(error));
         }
       }
@@ -85,12 +93,12 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           await outbox.remove(item.id);
           sent++;
         } catch (error) {
-          if (isNetworkError(error) || isCanceled(error)) break;
+          if (isNetworkError(error) || isCanceled(error) || isPendingAccountStep(error)) break;
           await outbox.markError(item.id, errorMessage(error));
         }
       }
     } catch (error) {
-      if (!isNetworkError(error)) throw error; // sem conexão: tenta de novo no próximo ciclo
+      if (!isNetworkError(error) && !isPendingAccountStep(error)) throw error; // tenta de novo no próximo ciclo
     } finally {
       syncingRef.current = false;
       setSyncing(false);

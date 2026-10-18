@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, KeyRound, LogIn, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Form';
@@ -147,7 +147,17 @@ export function LoginPage() {
             <Button type="submit" size="lg" className="w-full" loading={formState.isSubmitting} icon={<LogIn className="size-4" />}>
               Entrar
             </Button>
+            <p className="text-center">
+              <Link to="/recuperar-senha" className="text-sm font-medium text-brand-700 hover:text-brand-800">
+                Esqueci minha senha
+              </Link>
+            </p>
           </form>
+          <p className="mt-10 text-center text-xs text-slate-400">
+            <Link to="/termos" className="hover:text-slate-600 hover:underline">
+              Termo de Uso e Política de Privacidade
+            </Link>
+          </p>
         </div>
       </section>
     </div>

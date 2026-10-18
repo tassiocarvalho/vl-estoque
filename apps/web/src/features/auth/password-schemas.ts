@@ -26,3 +26,29 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+
+/** Primeiro acesso: senha nova, PIN (se ainda não houver), e-mail de recuperação e ciência do termo de uso. */
+export const firstAccessSchema = (options: { withPin: boolean; withEmail: boolean; emailRequired: boolean; withTerms: boolean }) =>
+  z
+    .object({
+      newPassword: passwordRule,
+      confirmPassword: z.string(),
+      pin: options.withPin ? pinRule : z.string().optional(),
+      confirmPin: z.string().optional(),
+      email: options.emailRequired
+        ? z.string().trim().min(1, 'Informe o seu e-mail').email('E-mail inválido')
+        : z.union([z.literal(''), z.string().trim().email('E-mail inválido')]).optional(),
+      acceptTerms: options.withTerms
+        ? z.literal(true, { errorMap: () => ({ message: 'É preciso aceitar o termo para continuar' }) })
+        : z.boolean().optional(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      path: ['confirmPassword'],
+      message: 'As senhas não conferem',
+    })
+    .refine((data) => !options.withPin || data.pin === data.confirmPin, {
+      path: ['confirmPin'],
+      message: 'Os PINs não conferem',
+    });
+
+export type FirstAccessData = z.infer<ReturnType<typeof firstAccessSchema>>;

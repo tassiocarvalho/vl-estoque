@@ -7,8 +7,11 @@ export interface AuthUser {
   name: string;
   username: string;
   role: Role;
+  email: string | null;
   mustChangePassword: boolean;
   hasPin: boolean;
+  /** Se deu ciência da versão atual do Termo de Uso e Política de Privacidade. */
+  termsAccepted: boolean;
 }
 
 export interface AuthenticatedRequest extends Request {

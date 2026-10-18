@@ -25,6 +25,7 @@ import type { Dashboard, Movement } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { useSalesReport } from '../pos/api';
 import { useMovements } from '../stock/api';
+import { MissingEmailCard, WelcomeCard } from './WelcomeCard';
 
 /** Vendas de hoje (para quem tem acesso aos relatórios de vendas). */
 function TodaySales() {
@@ -116,6 +117,8 @@ export function DashboardPage() {
 
   return (
     <>
+      <MissingEmailCard />
+      <WelcomeCard />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">

@@ -18,6 +18,7 @@ const ROLES: Role[] = ['CASHIER', 'MANAGER', 'STOCKIST', 'ADMIN'];
 const baseSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome').max(80),
   role: z.enum(['ADMIN', 'MANAGER', 'STOCKIST', 'CASHIER']),
+  email: z.union([z.literal(''), z.string().trim().toLowerCase().email('E-mail inválido').max(120)]),
 });
 const createSchema = baseSchema.extend({
   username: z
@@ -34,7 +35,7 @@ type FormData = z.infer<typeof createSchema>;
 export function UserFormModal({ open, user, onClose }: { open: boolean; user: UserAccount | null; onClose: () => void }) {
   const editing = Boolean(user);
   const save = useSaveUser();
-  const { register, handleSubmit, reset, watch, setValue, formState } = useForm<FormData>({
+  const { register, handleSubmit, reset, watch, setValue, setError, formState } = useForm<FormData>({
     resolver: zodResolver(editing ? (baseSchema as unknown as typeof createSchema) : createSchema),
   });
   const { errors } = formState;
@@ -44,16 +45,20 @@ export function UserFormModal({ open, user, onClose }: { open: boolean; user: Us
     if (open) {
       reset(
         user
-          ? { name: user.name, role: user.role, username: user.username, password: '', pin: '' }
-          : { name: '', role: 'CASHIER', username: '', password: '', pin: '' },
+          ? { name: user.name, role: user.role, email: user.email ?? '', username: user.username, password: '', pin: '' }
+          : { name: '', role: 'CASHIER', email: '', username: '', password: '', pin: '' },
       );
     }
   }, [open, user, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
+    if (values.role === 'ADMIN' && !values.email) {
+      setError('email', { message: 'Obrigatório para administradores (usado para recuperar a senha)' });
+      return;
+    }
     try {
       if (user) {
-        await save.mutateAsync({ id: user.id, data: { name: values.name, role: values.role } });
+        await save.mutateAsync({ id: user.id, data: { name: values.name, role: values.role, email: values.email } });
         toast.success('Usuário atualizado');
       } else {
         await save.mutateAsync({ data: { ...values, pin: values.pin || undefined } });
@@ -85,6 +90,14 @@ export function UserFormModal({ open, user, onClose }: { open: boolean; user: Us
       <form id="user-form" onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="Nome completo" error={errors.name?.message}>
           {(id) => <Input id={id} autoFocus aria-invalid={!!errors.name} {...register('name')} />}
+        </Field>
+
+        <Field
+          label={role === 'ADMIN' ? 'E-mail' : 'E-mail (opcional)'}
+          error={errors.email?.message}
+          hint="Usado somente para a pessoa recuperar a senha. Obrigatório para administradores."
+        >
+          {(id) => <Input id={id} type="email" autoCapitalize="none" spellCheck={false} aria-invalid={!!errors.email} {...register('email')} />}
         </Field>
 
         <div>

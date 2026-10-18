@@ -14,6 +14,8 @@ import { PaymentMethodsCard } from '../payment-methods/PaymentMethodsCard';
 import type { PrintDocument } from '../printing/document';
 import { printHtml, renderHtml } from '../printing/render-html';
 import { SETTINGS_QUERY_KEY, useSystemSettings } from '../printing/usePrinter';
+import { CompanySettingsCard } from './CompanySettingsCard';
+import { MailSettingsCard } from './MailSettingsCard';
 
 const PIN_OPTIONS: { key: keyof SystemSettings['pinRequired']; label: string; description: string }[] = [
   { key: 'stockOut', label: 'Registrar saída', description: 'Perdas e ajustes de saída (as vendas do caixa não pedem PIN)' },
@@ -341,6 +343,11 @@ export function SettingsPage() {
             </Field>
           </div>
         </Card>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <MailSettingsCard />
+        <CompanySettingsCard />
       </div>
     </>
   );

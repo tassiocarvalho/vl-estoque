@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingState } from './components/ui/Display';
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { useAuth } from './features/auth/AuthProvider';
 import { RequireAuth, RequirePermission } from './features/auth/guards';
@@ -41,9 +42,13 @@ function Home() {
     </RequirePermission>
   );
 }
+const TermsPage = page(() => import('./features/legal/TermsPage'), 'TermsPage');
+const AcceptTermsPage = page(() => import('./features/legal/AcceptTermsPage'), 'AcceptTermsPage');
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/recuperar-senha', element: <ForgotPasswordPage /> },
+  { path: '/termos', element: <Suspense fallback={<LoadingState />}><TermsPage /></Suspense> },
   {
     element: <RequireAuth />,
     children: [
@@ -59,6 +64,7 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      { path: '/aceitar-termos', element: <Suspense fallback={<LoadingState />}><AcceptTermsPage /></Suspense> },
       {
         element: <AppLayout />,
         children: [

@@ -1,6 +1,7 @@
+import { applyDecorators } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Length, Matches, MaxLength, ValidateIf } from 'class-validator';
 import {
   PASSWORD_RULE,
   PASSWORD_RULE_MESSAGE,
@@ -9,6 +10,17 @@ import {
 } from '../../common/security/password';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
+const normalizeEmail = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
+
+/** E-mail opcional ("" = sem e-mail); obrigatório para administradores (validado no serviço). */
+const OptionalEmail = () =>
+  applyDecorators(
+    Transform(normalizeEmail),
+    IsOptional(),
+    ValidateIf((dto: { email?: string }) => Boolean(dto.email)),
+    IsEmail({}, { message: 'E-mail inválido' }),
+    MaxLength(120),
+  );
 
 export class CreateUserDto {
   @Transform(trim)
@@ -21,6 +33,9 @@ export class CreateUserDto {
     message: 'Usuário deve ter de 3 a 30 caracteres: letras minúsculas, números, ponto, hífen ou _',
   })
   username: string;
+
+  @OptionalEmail()
+  email?: string;
 
   @IsEnum(Role, { message: 'Perfil inválido' })
   role: Role;
@@ -39,6 +54,9 @@ export class UpdateUserDto {
   @IsString()
   @Length(2, 80)
   name?: string;
+
+  @OptionalEmail()
+  email?: string;
 
   @IsOptional()
   @IsEnum(Role, { message: 'Perfil inválido' })

@@ -41,6 +41,11 @@ class UsersController {
     return this.users.resetPassword(id, dto.password, { id: user.id, ip });
   }
 
+  @Post(':id/anonymize')
+  anonymize(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthUser, @ClientIp() ip: string) {
+    return this.users.anonymize(id, { id: user.id, ip });
+  }
+
   @Post(':id/reset-pin')
   @HttpCode(204)
   resetPin(
