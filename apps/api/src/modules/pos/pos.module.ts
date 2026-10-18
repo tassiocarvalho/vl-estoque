@@ -18,7 +18,11 @@ import {
   SalesReportQueryDto,
   TerminalQueryDto,
 } from './pos.dto';
+import { ReceivablesController, ReturnsController, StoreCreditsController } from './post-sale.controller';
+import { ReceivablesService } from './receivables.service';
+import { ReturnsService } from './returns.service';
 import { SalesReportService } from './sales-report.service';
+import { StoreCreditsService } from './store-credits.service';
 import { SalesService } from './sales.service';
 import { SupervisorAuthorizationService } from './supervisor-authorization.service';
 
@@ -161,8 +165,16 @@ class SalesController {
 
 @Module({
   imports: [StockModule],
-  controllers: [PosController, CashController, SalesController],
-  providers: [SupervisorAuthorizationService, CashService, SalesService, SalesReportService],
-  exports: [CashService, SalesService],
+  controllers: [PosController, CashController, SalesController, ReturnsController, StoreCreditsController, ReceivablesController],
+  providers: [
+    SupervisorAuthorizationService,
+    CashService,
+    SalesService,
+    SalesReportService,
+    StoreCreditsService,
+    ReceivablesService,
+    ReturnsService,
+  ],
+  exports: [CashService, SalesService, ReceivablesService, StoreCreditsService],
 })
 export class PosModule {}

@@ -2,8 +2,9 @@ import { Prisma } from '@prisma/client';
 import { toNumber } from '../../common/decimal';
 
 export const saleInclude = {
-  items: { orderBy: { position: 'asc' } },
-  payments: true,
+  items: { orderBy: { position: 'asc' }, include: { returnItems: { select: { quantity: true } } } },
+  payments: { include: { storeCredit: { select: { code: true } } } },
+  returns: { select: { id: true, number: true, total: true, refundMethod: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
   session: { select: { id: true, terminal: true, status: true } },
   operator: { select: { id: true, name: true } },
   discountAuthorizedBy: { select: { id: true, name: true } },
@@ -50,13 +51,17 @@ export function toSaleView(sale: SaleWithRelations) {
       discountValue: optionalNumber(item.discountValue),
       discount: toNumber(item.discount),
       total: toNumber(item.total),
+      returnedQuantity: Math.round(item.returnItems.reduce((sum, r) => sum + toNumber(r.quantity), 0) * 1000) / 1000,
     })),
     payments: sale.payments.map((p) => ({
       methodId: p.paymentMethodId,
       name: p.methodName,
       kind: p.methodKind,
       amount: toNumber(p.amount),
+      storeCreditCode: p.storeCredit?.code ?? null,
+      installments: p.installments,
     })),
+    returns: sale.returns.map((r) => ({ ...r, total: toNumber(r.total) })),
   };
 }
 

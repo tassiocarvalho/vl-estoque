@@ -137,6 +137,18 @@ export class PaymentDto {
   @Min(0.01)
   @Max(MAX_MONEY)
   amount: number;
+
+  /** Vale-troca usado (formas de natureza "vale-troca"). */
+  @IsOptional()
+  @IsUUID()
+  storeCreditId?: string;
+
+  /** Parcelas do fiado (formas de natureza "fiado"). */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  installments?: number;
 }
 
 /** Item retirado do cupom antes de finalizar — vai para a auditoria. */

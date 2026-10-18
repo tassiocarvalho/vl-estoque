@@ -87,6 +87,10 @@ export const toPaymentMethodView = (m: PaymentMethod) => ({
 
 /** A forma "Dinheiro" de fábrica: é a que entra na gaveta e não pode ser desativada nem mudar de tipo. */
 const CASH_CODE = 'CASH';
+/** Naturezas exclusivas das formas de fábrica (cada uma tem regras próprias no caixa). */
+const SYSTEM_KINDS: PaymentKind[] = [PaymentKind.CASH, PaymentKind.STORE_CREDIT, PaymentKind.ON_ACCOUNT];
+/** Vale-troca e fiado nunca dão troco em dinheiro. */
+const NO_CHANGE_KINDS: PaymentKind[] = [PaymentKind.STORE_CREDIT, PaymentKind.ON_ACCOUNT];
 
 @Injectable()
 export class PaymentMethodsService {
@@ -104,7 +108,7 @@ export class PaymentMethodsService {
   }
 
   async create(dto: CreatePaymentMethodDto, user: AuthUser, ip: string) {
-    if (dto.kind === PaymentKind.CASH) throw badRequest('Já existe a forma "Dinheiro". Crie a nova com outro tipo.');
+    if (SYSTEM_KINDS.includes(dto.kind)) throw badRequest('Dinheiro, vale-troca e fiado já existem. Crie a nova forma com outro tipo.');
     await this.assertUniqueName(dto.name);
     const last = await this.prisma.paymentMethod.aggregate({ _max: { position: true } });
     const method = await this.prisma.paymentMethod.create({
@@ -119,9 +123,11 @@ export class PaymentMethodsService {
     if (current.code === CASH_CODE) {
       if (dto.active === false) throw badRequest('A forma "Dinheiro" não pode ser desativada');
       if (dto.kind && dto.kind !== PaymentKind.CASH) throw badRequest('A forma "Dinheiro" não pode mudar de tipo');
-    } else if (dto.kind === PaymentKind.CASH) {
-      throw badRequest('Só a forma "Dinheiro" de fábrica pode ter o tipo Dinheiro');
+    } else if (dto.kind && dto.kind !== current.kind && (SYSTEM_KINDS.includes(dto.kind) || SYSTEM_KINDS.includes(current.kind))) {
+      throw badRequest('Dinheiro, vale-troca e fiado são formas de fábrica: o tipo não pode ser trocado');
     }
+    if (dto.allowsChange && NO_CHANGE_KINDS.includes(current.kind)) throw badRequest('Vale-troca e fiado não podem dar troco');
+    if (current.kind === PaymentKind.ON_ACCOUNT && dto.requiresCustomer === false) throw badRequest('O fiado sempre exige o cliente identificado');
     if (dto.name && dto.name !== current.name) await this.assertUniqueName(dto.name, id);
     const method = await this.prisma.paymentMethod.update({ where: { id }, data: dto });
     await this.log(user, ip, 'payment-method.update', id, toJson(dto));

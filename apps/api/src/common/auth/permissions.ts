@@ -30,6 +30,10 @@ export enum Permission {
   CASH_MOVEMENT = 'cash:movement',
   /** Consultar vendas e caixas de todos os operadores. */
   SALES_READ = 'sales:read',
+  /** Troca e devolução de venda (o operador sem ela pede autorização do supervisor). */
+  POS_RETURN = 'pos:return',
+  /** Liberar fiado acima do limite ou de cliente com parcela vencida. */
+  POS_CREDIT = 'pos:credit',
 
   // ─── Clientes ───
   CUSTOMER_READ = 'customer:read',
@@ -68,6 +72,8 @@ const MANAGER: Permission[] = [
   ...CASHIER,
   Permission.POS_DISCOUNT,
   Permission.POS_CANCEL,
+  Permission.POS_RETURN,
+  Permission.POS_CREDIT,
   Permission.CASH_MOVEMENT,
   Permission.SALES_READ,
   Permission.REPORT_READ,
@@ -93,5 +99,7 @@ export const AUTHORIZABLE_PERMISSIONS = [
   Permission.POS_DISCOUNT,
   Permission.POS_CANCEL,
   Permission.CASH_MOVEMENT,
+  Permission.POS_RETURN,
+  Permission.POS_CREDIT,
 ] as const;
 export type AuthorizablePermission = (typeof AUTHORIZABLE_PERMISSIONS)[number];

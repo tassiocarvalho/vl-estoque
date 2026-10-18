@@ -47,7 +47,7 @@ export class SalesReportService {
     // O Prisma grava as datas em UTC em colunas sem fuso: no SQL manual, compara pelo horário UTC.
     const startUtc = start.toISOString();
     const endUtc = end.toISOString();
-    const [sales, canceledCount, topProducts, costRow] = await Promise.all([
+    const [sales, canceledCount, topProducts, costRow, returns] = await Promise.all([
       this.prisma.sale.findMany({
         where: { ...inPeriod, status: SaleStatus.COMPLETED },
         select: {
@@ -76,6 +76,10 @@ export class SalesReportService {
         FROM sale_items si
         JOIN sales s ON s.id = si."saleId"
         WHERE s.status = 'COMPLETED' AND s."occurredAt" BETWEEN ${startUtc}::timestamp AND ${endUtc}::timestamp`,
+      this.prisma.saleReturn.findMany({
+        where: { createdAt: { gte: start, lte: end } },
+        select: { total: true, items: { select: { quantity: true, unitCost: true, restock: true } } },
+      }),
     ]);
 
     let totalCents = 0;
@@ -113,6 +117,12 @@ export class SalesReportService {
 
     const costCents = toCents(toNumber(costRow[0]?.cost ?? 0));
     const count = sales.length;
+    // Devoluções do período: saem da receita; o custo do que voltou ao estoque sai do CMV.
+    const returnsCents = returns.reduce((sum, r) => sum + toCents(toNumber(r.total)), 0);
+    const returnedCostCents = returns.reduce(
+      (sum, r) => sum + r.items.filter((i) => i.restock).reduce((s, i) => s + Math.round(toNumber(i.unitCost) * toNumber(i.quantity) * 100), 0),
+      0,
+    );
 
     return {
       period: { from: start, to: end },
@@ -123,8 +133,11 @@ export class SalesReportService {
         discounts: fromCents(discountCents),
         net: fromCents(totalCents),
         averageTicket: count ? fromCents(Math.round(totalCents / count)) : 0,
-        cost: fromCents(costCents),
-        margin: fromCents(totalCents - costCents),
+        returnsCount: returns.length,
+        returns: fromCents(returnsCents),
+        netAfterReturns: fromCents(totalCents - returnsCents),
+        cost: fromCents(costCents - returnedCostCents),
+        margin: fromCents(totalCents - returnsCents - (costCents - returnedCostCents)),
       },
       methods: [...byMethod.values()]
         .map((m) => ({ id: m.id, name: m.name, kind: m.kind, amount: fromCents(m.kind === 'CASH' ? m.cents - changeCents : m.cents) }))

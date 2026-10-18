@@ -58,8 +58,15 @@ export function saleReceipt(
   if (discount > 0) doc.pair('Descontos', `-${money(discount)}`);
   doc.bold(true).large(true).pair('TOTAL', money(sale.total)).large(false).bold(false);
 
-  for (const payment of sale.payments) doc.pair(payment.name, money(payment.amount));
+  for (const payment of sale.payments) {
+    doc.pair(payment.name, money(payment.amount));
+    if (payment.storeCreditCode) doc.line(`    Vale ${payment.storeCreditCode}`);
+    if (payment.kind === 'ON_ACCOUNT' && payment.installments && payment.installments > 1) doc.line(`    Em ${payment.installments} parcelas`);
+  }
   if (sale.change > 0) doc.bold(true).pair('Troco', money(sale.change)).bold(false);
+  if (sale.payments.some((p) => p.kind === 'ON_ACCOUNT')) {
+    doc.newline(2).align('center').line('_'.repeat(Math.min(columns, 32))).line('Assinatura do cliente (fiado)').align('left');
+  }
 
   footer(doc, store);
   return doc.cut().build();
@@ -91,8 +98,15 @@ export function cashReport(session: CashReportData, store: StoreBranding, column
   doc.separator().pair('Vendas', String(summary.salesCount)).pair('Canceladas', String(summary.canceledCount));
   doc.pair('Total vendido', money(summary.salesTotal)).separator();
   for (const method of summary.methods) doc.pair(method.name, money(method.amount));
+  if (summary.receiptsCount) {
+    doc.separator().line(`Recebimentos de fiado (${summary.receiptsCount}):`);
+    for (const method of summary.receiptMethods) doc.pair(`  ${method.name}`, money(method.amount));
+  }
+  if (summary.returnsCount) doc.pair(`Devoluções (${summary.returnsCount})`, money(summary.returnsTotal));
   doc.separator().pair('Troco inicial', money(summary.openingAmount));
   doc.pair('Suprimentos', money(summary.supplies)).pair('Sangrias', `-${money(summary.withdrawals)}`);
+  if (summary.cashReceipts) doc.pair('Fiado recebido em dinheiro', money(summary.cashReceipts));
+  if (summary.cashRefunds) doc.pair('Devolvido em dinheiro', `-${money(summary.cashRefunds)}`);
   doc.bold(true).pair('Dinheiro esperado', money(summary.expectedCash)).bold(false);
 
   if (closed && session.countedCash !== null) {

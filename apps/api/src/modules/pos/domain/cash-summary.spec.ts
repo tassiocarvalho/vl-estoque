@@ -73,3 +73,46 @@ describe('cashDifference', () => {
     expect(cashDifference(10, 10)).toBe(0);
   });
 });
+
+describe('pós-venda no caixa', () => {
+  const sale = { canceled: false, total: 40, change: 10, payments: [{ ...CASH, amount: 50 }] };
+
+  it('recebimento de fiado em dinheiro entra na gaveta; no PIX, só no total por forma', () => {
+    const summary = summarizeCashSession(100, [sale], [], [CASH, PIX], {
+      receipts: [
+        { method: CASH, amount: 25 },
+        { method: PIX, amount: 60 },
+      ],
+    });
+    expect(summary.receiptsCount).toBe(2);
+    expect(summary.receiptsTotal).toBe(85);
+    expect(summary.cashReceipts).toBe(25);
+    expect(summary.receiptMethods).toEqual([
+      { ...CASH, amount: 25 },
+      { ...PIX, amount: 60 },
+    ]);
+    // 100 + (50 − 10) + 25
+    expect(summary.expectedCash).toBe(165);
+  });
+
+  it('só a devolução em dinheiro sai da gaveta', () => {
+    const summary = summarizeCashSession(100, [sale], [], [CASH], {
+      refunds: [
+        { refundMethod: 'CASH', total: 15.5 },
+        { refundMethod: 'STORE_CREDIT', total: 30 },
+        { refundMethod: 'ORIGINAL', total: 12 },
+      ],
+    });
+    expect(summary.returnsCount).toBe(3);
+    expect(summary.returnsTotal).toBe(57.5);
+    expect(summary.cashRefunds).toBe(15.5);
+    expect(summary.expectedCash).toBe(124.5);
+  });
+
+  it('fechamentos antigos ganham os campos novos zerados', () => {
+    const old = normalizeCashSummary({ openingAmount: 0, salesCount: 0, canceledCount: 0, salesTotal: 0, methods: [], cashSales: 0, supplies: 0, withdrawals: 0, expectedCash: 0 });
+    expect(old.receiptsTotal).toBe(0);
+    expect(old.cashRefunds).toBe(0);
+    expect(old.receiptMethods).toEqual([]);
+  });
+});

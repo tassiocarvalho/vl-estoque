@@ -19,11 +19,14 @@ import {
   IsDate,
   IsEmail,
   IsIn,
+  IsNumber,
   IsOptional,
   IsString,
   Length,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { AuthUser } from '../../common/auth/auth-user';
@@ -35,6 +38,7 @@ import { badRequest, conflict, notFound } from '../../common/errors';
 import { Paginated, PaginationQueryDto, toSkipTake } from '../../common/pagination';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { SettingsService } from '../settings/settings.service';
 
 const CONSENT_CHANNELS = ['balcao', 'telefone', 'online', 'outro'] as const;
 
@@ -101,6 +105,13 @@ class CustomerDto {
   @IsOptional()
   @IsBoolean()
   marketingConsent?: boolean;
+
+  /** Limite do fiado (só o gerente ou o administrador define). */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Limite de fiado inválido' })
+  @Min(0)
+  @Max(1_000_000)
+  creditLimit?: number;
 }
 
 class CreateCustomerDto extends CustomerDto {}
@@ -139,6 +150,7 @@ const toCustomerView = (c: CustomerRow) => ({
   consentAt: c.consentAt,
   consentChannel: c.consentChannel,
   marketingConsent: c.marketingConsent,
+  creditLimit: toNumber(c.creditLimit),
   anonymizedAt: c.anonymizedAt,
   createdAt: c.createdAt,
   updatedAt: c.updatedAt,
@@ -154,6 +166,7 @@ export class CustomersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly settings: SettingsService,
   ) {}
 
   async list(query: ListCustomersQueryDto): Promise<Paginated<ReturnType<typeof toCustomerView>>> {
@@ -201,7 +214,9 @@ export class CustomersService {
     };
   }
 
-  async create(dto: CreateCustomerDto, { user, ip }: Actor) {
+  async create(dto: CreateCustomerDto, { user, ip }: Actor, canManage = false) {
+    if (dto.creditLimit !== undefined && !canManage) throw badRequest('Somente o gerente ou o administrador define o limite do fiado');
+    const { credit } = await this.settings.get();
     this.assertDocument(dto.document);
     this.assertConsent(dto);
     await this.assertUniqueDocument(dto.document);
@@ -215,6 +230,7 @@ export class CustomersService {
         address: dto.address ?? null,
         notes: dto.notes ?? null,
         ...this.consentData(dto),
+        creditLimit: dto.creditLimit ?? credit.defaultLimit,
         createdById: user.id,
       },
     });
@@ -227,6 +243,9 @@ export class CustomersService {
     if (current.anonymizedAt) throw badRequest('Os dados deste cliente foram apagados a pedido dele (LGPD)');
     if (dto.active !== undefined && dto.active !== current.active && !canManage) {
       throw badRequest('Somente o gerente ou o administrador pode inativar ou reativar clientes');
+    }
+    if (dto.creditLimit !== undefined && dto.creditLimit !== toNumber(current.creditLimit) && !canManage) {
+      throw badRequest('Somente o gerente ou o administrador define o limite do fiado');
     }
     if (dto.document !== undefined) {
       this.assertDocument(dto.document);
@@ -243,6 +262,7 @@ export class CustomersService {
       ...(dto.notes !== undefined && { notes: dto.notes }),
       ...(dto.active !== undefined && { active: dto.active }),
       ...(dto.marketingConsent !== undefined && { marketingConsent: dto.marketingConsent }),
+      ...(dto.creditLimit !== undefined && { creditLimit: dto.creditLimit }),
       ...consent,
     };
     const customer = await this.prisma.customer.update({ where: { id }, data });
@@ -266,8 +286,21 @@ export class CustomersService {
         payments: { select: { methodName: true, amount: true } },
       },
     });
+    const [receivables, credits] = await Promise.all([
+      this.prisma.receivable.findMany({ where: { customerId: id }, orderBy: { dueDate: 'asc' } }),
+      this.prisma.storeCredit.findMany({ where: { customerId: id }, orderBy: { createdAt: 'asc' } }),
+    ]);
     await this.log(user, ip, 'customer.export', id);
     return {
+      fiado: receivables.map((r) => ({
+        description: r.description,
+        installment: `${r.installment}/${r.installments}`,
+        dueDate: r.dueDate,
+        amount: toNumber(r.amount),
+        paid: toNumber(r.paidAmount),
+        status: r.status,
+      })),
+      vales: credits.map((c) => ({ code: c.code, amount: toNumber(c.amount), balance: toNumber(c.balance), expiresAt: c.expiresAt, createdAt: c.createdAt })),
       exportedAt: new Date(),
       customer: toCustomerView(customer),
       purchases: sales.map((s) => ({
@@ -289,6 +322,10 @@ export class CustomersService {
   async anonymize(id: string, { user, ip }: Actor) {
     const current = await this.findOrFail(id);
     if (current.anonymizedAt) throw badRequest('Os dados deste cliente já foram apagados');
+    const openDebt = await this.prisma.receivable.count({ where: { customerId: id, status: 'OPEN' } });
+    if (openDebt) {
+      throw badRequest('O cliente tem fiado em aberto: a loja precisa dos dados para a cobrança (LGPD, art. 16). Quite ou cancele as parcelas antes.');
+    }
     const customer = await this.prisma.$transaction(async (tx) => {
       await tx.sale.updateMany({ where: { customerId: id }, data: { customerName: null, customerDocument: null } });
       return tx.customer.update({
@@ -364,7 +401,7 @@ class CustomersController {
   @Post()
   @RequirePermissions(Permission.CUSTOMER_WRITE)
   create(@Body() dto: CreateCustomerDto, @CurrentUser() user: AuthUser, @ClientIp() ip: string) {
-    return this.customers.create(dto, { user, ip });
+    return this.customers.create(dto, { user, ip }, hasPermission(user.role, Permission.CUSTOMER_MANAGE));
   }
 
   @Patch(':id')

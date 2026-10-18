@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { CashSessionStatus, MovementSource, MovementType, Prisma, SaleStatus } from '@prisma/client';
+import { CashSessionStatus, MovementSource, MovementType, PaymentKind, Prisma, SaleStatus } from '@prisma/client';
 import { AuthUser } from '../../common/auth/auth-user';
 import { hasPermission, Permission } from '../../common/auth/permissions';
 import { toNumber } from '../../common/decimal';
@@ -14,7 +14,9 @@ import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
 import { calculateSale, fromCents, SaleRuleError, settlePayments } from './domain/sale-calculator';
 import { AbandonSaleDto, CancelSaleDto, CreateSaleDto, ListSalesQueryDto } from './pos.dto';
+import { ReceivablesService } from './receivables.service';
 import { saleInclude, toSaleView, type SaleView } from './sale.view';
+import { StoreCreditsService } from './store-credits.service';
 import { SupervisorAuthorizationService } from './supervisor-authorization.service';
 
 const money = (value: number) => value.toFixed(2).replace('.', ',');
@@ -27,6 +29,8 @@ export class SalesService {
     private readonly settings: SettingsService,
     private readonly audit: AuditService,
     private readonly authorization: SupervisorAuthorizationService,
+    private readonly credits: StoreCreditsService,
+    private readonly receivables: ReceivablesService,
   ) {}
 
   /**
@@ -52,6 +56,11 @@ export class SalesService {
     const divergences = this.checkPrices(dto, byId, offline);
     const payments = await this.resolvePayments(dto, offline);
     const customer = await this.resolveCustomer(dto, payments, offline);
+    await this.checkStoreCredits(payments, customer.id, offline);
+    const onAccountCents = payments.filter((p) => p.method.kind === PaymentKind.ON_ACCOUNT).reduce((sum, p) => sum + Math.round(p.amount * 100), 0);
+    const creditAuthorizedById = onAccountCents
+      ? await this.receivables.assertCredit(customer.id!, fromCents(onAccountCents), { user, token, saleId: dto.id, offline })
+      : null;
 
     let totals: ReturnType<typeof calculateSale>;
     let settlement: ReturnType<typeof settlePayments>;
@@ -124,10 +133,27 @@ export class SalesService {
                 methodName: p.method.name,
                 methodKind: p.method.kind,
                 amount: p.amount,
+                storeCreditId: p.method.kind === PaymentKind.STORE_CREDIT ? p.storeCreditId : null,
+                installments: p.method.kind === PaymentKind.ON_ACCOUNT ? (p.installments ?? 1) : null,
               })),
             },
           },
         });
+
+        // Vale-troca: desconta o saldo. Fiado: gera as parcelas a receber.
+        for (const p of payments.filter((p) => p.method.kind === PaymentKind.STORE_CREDIT)) {
+          await this.credits.redeem(tx, { creditId: p.storeCreditId!, amount: p.amount, saleId: dto.id, userId: user.id, offline });
+        }
+        if (onAccountCents) {
+          await this.receivables.createForSale(tx, {
+            customerId: customer.id!,
+            saleId: dto.id,
+            saleNumber: created.number,
+            amount: fromCents(onAccountCents),
+            installments: Math.max(...payments.filter((p) => p.method.kind === PaymentKind.ON_ACCOUNT).map((p) => p.installments ?? 1)),
+            occurredAt: dto.occurredAt,
+          });
+        }
 
         // Venda offline já aconteceu no balcão: nunca é barrada por saldo do sistema.
         const allowNegative = offline || !settings.pos.blockSaleWithoutStock;
@@ -160,14 +186,28 @@ export class SalesService {
 
     const view = toSaleView(sale);
     await this.auditSale(view, dto, divergences, user, ip);
+    if (creditAuthorizedById) {
+      await this.audit.log({
+        userId: user.id,
+        action: 'sale.credit-override',
+        entity: 'sale',
+        entityId: view.id,
+        details: { number: view.number, amount: fromCents(onAccountCents), authorizedById: creditAuthorizedById },
+        ip,
+      });
+    }
     return { sale: view, duplicated: false };
   }
 
   /** Cancela uma venda do turno aberto e devolve os itens ao estoque. */
   async cancel(id: string, dto: CancelSaleDto, user: AuthUser, token: string | undefined, ip: string) {
-    const sale = await this.prisma.sale.findUnique({ where: { id }, include: { session: true, items: true } });
+    const sale = await this.prisma.sale.findUnique({
+      where: { id },
+      include: { session: true, items: true, payments: true, _count: { select: { returns: true } } },
+    });
     if (!sale) throw notFound('Venda');
     if (sale.status === SaleStatus.CANCELED) throw badRequest('Esta venda já foi cancelada');
+    if (sale._count.returns > 0) throw badRequest('Esta venda já tem devolução: faça a devolução dos itens restantes em vez de cancelar');
     if (sale.session.status !== CashSessionStatus.OPEN) {
       throw new AppException(
         HttpStatus.CONFLICT,
@@ -187,6 +227,11 @@ export class SalesService {
         data: { status: SaleStatus.CANCELED, canceledAt: new Date(), canceledById: user.id, cancelReason: dto.reason },
       });
       if (count === 0) throw badRequest('Esta venda já foi cancelada');
+
+      await this.receivables.cancelForSale(tx, id);
+      for (const p of sale.payments.filter((p) => p.storeCreditId)) {
+        await this.credits.reverse(tx, { creditId: p.storeCreditId!, amount: toNumber(p.amount), saleId: id, userId: user.id });
+      }
 
       for (const item of sale.items) {
         await this.stock.registerInTransaction(
@@ -286,8 +331,26 @@ export class SalesService {
       const method = methods.find((m) => (payment.methodId ? m.id === payment.methodId : m.code === payment.method));
       if (!method) throw badRequest('Forma de pagamento não encontrada');
       if (!method.active && !offline) throw badRequest(`A forma de pagamento "${method.name}" está desativada`);
-      return { method, amount: payment.amount };
+      return { method, amount: payment.amount, storeCreditId: payment.storeCreditId, installments: payment.installments };
     });
+  }
+
+  /** Vale-troca: precisa do código, estar ativo e ter saldo (online). O saldo é descontado na transação da venda. */
+  private async checkStoreCredits(payments: { method: { kind: PaymentKind }; amount: number; storeCreditId?: string }[], customerId: string | null, offline: boolean) {
+    const byCredit = new Map<string, number>();
+    for (const p of payments.filter((p) => p.method.kind === PaymentKind.STORE_CREDIT)) {
+      if (!p.storeCreditId) throw badRequest('Informe o código do vale-troca');
+      byCredit.set(p.storeCreditId, (byCredit.get(p.storeCreditId) ?? 0) + Math.round(p.amount * 100));
+    }
+    if (offline) return;
+    for (const [creditId, cents] of byCredit) {
+      const credit = await this.credits.findOne(creditId);
+      if (credit.status !== 'ACTIVE') throw badRequest(`O vale ${credit.code} não pode ser usado (${credit.status === 'EXPIRED' ? 'vencido' : credit.status === 'USED' ? 'sem saldo' : 'cancelado'})`);
+      if (cents > Math.round(credit.balance * 100)) throw badRequest(`O saldo do vale ${credit.code} é de R$ ${credit.balance.toFixed(2).replace('.', ',')}`);
+      if (credit.customer && customerId && credit.customer.id !== customerId) {
+        throw badRequest(`O vale ${credit.code} é de outro cliente (${credit.customer.name})`);
+      }
+    }
   }
 
   /** Cliente identificado e/ou CPF na nota. Formas como o fiado exigem cliente. */

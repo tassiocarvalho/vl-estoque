@@ -53,6 +53,10 @@ model User {
   salesAuthorized    Sale[]         @relation("SaleAuthorizer")
   salesCanceled      Sale[]         @relation("SaleCanceledBy")
 
+  returnsMade       SaleReturn[]      @relation("SaleReturnUser")
+  returnsAuthorized SaleReturn[]      @relation("SaleReturnAuthorizer")
+  receiptsTaken     CustomerReceipt[] @relation("ReceiptUser")
+
   invoicesCreated   PurchaseInvoice[] @relation("InvoiceCreatedBy")
   invoicesFinalized PurchaseInvoice[] @relation("InvoiceFinalizedBy")
 
@@ -138,6 +142,7 @@ model Product {
   saleItems        SaleItem[]
   suppliers        ProductSupplier[]
   invoiceItems     PurchaseInvoiceItem[]
+  returnItems      SaleReturnItem[]
 
   @@index([deletedAt])
   @@index([name])
@@ -152,6 +157,7 @@ enum MovementType {
   IN_RETURN // Entrada: retorno ao estoque
   IN_ADJUSTMENT // Entrada: ajuste / estoque inicial
   IN_SALE_CANCEL // Entrada: estorno de venda cancelada no caixa
+  IN_SALE_RETURN // Entrada: devolução de venda (troca)
   OUT_SALE // Saída: venda
   OUT_LOSS // Saída: perda, quebra ou vencimento
   OUT_ADJUSTMENT // Saída: ajuste de inventário
@@ -241,6 +247,8 @@ model CashSession {
 
   movements CashMovement[]
   sales     Sale[]
+  returns   SaleReturn[]
+  receipts  CustomerReceipt[]
 
   @@index([terminal, status])
   @@index([openedAt])
@@ -289,6 +297,8 @@ enum PaymentKind {
   VOUCHER // Vale-alimentação, vale-refeição...
   CHECK // Cheque
   OTHER
+  STORE_CREDIT // Vale-troca / crédito do cliente: abate do saldo do vale
+  ON_ACCOUNT // Fiado / crediário: vira conta a receber do cliente
 }
 
 /// Formas de pagamento da loja (configuráveis). Nunca são apagadas depois de usadas: só desativadas.
@@ -312,6 +322,7 @@ model PaymentMethod {
   updatedAt        DateTime    @updatedAt
 
   payments SalePayment[]
+  receipts CustomerReceipt[]
 
   @@map("payment_methods")
 }
@@ -356,8 +367,10 @@ model Sale {
   canceledBy             User?         @relation("SaleCanceledBy", fields: [canceledById], references: [id], onDelete: Restrict)
   cancelReason           String?
 
-  items    SaleItem[]
-  payments SalePayment[]
+  items       SaleItem[]
+  payments    SalePayment[]
+  returns     SaleReturn[]
+  receivables Receivable[]
 
   @@index([sessionId])
   @@index([occurredAt])
@@ -386,6 +399,8 @@ model SaleItem {
   discount      Decimal       @db.Decimal(12, 2)
   total         Decimal       @db.Decimal(12, 2)
 
+  returnItems SaleReturnItem[]
+
   @@index([saleId])
   @@index([productId])
   @@map("sale_items")
@@ -402,10 +417,196 @@ model SalePayment {
   methodKind      PaymentKind
   /// Valor entregue pelo cliente nesta forma de pagamento.
   amount          Decimal       @db.Decimal(12, 2)
+  /// Vale-troca usado (formas de natureza STORE_CREDIT).
+  storeCreditId   String?       @db.Uuid
+  storeCredit     StoreCredit?  @relation(fields: [storeCreditId], references: [id], onDelete: Restrict)
+  /// Parcelas do fiado (formas de natureza ON_ACCOUNT).
+  installments    Int?
 
   @@index([saleId])
   @@index([paymentMethodId])
   @@map("sale_payments")
+}
+
+// ─── Pós-venda: devoluções, vale-troca e fiado ────────────────────────────────
+
+/// Como o cliente é reembolsado na devolução.
+enum RefundMethod {
+  CASH // Dinheiro: sai da gaveta do caixa aberto
+  ORIGINAL // Estorno na forma original (cartão, PIX): só registro
+  STORE_CREDIT // Vale-troca / crédito para usar em outra compra
+  ACCOUNT // Abate do fiado (venda feita no fiado)
+}
+
+/// Devolução (total ou parcial) de uma venda, inclusive depois do fechamento do turno. O id vem do caixa.
+model SaleReturn {
+  id               String       @id @db.Uuid
+  number           Int          @unique @default(autoincrement())
+  saleId           String       @db.Uuid
+  sale             Sale         @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  /// Caixa em que a devolução foi feita (o dinheiro devolvido sai dele).
+  sessionId        String?      @db.Uuid
+  session          CashSession? @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  customerId       String?      @db.Uuid
+  customer         Customer?    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  userId           String       @db.Uuid
+  user             User         @relation("SaleReturnUser", fields: [userId], references: [id], onDelete: Restrict)
+  authorizedById   String?      @db.Uuid
+  authorizedBy     User?        @relation("SaleReturnAuthorizer", fields: [authorizedById], references: [id], onDelete: Restrict)
+  reason           String
+  refundMethod     RefundMethod
+  /// Estorno na forma original: nome da forma (ex.: "Cartão de crédito").
+  refundMethodName String?
+  total            Decimal      @db.Decimal(12, 2)
+  /// Vale-troca gerado (reembolso em crédito).
+  storeCreditId    String?      @unique @db.Uuid
+  storeCredit      StoreCredit? @relation(fields: [storeCreditId], references: [id], onDelete: Restrict)
+  createdAt        DateTime     @default(now())
+
+  items SaleReturnItem[]
+
+  @@index([saleId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("sale_returns")
+}
+
+model SaleReturnItem {
+  id          String     @id @default(uuid()) @db.Uuid
+  returnId    String     @db.Uuid
+  saleReturn  SaleReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  saleItemId  String     @db.Uuid
+  saleItem    SaleItem   @relation(fields: [saleItemId], references: [id], onDelete: Restrict)
+  productId   String     @db.Uuid
+  product     Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName String
+  unit        Unit
+  quantity    Decimal    @db.Decimal(12, 3)
+  /// Valor devolvido ao cliente por este item (proporcional ao que ele pagou).
+  amount      Decimal    @db.Decimal(12, 2)
+  unitCost    Decimal    @db.Decimal(14, 4)
+  /// Volta ao estoque (padrão) ou é registrado como perda (produto avariado).
+  restock     Boolean    @default(true)
+
+  @@index([returnId])
+  @@index([saleItemId])
+  @@map("sale_return_items")
+}
+
+/// Vale-troca / crédito: saldo com código único, ao portador ou de um cliente.
+model StoreCredit {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// Código impresso no vale (ex.: VT-7KQ3M9XP).
+  code        String    @unique
+  customerId  String?   @db.Uuid
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  amount      Decimal   @db.Decimal(12, 2)
+  balance     Decimal   @db.Decimal(12, 2)
+  expiresAt   DateTime? @db.Date
+  note        String?
+  createdById String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  canceledAt  DateTime?
+
+  saleReturn SaleReturn?
+  entries    StoreCreditEntry[]
+  payments   SalePayment[]
+
+  @@index([customerId])
+  @@map("store_credits")
+}
+
+/// Extrato do vale: emissão, usos em vendas, estornos e cancelamento.
+model StoreCreditEntry {
+  id        String      @id @default(uuid()) @db.Uuid
+  creditId  String      @db.Uuid
+  credit    StoreCredit @relation(fields: [creditId], references: [id], onDelete: Cascade)
+  /// ISSUE, REDEEM, REVERSAL ou CANCEL.
+  type      String
+  /// Positivo aumenta o saldo; negativo diminui.
+  amount    Decimal     @db.Decimal(12, 2)
+  saleId    String?     @db.Uuid
+  userId    String?     @db.Uuid
+  createdAt DateTime    @default(now())
+
+  @@index([creditId])
+  @@map("store_credit_entries")
+}
+
+enum ReceivableStatus {
+  OPEN
+  PAID
+  CANCELED
+}
+
+/// Conta a receber do fiado: uma por parcela da venda.
+model Receivable {
+  id           String           @id @default(uuid()) @db.Uuid
+  customerId   String           @db.Uuid
+  customer     Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  saleId       String?          @db.Uuid
+  sale         Sale?            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  description  String
+  installment  Int              @default(1)
+  installments Int              @default(1)
+  dueDate      DateTime         @db.Date
+  amount       Decimal          @db.Decimal(12, 2)
+  /// Quanto já foi recebido (baixa parcial).
+  paidAmount   Decimal          @default(0) @db.Decimal(12, 2)
+  status       ReceivableStatus @default(OPEN)
+  paidAt       DateTime?
+  canceledAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  allocations ReceiptAllocation[]
+
+  @@index([customerId, status])
+  @@index([status, dueDate])
+  @@index([saleId])
+  @@map("receivables")
+}
+
+/// Recebimento do fiado no caixa (baixa total ou parcial, das parcelas mais antigas para as mais novas).
+model CustomerReceipt {
+  id              String        @id @db.Uuid
+  number          Int           @unique @default(autoincrement())
+  customerId      String        @db.Uuid
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  sessionId       String        @db.Uuid
+  session         CashSession   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  userId          String        @db.Uuid
+  user            User          @relation("ReceiptUser", fields: [userId], references: [id], onDelete: Restrict)
+  paymentMethodId String        @db.Uuid
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+  methodName      String
+  methodKind      PaymentKind
+  /// Valor abatido da dívida.
+  amount          Decimal       @db.Decimal(12, 2)
+  /// Valor entregue pelo cliente e troco (só em dinheiro).
+  received        Decimal       @db.Decimal(12, 2)
+  change          Decimal       @default(0) @db.Decimal(12, 2)
+  occurredAt      DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  allocations ReceiptAllocation[]
+
+  @@index([customerId])
+  @@index([sessionId])
+  @@map("customer_receipts")
+}
+
+model ReceiptAllocation {
+  id           String          @id @default(uuid()) @db.Uuid
+  receiptId    String          @db.Uuid
+  receipt      CustomerReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  receivableId String          @db.Uuid
+  receivable   Receivable      @relation(fields: [receivableId], references: [id], onDelete: Restrict)
+  amount       Decimal         @db.Decimal(12, 2)
+
+  @@index([receiptId])
+  @@index([receivableId])
+  @@map("receipt_allocations")
 }
 
 // ─── Clientes ─────────────────────────────────────────────────────────────────
@@ -428,11 +629,17 @@ model Customer {
   marketingConsent Boolean   @default(false)
   /// Preenchido quando os dados pessoais foram apagados a pedido do titular.
   anonymizedAt     DateTime?
+  /// Limite do fiado (0 = fiado não liberado para o cliente).
+  creditLimit      Decimal   @default(0) @db.Decimal(12, 2)
   createdById      String?   @db.Uuid
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  sales Sale[]
+  sales        Sale[]
+  returns      SaleReturn[]
+  storeCredits StoreCredit[]
+  receivables  Receivable[]
+  receipts     CustomerReceipt[]
 
   @@index([name])
   @@index([phone])

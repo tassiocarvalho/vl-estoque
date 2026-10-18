@@ -10,19 +10,20 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Socket } from 'node:net';
 import { AuthUser } from '../../common/auth/auth-user';
 import { ClientIp, CurrentUser, RequirePermissions } from '../../common/auth/decorators';
 import { Permission } from '../../common/auth/permissions';
 import { toNumber } from '../../common/decimal';
-import { AppException, notFound } from '../../common/errors';
+import { AppException, badRequest, notFound } from '../../common/errors';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CashService } from '../pos/cash.service';
 import { PosModule } from '../pos/pos.module';
 import { SalesService } from '../pos/sales.service';
 import { SettingsService } from '../settings/settings.service';
+import { blocksToEscPos, validBlocks } from './blocks';
 import { EscPosBuilder } from './escpos';
 import { cashMovementReceipt, cashReport, saleReceipt, testPage } from './receipts';
 
@@ -33,6 +34,21 @@ class PrintSaleDto {
   @IsOptional()
   @IsBoolean()
   copy?: boolean;
+}
+
+class PrintDocumentDto {
+  @IsString()
+  @MaxLength(120)
+  title: string;
+
+  /** Blocos do documento (validados no controlador). */
+  @IsArray()
+  blocks: unknown[];
+
+  /** Abre a gaveta antes de imprimir (ex.: devolução em dinheiro). */
+  @IsOptional()
+  @IsBoolean()
+  openDrawer?: boolean;
 }
 
 /**
@@ -136,6 +152,18 @@ class PrintingController {
         await this.printing.columns(),
       ),
     );
+  }
+
+  /** Comprovantes do pós-venda (devolução, vale-troca, recebimento de fiado) no mesmo layout do navegador. */
+  @Post('document')
+  @HttpCode(204)
+  @RequirePermissions(Permission.POS_SELL)
+  async document(@Body() dto: PrintDocumentDto, @CurrentUser() user: AuthUser, @ClientIp() ip: string) {
+    if (!validBlocks(dto.blocks)) throw badRequest('Documento de impressão inválido');
+    const { printer } = await this.settings.get();
+    const openDrawer = Boolean(dto.openDrawer && printer.openDrawerOnCash);
+    await this.printing.send(blocksToEscPos(dto.blocks, await this.printing.columns(), { openDrawer }));
+    if (openDrawer) await this.logDrawer(user, ip, dto.title);
   }
 
   /** Abre a gaveta de dinheiro sem venda (fica registrado na auditoria). */

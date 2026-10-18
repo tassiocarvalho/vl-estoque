@@ -70,6 +70,15 @@ class PrinterSettingsDto {
 class PosSettingsDto {
   @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(100) maxDiscountPercent?: number;
   @IsOptional() @IsBoolean() blockSaleWithoutStock?: boolean;
+  @IsOptional() @IsInt() @Min(0) @Max(365) returnDays?: number;
+  @IsOptional() @IsInt() @Min(0) @Max(3650) voucherValidityDays?: number;
+}
+
+class CreditSettingsDto {
+  @IsOptional() @IsInt() @Min(0) @Max(365) firstDueDays?: number;
+  @IsOptional() @IsInt() @Min(1) @Max(365) intervalDays?: number;
+  @IsOptional() @IsBoolean() blockOverdue?: boolean;
+  @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000) defaultLimit?: number;
 }
 
 export class UpdateSettingsDto {
@@ -108,4 +117,9 @@ export class UpdateSettingsDto {
   @ValidateNested()
   @Type(() => PosSettingsDto)
   pos?: PosSettingsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreditSettingsDto)
+  credit?: CreditSettingsDto;
 }

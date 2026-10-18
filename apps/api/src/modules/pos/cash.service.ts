@@ -176,8 +176,14 @@ export class CashService {
     return session;
   }
 
+  /** Dinheiro que deveria estar na gaveta agora (sangria e devolução em dinheiro não podem passar disso). */
+  async expectedCash(sessionId: string) {
+    const session = await this.findOpen(sessionId);
+    return (await this.summarize(session)).expectedCash;
+  }
+
   private async summarize(session: { id: string; openingAmount: Prisma.Decimal }) {
-    const [sales, movements, activeMethods] = await Promise.all([
+    const [sales, movements, activeMethods, receipts, refunds] = await Promise.all([
       this.prisma.sale.findMany({
         where: { sessionId: session.id },
         select: {
@@ -189,6 +195,11 @@ export class CashService {
       }),
       this.prisma.cashMovement.findMany({ where: { sessionId: session.id }, select: { type: true, amount: true } }),
       this.prisma.paymentMethod.findMany({ where: { active: true }, orderBy: [{ position: 'asc' }, { name: 'asc' }] }),
+      this.prisma.customerReceipt.findMany({
+        where: { sessionId: session.id },
+        select: { paymentMethodId: true, methodName: true, methodKind: true, amount: true },
+      }),
+      this.prisma.saleReturn.findMany({ where: { sessionId: session.id }, select: { refundMethod: true, total: true } }),
     ]);
     return summarizeCashSession(
       toNumber(session.openingAmount),
@@ -205,6 +216,10 @@ export class CashService {
       })),
       movements.map((m) => ({ type: m.type, amount: toNumber(m.amount) })),
       activeMethods.map((m) => ({ id: m.id, name: m.name, kind: m.kind })),
+      {
+        receipts: receipts.map((r) => ({ method: { id: r.paymentMethodId, name: r.methodName, kind: r.methodKind }, amount: toNumber(r.amount) })),
+        refunds: refunds.map((r) => ({ refundMethod: r.refundMethod, total: toNumber(r.total) })),
+      },
     );
   }
 

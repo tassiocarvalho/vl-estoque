@@ -112,15 +112,16 @@ export class SupervisorAuthorizationService {
       );
     if (!token) throw required();
 
-    let payload: AuthorizationPayload;
-    try {
-      payload = await this.jwt.verifyAsync<AuthorizationPayload>(token, { audience: AUDIENCE });
-    } catch {
-      throw required();
+    // O cabeçalho pode trazer vários tokens separados por vírgula (ex.: desconto e fiado na mesma venda).
+    let payload: AuthorizationPayload | undefined;
+    for (const candidate of token.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 5)) {
+      const decoded = await this.jwt.verifyAsync<AuthorizationPayload>(candidate, { audience: AUDIENCE }).catch(() => undefined);
+      if (decoded && decoded.perm === permission && decoded.op === operator.id && (decoded.scope ?? undefined) === options.scope) {
+        payload = decoded;
+        break;
+      }
     }
-    const matches =
-      payload.perm === permission && payload.op === operator.id && (payload.scope ?? undefined) === options.scope;
-    if (!matches) throw required();
+    if (!payload) throw required();
 
     // Sem escopo, a autorização vale uma única vez.
     if (!payload.scope) {

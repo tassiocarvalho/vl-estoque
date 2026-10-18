@@ -48,6 +48,22 @@ export interface PosSettings {
   maxDiscountPercent: number;
   /** Bloqueia vender item sem saldo. Desligado: o caixa vende e o estoque fica negativo. */
   blockSaleWithoutStock: boolean;
+  /** Prazo (dias) para troca e devolução; depois disso só com autorização do gerente. */
+  returnDays: number;
+  /** Validade do vale-troca em dias (0 = não vence). */
+  voucherValidityDays: number;
+}
+
+/** Fiado / crediário. */
+export interface CreditSettings {
+  /** Dias até o vencimento da 1ª parcela. */
+  firstDueDays: number;
+  /** Dias entre as parcelas. */
+  intervalDays: number;
+  /** Bloqueia novo fiado de cliente com parcela vencida (o gerente pode liberar). */
+  blockOverdue: boolean;
+  /** Limite sugerido para clientes novos (0 = fiado não liberado até o gerente definir). */
+  defaultLimit: number;
 }
 
 /** Parâmetros do sistema que o administrador pode alterar sem reprogramar. */
@@ -63,6 +79,7 @@ export interface SystemSettings {
   store: StoreBranding;
   printer: PrinterSettings;
   pos: PosSettings;
+  credit: CreditSettings;
 }
 
 export const DEFAULT_SETTINGS: SystemSettings = {
@@ -98,8 +115,16 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   pos: {
     maxDiscountPercent: 0,
     blockSaleWithoutStock: false,
+    returnDays: 30,
+    voucherValidityDays: 180,
+  },
+  credit: {
+    firstDueDays: 30,
+    intervalDays: 30,
+    blockOverdue: true,
+    defaultLimit: 0,
   },
 };
 
 /** Grupos de configuração que são objetos (mesclados campo a campo nas alterações). */
-export const NESTED_SETTINGS = ['pinRequired', 'store', 'printer', 'pos'] as const;
+export const NESTED_SETTINGS = ['pinRequired', 'store', 'printer', 'pos', 'credit'] as const;

@@ -1,7 +1,8 @@
 /**
  * Resumo do turno de caixa — domínio puro.
  *
- *   dinheiro esperado na gaveta = troco inicial + suprimentos − sangrias + dinheiro recebido − troco devolvido
+ *   dinheiro esperado na gaveta = troco inicial + suprimentos − sangrias + dinheiro das vendas (sem o troco)
+ *                                 + recebimentos de fiado em dinheiro − devoluções pagas em dinheiro
  *   diferença                   = dinheiro contado − dinheiro esperado   (negativo = falta, positivo = sobra)
  *
  * As formas de pagamento são configuráveis: o que entra na gaveta é o que tem natureza CASH (dinheiro).
@@ -9,7 +10,7 @@
  */
 import { toCents } from './sale-calculator';
 
-export type PaymentKindName = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'VOUCHER' | 'CHECK' | 'OTHER';
+export type PaymentKindName = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'VOUCHER' | 'CHECK' | 'OTHER' | 'STORE_CREDIT' | 'ON_ACCOUNT';
 
 export interface MethodRef {
   id: string;
@@ -29,6 +30,18 @@ export interface SessionCashMovement {
   amount: number;
 }
 
+/** Recebimento de fiado no turno: valor abatido da dívida (o troco já foi devolvido). */
+export interface SessionReceipt {
+  method: MethodRef;
+  amount: number;
+}
+
+/** Devolução feita no turno; só o reembolso em dinheiro sai da gaveta. */
+export interface SessionRefund {
+  refundMethod: 'CASH' | 'ORIGINAL' | 'STORE_CREDIT' | 'ACCOUNT';
+  total: number;
+}
+
 export interface MethodTotal extends MethodRef {
   /** Valor líquido recebido (no dinheiro, já sem o troco devolvido). */
   amount: number;
@@ -45,6 +58,15 @@ export interface CashSummary {
   cashSales: number;
   supplies: number;
   withdrawals: number;
+  /** Recebimentos de fiado no turno (total, por forma e em dinheiro). */
+  receiptsCount: number;
+  receiptsTotal: number;
+  receiptMethods: MethodTotal[];
+  cashReceipts: number;
+  /** Devoluções feitas no turno (total e o que saiu da gaveta em dinheiro). */
+  returnsCount: number;
+  returnsTotal: number;
+  cashRefunds: number;
   expectedCash: number;
 }
 
@@ -58,6 +80,7 @@ export function summarizeCashSession(
   sales: SessionSale[],
   movements: SessionCashMovement[],
   methods: MethodRef[] = [],
+  extra: { receipts?: SessionReceipt[]; refunds?: SessionRefund[] } = {},
 ): CashSummary {
   const totals = new Map<string, MethodRef & { cents: number }>();
   for (const method of methods) totals.set(method.id, { ...method, cents: 0 });
@@ -90,7 +113,23 @@ export function summarizeCashSession(
   const suppliesCents = movements.filter((m) => m.type === 'SUPPLY').reduce((s, m) => s + toCents(m.amount), 0);
   const withdrawalsCents = movements.filter((m) => m.type === 'WITHDRAWAL').reduce((s, m) => s + toCents(m.amount), 0);
   const cashSalesCents = cashReceivedCents - changeCents;
-  const expectedCashCents = toCents(openingAmount) + suppliesCents - withdrawalsCents + cashSalesCents;
+
+  const receipts = extra.receipts ?? [];
+  const receiptTotals = new Map<string, MethodRef & { cents: number }>();
+  for (const receipt of receipts) {
+    const entry = receiptTotals.get(receipt.method.id) ?? { ...receipt.method, cents: 0 };
+    entry.cents += toCents(receipt.amount);
+    receiptTotals.set(receipt.method.id, entry);
+  }
+  const receiptsCents = receipts.reduce((sum, r) => sum + toCents(r.amount), 0);
+  const cashReceiptsCents = receipts.filter((r) => r.method.kind === 'CASH').reduce((sum, r) => sum + toCents(r.amount), 0);
+
+  const refunds = extra.refunds ?? [];
+  const returnsCents = refunds.reduce((sum, r) => sum + toCents(r.total), 0);
+  const cashRefundsCents = refunds.filter((r) => r.refundMethod === 'CASH').reduce((sum, r) => sum + toCents(r.total), 0);
+
+  const expectedCashCents =
+    toCents(openingAmount) + suppliesCents - withdrawalsCents + cashSalesCents + cashReceiptsCents - cashRefundsCents;
 
   return {
     openingAmount,
@@ -101,6 +140,13 @@ export function summarizeCashSession(
     cashSales: fromCents(cashSalesCents),
     supplies: fromCents(suppliesCents),
     withdrawals: fromCents(withdrawalsCents),
+    receiptsCount: receipts.length,
+    receiptsTotal: fromCents(receiptsCents),
+    receiptMethods: [...receiptTotals.values()].map(({ cents, ...method }) => ({ ...method, amount: fromCents(cents) })),
+    cashReceipts: fromCents(cashReceiptsCents),
+    returnsCount: refunds.length,
+    returnsTotal: fromCents(returnsCents),
+    cashRefunds: fromCents(cashRefundsCents),
     expectedCash: fromCents(expectedCashCents),
   };
 }
@@ -116,8 +162,18 @@ const LEGACY_METHODS: Record<string, MethodRef> = {
 };
 
 /** Converte um resumo de fechamento gravado no formato antigo (byMethod como objeto) para o atual. */
+const POST_SALE_DEFAULTS = {
+  receiptsCount: 0,
+  receiptsTotal: 0,
+  receiptMethods: [],
+  cashReceipts: 0,
+  returnsCount: 0,
+  returnsTotal: 0,
+  cashRefunds: 0,
+};
+
 export function normalizeCashSummary(stored: unknown): CashSummary {
-  const summary = stored as CashSummary & { byMethod?: Record<string, number> };
+  const summary = { ...POST_SALE_DEFAULTS, ...(stored as CashSummary & { byMethod?: Record<string, number> }) };
   if (Array.isArray(summary.methods)) return summary;
   const byMethod = summary.byMethod ?? {};
   const { byMethod: _legacy, ...rest } = summary;
