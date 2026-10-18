@@ -128,7 +128,7 @@ function Sidebar({ onNavigate, onSearch, collapsed = false, onToggleCollapsed }:
         </button>
       </div>
 
-      <nav className={cn('flex-1 overflow-y-auto py-2', collapsed ? 'space-y-3 px-2' : 'space-y-6 px-3')}>
+      <nav className={cn('sidebar-scroll flex-1 overflow-y-auto py-2', collapsed ? 'space-y-3 px-2' : 'space-y-6 px-3')}>
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter((item) => can(item.permission));
           if (items.length === 0) return null;

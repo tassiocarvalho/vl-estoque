@@ -138,3 +138,43 @@
     @apply m-0 p-0 shadow-none;
   }
 }
+
+/* Barras de rolagem finas e discretas (Windows mostra a barra clássica, larga e branca). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.55) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.55);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139 / 0.8);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Menu lateral (fundo escuro): barra clara e translúcida, que só aparece ao passar o mouse. */
+.sidebar-scroll {
+  scrollbar-color: transparent transparent;
+}
+.sidebar-scroll:hover {
+  scrollbar-color: rgb(255 255 255 / 0.25) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.25);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 0.4);
+}
