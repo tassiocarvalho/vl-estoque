@@ -21,6 +21,9 @@ if not exist "node_modules" (
 if not exist "apps\api\dist\main.js" call npm run build || goto :erro
 if not exist "apps\web\dist\index.html" call npm run build || goto :erro
 
+rem Aplica as atualizacoes do banco de dados (so as que faltam; os dados sao mantidos).
+call npm run db:deploy -w @vl/api >nul || goto :erro
+
 echo.
 echo  Sistema iniciando... o navegador abrira em instantes em http://localhost:3000
 echo  Para acessar de outro computador ou celular da mesma rede, use http://IP-DESTE-PC:3000

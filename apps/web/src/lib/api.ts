@@ -11,6 +11,8 @@ export class ApiError extends Error {
     public readonly status: number,
     message: string,
     public readonly code?: string,
+    /** Corpo completo da resposta de erro (campos extras, ex.: id do registro em conflito). */
+    public readonly details: Record<string, unknown> = {},
   ) {
     super(message);
     this.name = 'ApiError';
@@ -124,7 +126,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   if (response.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/pin-login')) {
     onSessionExpired?.();
   }
-  throw new ApiError(response.status, message, code);
+  throw new ApiError(response.status, message, code, data && typeof data === 'object' ? data : {});
 }
 
 export const http = {

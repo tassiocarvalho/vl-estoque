@@ -35,6 +35,7 @@ export function toProductView(product: ProductWithCategory) {
     leadTimeDays: product.leadTimeDays,
     currentStock,
     costPrice: toNumber(product.costPrice),
+    lastCost: toNumber(product.lastCost),
     salePrice: toNumber(product.salePrice),
     ...indicators,
     status: classifyStock(currentStock, indicators),

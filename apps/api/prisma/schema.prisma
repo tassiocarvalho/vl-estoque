@@ -53,6 +53,9 @@ model User {
   salesAuthorized    Sale[]         @relation("SaleAuthorizer")
   salesCanceled      Sale[]         @relation("SaleCanceledBy")
 
+  invoicesCreated   PurchaseInvoice[] @relation("InvoiceCreatedBy")
+  invoicesFinalized PurchaseInvoice[] @relation("InvoiceFinalizedBy")
+
   @@map("users")
 }
 
@@ -101,35 +104,40 @@ enum Unit {
 }
 
 model Product {
-  id                  String    @id @default(uuid()) @db.Uuid
-  name                String
-  sku                 String    @unique
-  barcode             String?   @unique
-  categoryId          String    @db.Uuid
-  category            Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unit                Unit
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String
+  sku                  String    @unique
+  barcode              String?   @unique
+  categoryId           String    @db.Uuid
+  category             Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit                 Unit
   /// Desligado: o produto não usa consumo/prazo, não tem ponto de pedido nem gera solicitação automática.
-  replenishmentEnabled Boolean  @default(true)
-  avgDailyConsumption Decimal   @db.Decimal(12, 3)
-  maxDailyConsumption Decimal   @db.Decimal(12, 3)
-  leadTimeDays        Int
+  replenishmentEnabled Boolean   @default(true)
+  avgDailyConsumption  Decimal   @db.Decimal(12, 3)
+  maxDailyConsumption  Decimal   @db.Decimal(12, 3)
+  leadTimeDays         Int
   /// Indicadores calculados pelo domínio (EM, ES e PP) — armazenados para filtros rápidos.
-  minimumStock        Decimal   @db.Decimal(12, 3)
-  safetyStock         Decimal   @db.Decimal(12, 3)
-  reorderPoint        Decimal   @db.Decimal(12, 3)
+  minimumStock         Decimal   @db.Decimal(12, 3)
+  safetyStock          Decimal   @db.Decimal(12, 3)
+  reorderPoint         Decimal   @db.Decimal(12, 3)
   /// Saldo atual (cache). A fonte da verdade é a soma das movimentações.
-  currentStock        Decimal   @default(0) @db.Decimal(12, 3)
-  /// Preços em reais (2 casas). O preço de venda é o usado no caixa.
-  costPrice           Decimal   @default(0) @db.Decimal(12, 2)
-  salePrice           Decimal   @default(0) @db.Decimal(12, 2)
+  currentStock         Decimal   @default(0) @db.Decimal(12, 3)
+  /// Custo médio ponderado (atualizado nas entradas por nota; 4 casas para não perder centavos no rateio).
+  costPrice            Decimal   @default(0) @db.Decimal(14, 4)
+  /// Custo unitário da última entrada por nota.
+  lastCost             Decimal   @default(0) @db.Decimal(14, 4)
+  /// Preço de venda em reais (2 casas): o usado no caixa.
+  salePrice            Decimal   @default(0) @db.Decimal(12, 2)
   /// Preenchido quando o produto vai para a lixeira.
-  deletedAt           DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  deletedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   movements        StockMovement[]
   purchaseRequests PurchaseRequest[]
   saleItems        SaleItem[]
+  suppliers        ProductSupplier[]
+  invoiceItems     PurchaseInvoiceItem[]
 
   @@index([deletedAt])
   @@index([name])
@@ -310,43 +318,43 @@ model PaymentMethod {
 
 /// Venda não fiscal. O id é gerado no caixa: o reenvio offline não duplica a venda.
 model Sale {
-  id                  String        @id @db.Uuid
+  id                     String        @id @db.Uuid
   /// Número sequencial exibido no comprovante.
-  number              Int           @unique @default(autoincrement())
-  sessionId           String        @db.Uuid
-  session             CashSession   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  operatorId          String        @db.Uuid
-  operator            User          @relation("SaleOperator", fields: [operatorId], references: [id], onDelete: Restrict)
+  number                 Int           @unique @default(autoincrement())
+  sessionId              String        @db.Uuid
+  session                CashSession   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  operatorId             String        @db.Uuid
+  operator               User          @relation("SaleOperator", fields: [operatorId], references: [id], onDelete: Restrict)
   /// Cliente identificado (opcional) e cópia do nome/documento impressos no comprovante.
-  customerId          String?       @db.Uuid
-  customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  customerName        String?
+  customerId             String?       @db.Uuid
+  customer               Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customerName           String?
   /// CPF/CNPJ do consumidor, só números ("CPF na nota").
-  customerDocument    String?
-  status              SaleStatus    @default(COMPLETED)
+  customerDocument       String?
+  status                 SaleStatus    @default(COMPLETED)
   /// Soma dos itens antes de qualquer desconto.
-  grossTotal          Decimal       @db.Decimal(12, 2)
-  itemsDiscount       Decimal       @db.Decimal(12, 2)
-  orderDiscountType   DiscountType?
-  orderDiscountValue  Decimal?      @db.Decimal(12, 2)
-  orderDiscount       Decimal       @db.Decimal(12, 2)
-  total               Decimal       @db.Decimal(12, 2)
+  grossTotal             Decimal       @db.Decimal(12, 2)
+  itemsDiscount          Decimal       @db.Decimal(12, 2)
+  orderDiscountType      DiscountType?
+  orderDiscountValue     Decimal?      @db.Decimal(12, 2)
+  orderDiscount          Decimal       @db.Decimal(12, 2)
+  total                  Decimal       @db.Decimal(12, 2)
   /// Soma do que o cliente entregou e o troco devolvido (só em dinheiro).
-  paidTotal           Decimal       @db.Decimal(12, 2)
-  change              Decimal       @db.Decimal(12, 2)
+  paidTotal              Decimal       @db.Decimal(12, 2)
+  change                 Decimal       @db.Decimal(12, 2)
   /// Supervisor que autorizou descontos acima do limite do operador.
-  discountAuthorizedById String?    @db.Uuid
-  discountAuthorizedBy   User?      @relation("SaleAuthorizer", fields: [discountAuthorizedById], references: [id], onDelete: Restrict)
+  discountAuthorizedById String?       @db.Uuid
+  discountAuthorizedBy   User?         @relation("SaleAuthorizer", fields: [discountAuthorizedById], references: [id], onDelete: Restrict)
   /// Itens retirados do cupom antes de finalizar (rastro para a auditoria).
-  removedItems        Json?
+  removedItems           Json?
   /// Registrada sem internet e sincronizada depois.
-  offline             Boolean       @default(false)
-  occurredAt          DateTime
-  createdAt           DateTime      @default(now())
-  canceledAt          DateTime?
-  canceledById        String?       @db.Uuid
-  canceledBy          User?         @relation("SaleCanceledBy", fields: [canceledById], references: [id], onDelete: Restrict)
-  cancelReason        String?
+  offline                Boolean       @default(false)
+  occurredAt             DateTime
+  createdAt              DateTime      @default(now())
+  canceledAt             DateTime?
+  canceledById           String?       @db.Uuid
+  canceledBy             User?         @relation("SaleCanceledBy", fields: [canceledById], references: [id], onDelete: Restrict)
+  cancelReason           String?
 
   items    SaleItem[]
   payments SalePayment[]
@@ -359,23 +367,24 @@ model Sale {
 }
 
 model SaleItem {
-  id             String        @id @default(uuid()) @db.Uuid
-  saleId         String        @db.Uuid
-  sale           Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  position       Int
-  productId      String        @db.Uuid
-  product        Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id            String        @id @default(uuid()) @db.Uuid
+  saleId        String        @db.Uuid
+  sale          Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  position      Int
+  productId     String        @db.Uuid
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
   /// Cópia dos dados no momento da venda (o comprovante não muda se o cadastro mudar).
-  productName    String
-  sku            String
-  unit           Unit
-  quantity       Decimal       @db.Decimal(12, 3)
-  unitPrice      Decimal       @db.Decimal(12, 2)
-  unitCost       Decimal       @db.Decimal(12, 2)
-  discountType   DiscountType?
-  discountValue  Decimal?      @db.Decimal(12, 2)
-  discount       Decimal       @db.Decimal(12, 2)
-  total          Decimal       @db.Decimal(12, 2)
+  productName   String
+  sku           String
+  unit          Unit
+  quantity      Decimal       @db.Decimal(12, 3)
+  unitPrice     Decimal       @db.Decimal(12, 2)
+  /// Custo médio do produto no momento da venda (base da margem e do CMV).
+  unitCost      Decimal       @db.Decimal(14, 4)
+  discountType  DiscountType?
+  discountValue Decimal?      @db.Decimal(12, 2)
+  discount      Decimal       @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
 
   @@index([saleId])
   @@index([productId])
@@ -383,16 +392,16 @@ model SaleItem {
 }
 
 model SalePayment {
-  id      String        @id @default(uuid()) @db.Uuid
-  saleId  String        @db.Uuid
-  sale    Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  id              String        @id @default(uuid()) @db.Uuid
+  saleId          String        @db.Uuid
+  sale            Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
   paymentMethodId String        @db.Uuid
   paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
   /// Cópia do nome e da natureza no momento da venda (o comprovante não muda se a forma for renomeada).
   methodName      String
   methodKind      PaymentKind
   /// Valor entregue pelo cliente nesta forma de pagamento.
-  amount  Decimal       @db.Decimal(12, 2)
+  amount          Decimal       @db.Decimal(12, 2)
 
   @@index([saleId])
   @@index([paymentMethodId])
@@ -428,6 +437,185 @@ model Customer {
   @@index([name])
   @@index([phone])
   @@map("customers")
+}
+
+// ─── Compras: fornecedores e notas de entrada ─────────────────────────────────
+
+model Supplier {
+  id           String   @id @default(uuid()) @db.Uuid
+  /// Razão social (ou nome, se pessoa física).
+  name         String
+  tradeName    String?
+  /// CNPJ (14) ou CPF (11), só números.
+  document     String?  @unique
+  phone        String?
+  email        String?
+  contactName  String?
+  /// Prazo médio de entrega (dias).
+  leadTimeDays Int?
+  /// Condições de pagamento combinadas (ex.: "28/56 dias").
+  paymentTerms String?
+  notes        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products ProductSupplier[]
+  invoices PurchaseInvoice[]
+  payables Payable[]
+
+  @@index([name])
+  @@map("suppliers")
+}
+
+/// Produto comprado de um fornecedor: código do produto no fornecedor, conversão e último custo.
+model ProductSupplier {
+  productId      String    @db.Uuid
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplierId     String    @db.Uuid
+  supplier       Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierCode   String?
+  /// Unidades do produto em cada unidade comprada (ex.: caixa com 12 = 12).
+  factor         Decimal   @default(1) @db.Decimal(12, 3)
+  /// Último custo por unidade do produto (já com frete e descontos rateados).
+  lastCost       Decimal?  @db.Decimal(14, 4)
+  lastPurchaseAt DateTime?
+  /// Fornecedor sugerido nas solicitações de pedido.
+  preferred      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@id([productId, supplierId])
+  @@index([supplierId, supplierCode])
+  @@map("product_suppliers")
+}
+
+enum PurchaseInvoiceStatus {
+  DRAFT // Em conferência: não mexe no estoque
+  FINALIZED // Entrada lançada: estoque, custo médio e contas a pagar
+  CANCELED
+}
+
+/// Entrada de mercadoria por nota (digitada ou importada do XML da NF-e).
+model PurchaseInvoice {
+  id             String                @id @default(uuid()) @db.Uuid
+  /// Número interno da entrada.
+  number         Int                   @unique @default(autoincrement())
+  supplierId     String?               @db.Uuid
+  supplier       Supplier?             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  /// Número e série da nota do fornecedor.
+  documentNumber String?
+  series         String?
+  /// Chave de acesso da NF-e (44 dígitos): impede importar a mesma nota duas vezes.
+  accessKey      String?               @unique
+  issueDate      DateTime?             @db.Date
+  status         PurchaseInvoiceStatus @default(DRAFT)
+  /// Valores da nota rateados no custo dos itens (proporcional ao valor de cada item).
+  freight        Decimal               @default(0) @db.Decimal(12, 2)
+  otherCosts     Decimal               @default(0) @db.Decimal(12, 2)
+  discount       Decimal               @default(0) @db.Decimal(12, 2)
+  /// Total impresso na nota, para conferência.
+  declaredTotal  Decimal?              @db.Decimal(12, 2)
+  /// Parcelas a pagar ([{ dueDate, amount }]); viram contas a pagar ao finalizar.
+  installments   Json?
+  notes          String?
+  /// MANUAL ou XML.
+  source         String                @default("MANUAL")
+  createdById    String?               @db.Uuid
+  createdBy      User?                 @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  finalizedById  String?               @db.Uuid
+  finalizedBy    User?                 @relation("InvoiceFinalizedBy", fields: [finalizedById], references: [id], onDelete: SetNull)
+  finalizedAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  items    PurchaseInvoiceItem[]
+  payables Payable[]
+
+  @@index([status, createdAt])
+  @@map("purchase_invoices")
+}
+
+model PurchaseInvoiceItem {
+  id           String          @id @default(uuid()) @db.Uuid
+  invoiceId    String          @db.Uuid
+  invoice      PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  position     Int
+  /// Produto do cadastro (nulo enquanto o item importado do XML não foi associado).
+  productId    String?         @db.Uuid
+  product      Product?        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  /// Dados do item como vieram na nota.
+  supplierCode String?
+  description  String
+  barcode      String?
+  purchaseUnit String?
+  /// Quantidade e custo na unidade da nota.
+  quantity     Decimal         @db.Decimal(12, 3)
+  unitCost     Decimal         @db.Decimal(14, 4)
+  total        Decimal         @db.Decimal(12, 2)
+  /// Unidades do produto em cada unidade da nota (estoque = quantidade × fator).
+  factor       Decimal         @default(1) @db.Decimal(12, 3)
+
+  @@index([invoiceId])
+  @@index([productId])
+  @@map("purchase_invoice_items")
+}
+
+// ─── Financeiro: contas a pagar ───────────────────────────────────────────────
+
+model ExpenseCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Código das categorias de fábrica (MERCHANDISE = compra de mercadoria: vira custo, não despesa).
+  code      String?  @unique
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  payables Payable[]
+
+  @@map("expense_categories")
+}
+
+enum PayableStatus {
+  OPEN
+  PAID
+  CANCELED
+}
+
+model Payable {
+  id                String           @id @default(uuid()) @db.Uuid
+  description       String
+  categoryId        String           @db.Uuid
+  category          ExpenseCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplierId        String?          @db.Uuid
+  supplier          Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  /// Nota de entrada que gerou a conta (parcelas da nota).
+  invoiceId         String?          @db.Uuid
+  invoice           PurchaseInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  documentNumber    String?
+  installment       Int              @default(1)
+  installments      Int              @default(1)
+  dueDate           DateTime         @db.Date
+  amount            Decimal          @db.Decimal(12, 2)
+  status            PayableStatus    @default(OPEN)
+  /// Baixa: data, valor pago (pode ter juros ou desconto) e forma de pagamento.
+  paidAt            DateTime?        @db.Date
+  paidAmount        Decimal?         @db.Decimal(12, 2)
+  paymentMethodName String?
+  notes             String?
+  /// Comprovante anexado (imagem ou PDF, até 2 MB).
+  attachment        Bytes?
+  attachmentName    String?
+  attachmentType    String?
+  createdById       String?          @db.Uuid
+  paidById          String?          @db.Uuid
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([status, dueDate])
+  @@index([paidAt])
+  @@index([invoiceId])
+  @@map("payables")
 }
 
 // ─── Configuração e auditoria ─────────────────────────────────────────────────

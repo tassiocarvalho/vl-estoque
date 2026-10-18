@@ -77,8 +77,9 @@ export class CreateProductDto {
   @Max(365)
   leadTimeDays: number;
 
+  /** Custo médio (atualizado sozinho pelas notas de entrada; pode ser ajustado à mão). */
   @IsOptional()
-  @IsNumber(MONEY, { message: 'Preço de custo inválido' })
+  @IsNumber({ maxDecimalPlaces: 4 }, { message: 'Preço de custo inválido' })
   @Min(0)
   @Max(1_000_000)
   costPrice?: number;

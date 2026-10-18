@@ -27,6 +27,19 @@ export function parseMoney(text: string): number {
   return Math.round(Number(clean) * 100) / 100;
 }
 
+/** Lê um número no padrão brasileiro com até `places` casas ("1.234,5678"). Devolve NaN se não for número. */
+export function parseDecimal(text: string, places: number): number {
+  let clean = text.replace(/[^\d,.-]/g, '');
+  if (clean.includes(',')) clean = clean.replace(/\./g, '').replace(',', '.');
+  if (clean === '' || clean === '-') return Number.NaN;
+  const factor = 10 ** places;
+  return Math.round(Number(clean) * factor) / factor;
+}
+
+/** Número para campo de digitação: "1234,5" (sem separador de milhar). */
+export const formatInput = (value: number, maxPlaces = 4) =>
+  new Intl.NumberFormat('pt-BR', { maximumFractionDigits: maxPlaces, useGrouping: false }).format(value);
+
 /** Lê uma quantidade (até 3 casas): "0,755" ou "2". */
 export function parseQuantity(text: string): number {
   const clean = text.replace(/[^\d,.]/g, '').replace(',', '.');

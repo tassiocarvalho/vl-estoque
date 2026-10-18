@@ -31,6 +31,10 @@ const PosPage = page(() => import('./features/pos/PosPage'), 'PosPage');
 const SalesPage = page(() => import('./features/sales/SalesPage'), 'SalesPage');
 const CashSessionsPage = page(() => import('./features/sales/CashSessionsPage'), 'CashSessionsPage');
 const CustomersPage = page(() => import('./features/customers/CustomersPage'), 'CustomersPage');
+const SuppliersPage = page(() => import('./features/suppliers/SuppliersPage'), 'SuppliersPage');
+const InvoicesPage = page(() => import('./features/invoices/InvoicesPage'), 'InvoicesPage');
+const InvoiceEditorPage = page(() => import('./features/invoices/InvoiceEditorPage'), 'InvoiceEditorPage');
+const PayablesPage = page(() => import('./features/finance/PayablesPage'), 'PayablesPage');
 
 /** O operador de caixa cai direto na frente de caixa; os demais, no painel. */
 function Home() {
@@ -79,6 +83,10 @@ export const router = createBrowserRouter([
           { path: 'categorias', element: <RequirePermission permission={P.CATEGORY_MANAGE}><CategoriesPage /></RequirePermission> },
           { path: 'movimentacoes', element: <RequirePermission permission={P.MOVEMENT_READ}><MovementsPage /></RequirePermission> },
           { path: 'pedidos', element: <RequirePermission permission={P.PURCHASE_READ}><PurchaseRequestsPage /></RequirePermission> },
+          { path: 'fornecedores', element: <RequirePermission permission={P.PURCHASE_READ}><SuppliersPage /></RequirePermission> },
+          { path: 'notas-entrada', element: <RequirePermission permission={P.PURCHASE_READ}><InvoicesPage /></RequirePermission> },
+          { path: 'notas-entrada/:id', element: <RequirePermission permission={P.PURCHASE_READ}><InvoiceEditorPage /></RequirePermission> },
+          { path: 'contas-a-pagar', element: <RequirePermission permission={P.FINANCE_READ}><PayablesPage /></RequirePermission> },
           { path: 'relatorios', element: <RequirePermission permission={P.REPORT_READ}><ReportsPage /></RequirePermission> },
           { path: 'usuarios', element: <RequirePermission permission={P.USER_MANAGE}><UsersPage /></RequirePermission> },
           { path: 'lixeira', element: <RequirePermission permission={P.TRASH_MANAGE}><TrashPage /></RequirePermission> },

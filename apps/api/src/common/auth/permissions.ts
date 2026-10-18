@@ -37,6 +37,11 @@ export enum Permission {
   CUSTOMER_WRITE = 'customer:write',
   /** Inativar e atender pedidos da LGPD (exportar e anonimizar dados). */
   CUSTOMER_MANAGE = 'customer:manage',
+
+  // ─── Financeiro ───
+  /** Contas a pagar, fluxo de caixa e resultado. */
+  FINANCE_READ = 'finance:read',
+  FINANCE_MANAGE = 'finance:manage',
 }
 
 const CASHIER: Permission[] = [
@@ -69,6 +74,8 @@ const MANAGER: Permission[] = [
   Permission.MOVEMENT_READ,
   Permission.PURCHASE_READ,
   Permission.CUSTOMER_MANAGE,
+  Permission.FINANCE_READ,
+  Permission.FINANCE_MANAGE,
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {

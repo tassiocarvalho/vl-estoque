@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 apps/desktop/.stage/
 apps/desktop/release/
+
+# Cache do TypeScript (tsc -b)
+*.tsbuildinfo

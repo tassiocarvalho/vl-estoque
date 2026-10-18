@@ -1,4 +1,4 @@
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useDeferredValue, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import type { Product } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { useDeleteProduct, useProducts } from './api';
 import { CategorySelect } from './CategorySelect';
+import { exportCatalog, ImportProductsModal } from './ImportProductsModal';
 import { ProductFormModal } from './ProductFormModal';
 
 const STATUS_TABS = [
@@ -38,6 +39,7 @@ export function ProductsPage() {
 
   const [editing, setEditing] = useState<Product | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
 
   const { data, isLoading, isError, refetch, isFetching } = useProducts({
@@ -79,13 +81,24 @@ export function ProductsPage() {
         title="Produtos"
         description="Catálogo de mercadorias com saldo atual e indicadores de reposição."
         actions={
-          can(P.PRODUCT_WRITE) && (
-            <Button icon={<Plus className="size-4" />} onClick={() => openForm(null)}>
-              Novo produto
+          <>
+            <Button variant="ghost" icon={<FileDown className="size-4" />} onClick={() => void exportCatalog().catch((e) => toast.error(errorMessage(e)))}>
+              Exportar planilha
             </Button>
-          )
+            {can(P.PRODUCT_WRITE) && (
+              <>
+                <Button variant="outline" icon={<FileSpreadsheet className="size-4" />} onClick={() => setImporting(true)}>
+                  Importar planilha
+                </Button>
+                <Button icon={<Plus className="size-4" />} onClick={() => openForm(null)}>
+                  Novo produto
+                </Button>
+              </>
+            )}
+          </>
         }
       />
+      <ImportProductsModal open={importing} onClose={() => setImporting(false)} />
 
       <div className="mb-4 flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
         <Tabs value={status} onChange={(value) => setFilter('status', value)} options={STATUS_TABS} />

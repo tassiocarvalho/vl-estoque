@@ -3,6 +3,8 @@ import {
   ArrowUpFromLine,
   BarChart3,
   ClipboardList,
+  FileInput,
+  HandCoins,
   Contact,
   FolderTree,
   History,
@@ -13,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Trash2,
+  Truck,
   Users,
   Vault,
   type LucideIcon,
@@ -53,7 +56,15 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { to: '/categorias', label: 'Categorias', icon: FolderTree, permission: P.CATEGORY_MANAGE },
       { to: '/movimentacoes', label: 'Movimentações', icon: History, permission: P.MOVEMENT_READ, keywords: 'historico' },
       { to: '/pedidos', label: 'Solicitações de pedido', icon: ClipboardList, permission: P.PURCHASE_READ, keywords: 'reposicao fornecedor compra' },
+      { to: '/notas-entrada', label: 'Notas de entrada', icon: FileInput, permission: P.PURCHASE_READ, keywords: 'nfe xml compra custo medio mercadoria' },
+      { to: '/fornecedores', label: 'Fornecedores', icon: Truck, permission: P.PURCHASE_READ, keywords: 'cnpj distribuidora compra' },
       { to: '/relatorios', label: 'Relatórios', icon: BarChart3, permission: P.REPORT_READ, keywords: 'ruptura parado excel csv' },
+    ],
+  },
+  {
+    title: 'Financeiro',
+    items: [
+      { to: '/contas-a-pagar', label: 'Contas a pagar', icon: HandCoins, permission: P.FINANCE_READ, keywords: 'despesa boleto vencimento aluguel' },
     ],
   },
   {

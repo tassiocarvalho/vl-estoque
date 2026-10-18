@@ -3,7 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
-import type { NextFunction, Request, Response } from 'express';
+import { json, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { env, isProduction } from './config/env';
 import { AppModule } from './app.module';
@@ -28,6 +28,8 @@ async function bootstrap() {
 
   app.disable('x-powered-by');
   app.set('trust proxy', 'loopback'); // IP real do cliente atrás de proxy reverso local (logs e rate limit)
+  // Rotas que recebem arquivos (XML da NF-e, planilha de produtos, comprovantes de contas): até 6 MB.
+  app.use(['/api/purchase-invoices/import-xml', '/api/products/import', '/api/payables'], json({ limit: '6mb' }));
   // 300 KB: comporta o logotipo da loja (até ~150 KB) nas configurações; o resto da API envia bem menos.
   app.useBodyParser('json', { limit: '300kb' });
   app.use(

@@ -60,20 +60,48 @@ class UpdateStatusDto {
 }
 
 const requestInclude = {
-  product: { select: { id: true, name: true, sku: true, barcode: true, unit: true, currentStock: true } },
+  product: {
+    select: {
+      id: true,
+      name: true,
+      sku: true,
+      barcode: true,
+      unit: true,
+      currentStock: true,
+      lastCost: true,
+      // Fornecedor preferencial (ou o da última compra) para agrupar o pedido.
+      suppliers: {
+        orderBy: [{ preferred: 'desc' }, { lastPurchaseAt: { sort: 'desc', nulls: 'last' } }],
+        take: 1,
+        select: { lastCost: true, supplierCode: true, preferred: true, supplier: { select: { id: true, name: true, tradeName: true, phone: true } } },
+      },
+    },
+  },
   createdBy: { select: { id: true, name: true } },
 } satisfies Prisma.PurchaseRequestInclude;
 
 type RequestWithRelations = Prisma.PurchaseRequestGetPayload<{ include: typeof requestInclude }>;
 
-const toRequestView = (request: RequestWithRelations) => ({
-  ...request,
-  suggestedQuantity: toNumber(request.suggestedQuantity),
-  stockAtRequest: toNumber(request.stockAtRequest),
-  reorderPoint: toNumber(request.reorderPoint),
-  product: { ...request.product, currentStock: toNumber(request.product.currentStock) },
-  automatic: request.createdById === null,
-});
+const toRequestView = (request: RequestWithRelations) => {
+  const { suppliers, ...product } = request.product;
+  const preferred = suppliers[0];
+  return {
+    ...request,
+    suggestedQuantity: toNumber(request.suggestedQuantity),
+    stockAtRequest: toNumber(request.stockAtRequest),
+    reorderPoint: toNumber(request.reorderPoint),
+    product: { ...product, currentStock: toNumber(product.currentStock), lastCost: toNumber(product.lastCost) },
+    supplier: preferred
+      ? {
+          ...preferred.supplier,
+          supplierCode: preferred.supplierCode,
+          preferred: preferred.preferred,
+          lastCost: preferred.lastCost === null ? null : toNumber(preferred.lastCost),
+        }
+      : null,
+    automatic: request.createdById === null,
+  };
+};
 
 @Injectable()
 class PurchaseRequestsService {

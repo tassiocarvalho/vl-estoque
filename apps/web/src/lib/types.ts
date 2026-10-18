@@ -46,7 +46,10 @@ export interface Product {
   maxDailyConsumption: number;
   leadTimeDays: number;
   currentStock: number;
+  /** Custo médio ponderado (atualizado pelas notas de entrada). */
   costPrice: number;
+  /** Custo unitário da última nota de entrada. */
+  lastCost: number;
   salePrice: number;
   minimumStock: number;
   safetyStock: number;
@@ -101,7 +104,17 @@ export interface PurchaseRequest {
   automatic: boolean;
   createdAt: string;
   closedAt: string | null;
-  product: { id: string; name: string; sku: string; barcode: string | null; unit: Unit; currentStock: number };
+  product: { id: string; name: string; sku: string; barcode: string | null; unit: Unit; currentStock: number; lastCost: number };
+  /** Fornecedor preferencial (ou o da última compra). */
+  supplier: {
+    id: string;
+    name: string;
+    tradeName: string | null;
+    phone: string | null;
+    supplierCode: string | null;
+    preferred: boolean;
+    lastCost: number | null;
+  } | null;
   createdBy: { id: string; name: string } | null;
 }
 
@@ -412,4 +425,160 @@ export interface SalesReport {
     cost: number;
     margin: number;
   }[];
+}
+
+// ─── Compras ──────────────────────────────────────────────────────────────────
+
+export interface Supplier {
+  id: string;
+  name: string;
+  tradeName: string | null;
+  document: string | null;
+  phone: string | null;
+  email: string | null;
+  contactName: string | null;
+  leadTimeDays: number | null;
+  paymentTerms: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductSupplierLink {
+  productId: string;
+  supplierId: string;
+  product: { id: string; name: string; sku: string; unit: Unit; costPrice: number; deletedAt: string | null };
+  supplier: { id: string; name: string; tradeName: string | null };
+  supplierCode: string | null;
+  factor: number;
+  lastCost: number | null;
+  lastPurchaseAt: string | null;
+  preferred: boolean;
+}
+
+export interface SupplierDetail extends Supplier {
+  products: ProductSupplierLink[];
+  stats: { invoices: number; lastPurchaseAt: string | null; openPayables: number; openAmount: number };
+}
+
+export type PurchaseInvoiceStatus = 'DRAFT' | 'FINALIZED' | 'CANCELED';
+
+export interface Installment {
+  dueDate: string;
+  amount: number;
+}
+
+export interface PurchaseInvoiceItem {
+  id: string;
+  position: number;
+  productId: string | null;
+  product: {
+    id: string;
+    name: string;
+    sku: string;
+    barcode: string | null;
+    unit: Unit;
+    costPrice: number;
+    salePrice: number;
+    deletedAt: string | null;
+  } | null;
+  supplierCode: string | null;
+  description: string;
+  barcode: string | null;
+  purchaseUnit: string | null;
+  quantity: number;
+  unitCost: number;
+  total: number;
+  factor: number;
+}
+
+export interface PurchaseInvoice {
+  id: string;
+  number: number;
+  status: PurchaseInvoiceStatus;
+  source: 'MANUAL' | 'XML';
+  supplier: { id: string; name: string; tradeName: string | null; document: string | null } | null;
+  documentNumber: string | null;
+  series: string | null;
+  accessKey: string | null;
+  issueDate: string | null;
+  freight: number;
+  otherCosts: number;
+  discount: number;
+  declaredTotal: number | null;
+  productsTotal: number;
+  total: number;
+  installments: Installment[];
+  notes: string | null;
+  createdBy: { id: string; name: string } | null;
+  finalizedBy: { id: string; name: string } | null;
+  finalizedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: PurchaseInvoiceItem[];
+  payables: { id: string; installment: number; installments: number; dueDate: string; amount: number; status: PayableStatus }[];
+}
+
+export type PurchaseInvoiceListItem = Omit<PurchaseInvoice, 'items'> & { itemsCount: number };
+
+export interface ImportPreviewRow {
+  line: number;
+  sku: string;
+  name: string | null;
+  action: 'create' | 'update';
+  errors: string[];
+}
+
+export interface ImportResult {
+  applied: boolean;
+  summary: { rows: number; create: number; update: number; errors: number; ignoredColumns: string[] };
+  rows: ImportPreviewRow[];
+}
+
+// ─── Financeiro ───────────────────────────────────────────────────────────────
+
+export type PayableStatus = 'OPEN' | 'PAID' | 'CANCELED';
+
+export interface ExpenseCategory {
+  id: string;
+  code: string | null;
+  name: string;
+  active: boolean;
+}
+
+export interface Payable {
+  id: string;
+  description: string;
+  category: { id: string; name: string; code: string | null };
+  supplier: { id: string; name: string; tradeName: string | null } | null;
+  invoice: { id: string; number: number; documentNumber: string | null } | null;
+  documentNumber: string | null;
+  installment: number;
+  installments: number;
+  dueDate: string;
+  amount: number;
+  status: PayableStatus;
+  paidAt: string | null;
+  paidAmount: number | null;
+  paymentMethodName: string | null;
+  notes: string | null;
+  attachmentName: string | null;
+  attachmentType: string | null;
+  hasAttachment: boolean;
+  overdue: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AmountCount {
+  count: number;
+  amount: number;
+}
+
+export interface PayablesSummary {
+  overdue: AmountCount;
+  today: AmountCount;
+  next7: AmountCount;
+  open: AmountCount;
 }

@@ -23,6 +23,8 @@ export const P = {
   CUSTOMER_READ: 'customer:read',
   CUSTOMER_WRITE: 'customer:write',
   CUSTOMER_MANAGE: 'customer:manage',
+  FINANCE_READ: 'finance:read',
+  FINANCE_MANAGE: 'finance:manage',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

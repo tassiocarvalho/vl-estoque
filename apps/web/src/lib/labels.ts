@@ -1,4 +1,14 @@
-import type { CashMovementType, MovementType, PaymentKind, PurchaseRequestStatus, Role, StockStatus, Unit } from './types';
+import type {
+  CashMovementType,
+  MovementType,
+  PayableStatus,
+  PaymentKind,
+  PurchaseInvoiceStatus,
+  PurchaseRequestStatus,
+  Role,
+  StockStatus,
+  Unit,
+} from './types';
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: 'Administrador',
@@ -116,6 +126,37 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'payment-method.create': 'Criou forma de pagamento',
   'payment-method.update': 'Alterou forma de pagamento',
   'payment-method.delete': 'Excluiu forma de pagamento',
+  'supplier.create': 'Cadastrou fornecedor',
+  'supplier.update': 'Alterou fornecedor',
+  'supplier.link-product': 'Ligou produto ao fornecedor',
+  'supplier.unlink-product': 'Desligou produto do fornecedor',
+  'invoice.create': 'Criou nota de entrada',
+  'invoice.update': 'Alterou nota de entrada (rascunho)',
+  'invoice.delete': 'Excluiu rascunho de nota de entrada',
+  'invoice.import-xml': 'Importou XML de NF-e',
+  'invoice.finalize': 'Lançou nota de entrada',
+  'product.import': 'Importou produtos por planilha',
+  'expense-category.create': 'Criou categoria de despesa',
+  'expense-category.update': 'Alterou categoria de despesa',
+  'payable.create': 'Lançou conta a pagar',
+  'payable.update': 'Alterou conta a pagar',
+  'payable.pay': 'Pagou conta',
+  'payable.reopen': 'Desfez pagamento de conta',
+  'payable.cancel': 'Cancelou conta a pagar',
+  'payable.attach': 'Anexou comprovante de conta',
+  'payable.detach': 'Removeu comprovante de conta',
+};
+
+export const INVOICE_STATUS_LABELS: Record<PurchaseInvoiceStatus, string> = {
+  DRAFT: 'Rascunho',
+  FINALIZED: 'Lançada',
+  CANCELED: 'Cancelada',
+};
+
+export const PAYABLE_STATUS_LABELS: Record<PayableStatus, string> = {
+  OPEN: 'Em aberto',
+  PAID: 'Paga',
+  CANCELED: 'Cancelada',
 };
 
 export const PAYMENT_KIND_LABELS: Record<PaymentKind, string> = {

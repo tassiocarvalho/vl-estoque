@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, EmptyState, ErrorState, LoadingState, Pagination } from '@/components/ui/Display';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { errorMessage, isCanceled } from '@/lib/api';
-import { formatDateTime, formatQuantity } from '@/lib/format';
+import { formatDate, formatDateTime, formatMoney, formatNumber, formatQuantity } from '@/lib/format';
 import { UNIT_LABELS } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuth } from '../auth/AuthProvider';
 import { NewPurchaseRequestModal } from '../purchases/NewPurchaseRequestModal';
+import { useProductSuppliers } from '../suppliers/api';
 import { useMovements } from '../stock/api';
 import { MovementsTable } from '../stock/MovementsTable';
 import { useDeleteProduct, useProduct } from './api';
@@ -40,11 +41,14 @@ export function ProductDetailPage() {
   const canSeeMovements = can(P.MOVEMENT_READ);
   const movements = useMovements({ productId: id, page, pageSize: 10 }, canSeeMovements);
   const deleteProduct = useDeleteProduct();
+  const canSeeSuppliers = can(P.PURCHASE_READ);
+  const suppliers = useProductSuppliers(id, canSeeSuppliers);
 
   if (isLoading) return <LoadingState />;
   if (isError || !product) return <ErrorState message="Produto não encontrado" onRetry={refetch} />;
 
   const qty = (value: number) => formatQuantity(value, product.unit);
+  const margin = product.salePrice > 0 && product.costPrice > 0 ? ((product.salePrice - product.costPrice) / product.salePrice) * 100 : null;
 
   const handleDelete = async () => {
     try {
@@ -113,6 +117,10 @@ export function ProductDetailPage() {
           <dl className="divide-y divide-slate-100 text-sm">
             {[
               ['Unidade', UNIT_LABELS[product.unit]],
+              ['Preço de venda', formatMoney(product.salePrice)],
+              ['Custo médio', formatMoney(product.costPrice)],
+              ['Último custo (nota)', product.lastCost ? formatMoney(product.lastCost) : '—'],
+              ['Margem sobre a venda', margin === null ? '—' : `${formatNumber(Math.round(margin * 10) / 10)}%`],
               ...(product.replenishmentEnabled
                 ? [
                     ['Consumo médio diário', qty(product.avgDailyConsumption)],
@@ -129,6 +137,35 @@ export function ProductDetailPage() {
               </div>
             ))}
           </dl>
+          {canSeeSuppliers && (
+            <div className="border-t border-slate-100 px-5 py-4">
+              <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">Fornecedores</p>
+              {suppliers.data?.length ? (
+                <ul className="space-y-2 text-sm">
+                  {suppliers.data.map((link) => (
+                    <li key={link.supplierId}>
+                      <p className="font-medium text-slate-800">
+                        {link.supplier.tradeName || link.supplier.name}
+                        {link.preferred && <span className="ml-1 text-xs text-amber-600">★ preferencial</span>}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {[
+                          link.supplierCode && `cód. ${link.supplierCode}`,
+                          link.factor !== 1 && `embalagem com ${formatNumber(link.factor)}`,
+                          link.lastCost !== null && `último custo ${formatMoney(link.lastCost)}`,
+                          link.lastPurchaseAt && `em ${formatDate(link.lastPurchaseAt)}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-500">Aparecem aqui depois da primeira nota de entrada.</p>
+              )}
+            </div>
+          )}
         </Card>
 
         <Card className="overflow-hidden lg:col-span-2">

@@ -142,7 +142,9 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
     const consumption = values.replenishmentEnabled
       ? {}
       : { avgDailyConsumption: undefined, maxDailyConsumption: undefined, leadTimeDays: undefined };
-    const data = { ...values, ...consumption, ...(editing && { initialStock: undefined }) };
+    // O custo médio guarda 4 casas: só é enviado se foi alterado à mão (senão a edição o arredondaria).
+    const keepCost = editing && !formState.dirtyFields.costPrice ? { costPrice: undefined } : {};
+    const data = { ...values, ...consumption, ...keepCost, ...(editing && { initialStock: undefined }) };
     try {
       const saved = await save.mutateAsync({ id: product?.id, data });
       toast.success(editing ? 'Produto atualizado' : 'Produto cadastrado');
@@ -204,7 +206,7 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
           <Field label="Preço de venda (R$)" error={errors.salePrice?.message} hint="Cobrado no caixa. Em branco = não vendido no caixa.">
             {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.salePrice} {...register('salePrice')} />}
           </Field>
-          <Field label="Preço de custo (R$)" error={errors.costPrice?.message} hint="Usado na margem do relatório de vendas">
+          <Field label="Custo médio (R$)" error={errors.costPrice?.message} hint="Atualizado sozinho pelas notas de entrada; base da margem">
             {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.costPrice} {...register('costPrice')} />}
           </Field>
           <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-sm">

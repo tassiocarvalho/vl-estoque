@@ -12,12 +12,14 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { FinanceModule } from './modules/finance/finance.module';
 import { IntegrationModule } from './modules/integration/integration.module';
 import { PaymentMethodsModule } from './modules/payment-methods/payment-methods.module';
 import { PosModule } from './modules/pos/pos.module';
 import { PrintingModule } from './modules/printing/printing.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PurchaseRequestsModule } from './modules/purchase-requests/purchase-requests.module';
+import { PurchasesModule } from './modules/purchases/purchases.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { LegalModule } from './modules/legal/legal.module';
 import { MailModule } from './modules/mail/mail.module';
@@ -48,6 +50,8 @@ const staticFiles = existsSync(webDist)
     ProductsModule,
     StockModule,
     PurchaseRequestsModule,
+    PurchasesModule,
+    FinanceModule,
     ReportsModule,
     CustomersModule,
     PaymentMethodsModule,
