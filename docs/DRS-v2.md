@@ -4,7 +4,7 @@
 |---|---|
 | **Produto** | SuaLojaAqui — frente de caixa (PDV não fiscal) e gestão de estoque, white-label |
 | **Versão do documento** | 2.0 |
-| **Status** | Em implementação — RF12, RF13, RF14 e RF22 entregues (ver a coluna Situação) |
+| **Status** | Em implementação — RF12–RF19, RF22–RF25 e RF32 entregues, além de etiqueta de balança e kits (ver a coluna Situação e as notas da entrega) |
 | **Base** | Continua o [DRS v1](DRS-PDV.md) (RF01–RF11 e RNF01–RNF04, já implementados) |
 
 ---
@@ -44,27 +44,29 @@ O DRS v1 entregou o caixa, o estoque, o controle de acesso e a impressão. Este 
 | RF12 | Cadastro de clientes | Alta | 1 | M | — | ✅ |
 | RF13 | Cliente e CPF na venda | Alta | 1 | P | RF12 | ✅ |
 | RF14 | Formas de pagamento configuráveis | Alta | 1 | M | — | ✅ |
-| RF15 | Troca e devolução (parcial e após o fechamento) | Alta | 1 | G | RF12, RF16 | — |
-| RF16 | Vale-troca / crédito do cliente | Alta | 1 | M | RF12 | — |
-| RF17 | Fornecedores | Alta | 1 | P | — | — |
-| RF18 | Entrada de mercadoria por nota (custo médio) | Alta | 1 | G | RF17 | — |
-| RF19 | Importação de produtos por planilha | Alta | 1 | M | — | — |
+| RF15 | Troca e devolução (parcial e após o fechamento) | Alta | 1 | G | RF12, RF16 | ✅ |
+| RF16 | Vale-troca / crédito do cliente | Alta | 1 | M | RF12 | ✅ |
+| RF17 | Fornecedores | Alta | 1 | P | — | ✅ |
+| RF18 | Entrada de mercadoria por nota (custo médio) | Alta | 1 | G | RF17 | ✅ |
+| RF19 | Importação de produtos por planilha | Alta | 1 | M | — | ✅ |
 | RF20 | Campos fiscais no produto e na venda | Alta | 1 | M | RF13 | — |
 | RF21 | Backup automático (versão web) | Alta | 1 | M | — | — |
 | RF22 | LGPD: consentimento, exportação e exclusão | Alta | 1 | M | RF12 | ✅ |
-| RF23 | Fiado / crediário (contas a receber) | Média | 2 | G | RF12, RF14 | — |
-| RF24 | Contas a pagar | Média | 2 | M | RF17, RF18 | — |
-| RF25 | Fluxo de caixa e resultado do período | Média | 2 | M | RF23, RF24 | — |
+| RF23 | Fiado / crediário (contas a receber) | Média | 2 | G | RF12, RF14 | ✅ |
+| RF24 | Contas a pagar | Média | 2 | M | RF17, RF18 | ✅ |
+| RF25 | Fluxo de caixa e resultado do período | Média | 2 | M | RF23, RF24 | ✅ |
 | RF26 | Orçamento salvo e conversão em venda | Média | 2 | M | RF12 | — |
 | RF27 | Promoções e preços diferenciados | Média | 2 | G | RF12 | — |
 | RF28 | Inventário (contagem e ajuste em lote) | Média | 2 | M | — | — |
 | RF29 | Lote e validade | Média | 2 | G | RF18 | — |
 | RF30 | Etiquetas de gôndola e de código de barras | Média | 2 | M | — | — |
 | RF31 | Histórico de preço e de custo | Média | 2 | P | RF18 | — |
-| RF32 | Recuperação de senha pelo próprio usuário | Baixa | 3 | M | RNF08 | — |
+| RF32 | Recuperação de senha pelo próprio usuário | Baixa | 3 | M | RNF08 | ✅ |
 | RF33 | Vendedor na venda, comissão e metas | Baixa | 3 | M | — | — |
 | RF34 | Variações de produto (grade) | Baixa | 3 | G | — | — |
 | RF35 | Multi-loja | Baixa | 3 | G | quase todos | — |
+| — | Etiqueta de balança (EAN-13 com preço ou peso) | Média | 2 | M | — | ✅ |
+| — | Kits e combos (produto composto) | Média | 2 | M | — | ✅ |
 
 ---
 
@@ -99,7 +101,7 @@ O cadastro de formas de pagamento substitui a lista fixa atual. Vem pronto com: 
   - O fechamento de caixa e os relatórios agrupam pelas formas cadastradas.
 - **Impacto:** o enum `PaymentMethod` vira uma tabela, com migração dos dados atuais.
 
-#### RF15 — Troca e devolução · Alta · Fase 1
+#### RF15 — Troca e devolução · Alta · Fase 1 · ✅ entregue
 Devolução de **um ou mais itens** de uma venda (inclusive parcial na quantidade), **mesmo depois do fechamento do turno**, com motivo obrigatório.
 
 - **Critérios de aceite**
@@ -113,7 +115,7 @@ Devolução de **um ou mais itens** de uma venda (inclusive parcial na quantidad
   - Respeita um prazo máximo configurável (ex.: 30 dias), que o gerente pode liberar.
 - **Observação:** o cancelamento atual (venda inteira, mesmo turno) continua existindo para erros de digitação.
 
-#### RF16 — Vale-troca / crédito do cliente · Alta · Fase 1
+#### RF16 — Vale-troca / crédito do cliente · Alta · Fase 1 · ✅ entregue
 Saldo de crédito por cliente (ou vale ao portador, com código), gerado em devoluções e usado como forma de pagamento.
 
 - **Critérios de aceite**
@@ -123,14 +125,14 @@ Saldo de crédito por cliente (ou vale ao portador, com código), gerado em devo
 
 ### 3.2 Estoque e compras
 
-#### RF17 — Fornecedores · Alta · Fase 1
+#### RF17 — Fornecedores · Alta · Fase 1 · ✅ entregue
 Cadastro com razão social, nome fantasia, CNPJ, contatos, prazo médio de entrega e condições de pagamento. O produto pode ter vários fornecedores, com código do produto no fornecedor e último custo.
 
 - **Critérios de aceite**
   - A solicitação de pedido (já existente) passa a sugerir o **fornecedor preferencial** e o último custo.
   - A lista de pedidos é impressa **agrupada por fornecedor**.
 
-#### RF18 — Entrada de mercadoria por nota · Alta · Fase 1
+#### RF18 — Entrada de mercadoria por nota · Alta · Fase 1 · ✅ entregue (com XML da NF-e)
 A tela de entrada ganha uma versão completa: fornecedor, número e série da nota, data de emissão, vários itens com quantidade e **custo unitário**, frete/desconto rateado e conferência do total da nota.
 
 - **Critérios de aceite**
@@ -141,7 +143,7 @@ A tela de entrada ganha uma versão completa: fornecedor, número e série da no
   - **Fase 2:** importar o XML da NF-e do fornecedor para preencher os itens.
 - **Permissões:** estoquista e administrador.
 
-#### RF19 — Importação de produtos por planilha · Alta · Fase 1
+#### RF19 — Importação de produtos por planilha · Alta · Fase 1 · ✅ entregue (CSV)
 Importação de CSV/XLSX com modelo para baixar.
 
 - **Critérios de aceite**
@@ -208,7 +210,7 @@ Campo **vendedor** na venda, diferente do operador do caixa (ex.: loja de roupas
 
 ### 3.4 Financeiro
 
-#### RF23 — Fiado / crediário · Média · Fase 2
+#### RF23 — Fiado / crediário · Média · Fase 2 · ✅ entregue
 Venda com forma de pagamento "Fiado", só para cliente identificado com **limite de crédito**.
 
 - **Critérios de aceite**
@@ -218,14 +220,14 @@ Venda com forma de pagamento "Fiado", só para cliente identificado com **limite
   - Extrato do cliente e relatório de inadimplência (vencidos por cliente e por faixa de atraso).
   - Juros e multa por atraso: opcional e configurável.
 
-#### RF24 — Contas a pagar · Média · Fase 2
+#### RF24 — Contas a pagar · Média · Fase 2 · ✅ entregue
 Títulos a pagar com origem manual (despesas: aluguel, energia, salários, por **categoria de despesa**) ou automática (nota de entrada, RF18, com parcelas).
 
 - **Critérios de aceite**
   - Agenda de vencimentos (hoje, semana, vencidos) e baixa com data e forma de pagamento.
   - Anexo do comprovante (imagem ou PDF).
 
-#### RF25 — Fluxo de caixa e resultado · Média · Fase 2
+#### RF25 — Fluxo de caixa e resultado · Média · Fase 2 · ✅ entregue
 - **Fluxo de caixa** diário e mensal, realizado e previsto: vendas por forma de pagamento (aplicando as taxas e prazos de RF14), recebimentos de fiado, contas pagas e a pagar.
 - **Resultado simples (DRE gerencial)** do período: vendas − devoluções − custo das mercadorias vendidas (custo médio) − despesas = resultado.
 - Exportação para Excel e PDF.
@@ -261,7 +263,7 @@ Títulos a pagar com origem manual (despesas: aluguel, energia, salários, por *
 - **Exclusão/anonimização:** apaga os dados pessoais e mantém as vendas para fins legais, com o cliente anonimizado.
 - Acesso aos dados de clientes registrado na auditoria. Uma política de privacidade editável aparece no cadastro.
 
-#### RF32 — Recuperação de senha · Baixa · Fase 3
+#### RF32 — Recuperação de senha · Baixa · Fase 3 · ✅ entregue (código por e-mail)
 "Esqueci minha senha" com link por e-mail (validade de 30 minutos, uso único). Depende do envio de e-mail (RNF08). Até lá, continua valendo a redefinição pelo administrador, que já existe.
 
 #### RF35 — Multi-loja · Baixa · Fase 3
@@ -290,6 +292,20 @@ Várias lojas na mesma instalação: estoque, caixas e configurações por loja;
 - **Offline:** o caixa guarda no aparelho as formas de pagamento e os clientes ativos (nome, documento e telefone). Os dados dos clientes são apagados do aparelho no logout. O cadastro de cliente novo precisa de conexão; offline, dá para informar só o CPF/CNPJ na nota.
 - **LGPD:** dados pessoais além do nome só com a autorização registrada (data e canal). Gerente e administrador exportam os dados (JSON) e apagam os dados pessoais a pedido do titular; as vendas continuam, sem identificar o cliente. A visualização de clientes **não** é auditada (só criação, alteração, exportação e anonimização), para não poluir a auditoria.
 
+### Notas da entrega (RF15–RF19, RF23–RF25, balança e kits)
+
+- **Troca e devolução (RF15):** a venda é localizada pelo **número** (tecla F11 no caixa) ou pelo relatório de vendas; a busca por cliente ou pela bipagem dos produtos fica para depois. O valor devolvido é o líquido pago pelo item (desconto do total rateado). A troca é feita como devolução em vale-troca que entra automaticamente no pagamento da venda seguinte, no mesmo caixa. Reembolso também **abatendo o fiado** da própria venda. O item avariado entra e sai como perda. Prazo padrão de 30 dias; fora dele, só o gerente.
+- **Vale-troca (RF16):** vale ao portador (cliente opcional) com código `VT-…`, saldo, uso parcial, validade padrão de 180 dias (0 = não vence), extrato e cancelamento pelo gerente. Não gera troco.
+- **Fornecedores (RF17):** vínculo produto–fornecedor com código, conversão, último custo e fornecedor preferido; a solicitação de pedido sugere o preferido, mostra o último custo e pode ser vista e impressa **agrupada por fornecedor**.
+- **Nota de entrada (RF18):** digitada ou pelo **XML da NF-e** (antecipado da fase 2), com associação automática por código no fornecedor ou EAN, conversão de embalagem, rateio de frete, despesas e desconto, custo com 4 casas, rascunho, conferência com o total da nota, parcelas que viram contas a pagar e fechamento das solicitações de pedido do produto. A mesma chave de acesso não entra duas vezes.
+- **Planilha (RF19):** CSV (o Excel salva em CSV; XLSX não), inclusive Windows-1252, com pré-visualização, modos "criar e atualizar" ou "só criar", criação opcional de categorias, gravação atômica e auditoria. Exporta no mesmo formato. Os campos fiscais entram com o RF20.
+- **Fiado (RF23):** limite por cliente (padrão configurável), até 12 parcelas, bloqueio de cliente em atraso com liberação do gerente (`pos:credit`), recebimento no caixa com troco, alocação nas parcelas mais antigas, extrato, atraso por faixa e maiores devedores. **Juros e multa ainda não** são calculados automaticamente.
+- **Contas a pagar (RF24):** categorias de despesa, parcelamento, conta fixa mensal, pagamento com juros/multa pela diferença, anexo, reabrir e cancelar.
+- **Fluxo de caixa e DRE (RF25):** realizado e previsto por dia e por categoria, cartões em D+N sem a taxa, vencidos à parte; DRE com vendas, devoluções, CMV, taxas, perdas e despesas (compra de mercadoria fora das despesas). Exporta CSV e imprime (PDF pelo navegador).
+- **Balança e kits:** etiqueta EAN-13 com prefixo e PLU configuráveis, modo preço ou peso; kit com itens e quantidades, sem estoque próprio, disponibilidade e custo calculados, e baixa/estorno dos itens na venda, no cancelamento e na devolução.
+- **Offline:** vale-troca, fiado, devolução e recebimento exigem conexão (RNF06); a venda comum continua offline.
+- **Auditoria (RNF09):** devoluções, vales, fiado, recebimentos, notas, importações e contas a pagar são auditados.
+
 ---
 
 ## 5. Plano de fases sugerido
@@ -305,9 +321,9 @@ Várias lojas na mesma instalação: estoque, caixas e configurações por loja;
 
 ## 6. Pontos a decidir com o cliente
 
-- [ ] **Devolução em dinheiro após o fechamento:** sai do caixa aberto no momento (proposto) ou de um caixa "administrativo"?
-- [ ] **Prazo máximo** para troca e devolução, e se o vale-troca vence.
-- [ ] **Fiado:** cobra juros e multa? Qual o limite de crédito padrão?
+- [x] **Devolução em dinheiro após o fechamento:** sai do caixa aberto no momento (implementado assim).
+- [x] **Prazo máximo** para troca e validade do vale: configuráveis (padrão 30 e 180 dias).
+- [ ] **Fiado:** cobra juros e multa? (O limite padrão já é configurável.)
 - [ ] **Promoções:** quando duas regras valem ao mesmo tempo, aplica a melhor para o cliente (proposto) ou a de maior prioridade?
 - [ ] **Multi-loja** está nos planos? Se sim, preparar `storeId` já na Fase 1.
 - [ ] Quem será o **contador de referência** para validar os campos fiscais (RF20)?

@@ -6,7 +6,7 @@
 
 **Frente de caixa (PDV não fiscal) e gestão de estoque — white-label**
 
-Caixa 100% pelo teclado · Vende sem internet · Comprovante térmico, A4 e PDF · Estoque com alertas de reposição
+Caixa 100% pelo teclado · Vende sem internet · Troca, vale-troca e fiado · Balança e kits · Compras com XML da NF-e · Fluxo de caixa e DRE
 
 ![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
@@ -50,14 +50,14 @@ Caixa 100% pelo teclado · Vende sem internet · Comprovante térmico, A4 e PDF 
 
 ## 🎯 Visão geral
 
-O SuaLojaAqui une uma **frente de caixa não fiscal** a um **controle de estoque com reposição automática**. O caixa vende pelo leitor de código de barras, aceita várias formas de pagamento na mesma venda, calcula o troco e imprime o comprovante. Cada venda dá baixa no estoque, e o sistema avisa a gestão quando é hora de comprar.
+O SuaLojaAqui une uma **frente de caixa não fiscal**, um **controle de estoque com reposição automática**, as **compras** (fornecedores e notas de entrada pelo XML da NF-e) e um **financeiro** de loja pequena (contas a pagar, fiado, fluxo de caixa e resultado do mês). O caixa vende pelo leitor de código de barras e pela etiqueta da balança, aceita várias formas de pagamento na mesma venda (inclusive vale-troca e fiado), faz troca e devolução e imprime o comprovante. Cada venda dá baixa no estoque (no kit, de cada item), e o sistema avisa a gestão quando é hora de comprar.
 
 É **white-label**: nome, logotipo, cores, tema e textos dos comprovantes mudam nas configurações, sem programar. "SuaLojaAqui" é apenas o nome padrão.
 
 > **Não fiscal:** esta versão não emite NFC-e, SAT nem NF-e e não fala com a SEFAZ. Todo comprovante diz **"Documento Não Fiscal — Sem Valor Fiscal"**.
 
 📄 O documento de requisitos, com a rastreabilidade de cada requisito até o código, está em **[docs/DRS-PDV.md](docs/DRS-PDV.md)**.
-O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financeiro, fiscal e mais) está priorizado no **[DRS v2](docs/DRS-v2.md)**.
+A segunda fase (clientes, troca/devolução, vale-troca, fiado, compras com nota, balança, kits e financeiro) está no **[DRS v2](docs/DRS-v2.md)**, com a situação de cada requisito. O **manual do usuário** (72 páginas, com capturas de tela) está em [apps/web/public/manual-de-uso.pdf](apps/web/public/manual-de-uso.pdf) e dentro do sistema, no menu *Manual de uso*.
 
 | Requisito do DRS | Como foi atendido |
 |---|---|
@@ -72,6 +72,11 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | RNF02 Não fiscal | Sem integração fiscal e com a menção obrigatória em todos os comprovantes |
 | RNF03 Impressoras | Epson, Elgin, Bematech, Daruma e outras (driver do Windows ou ESC/POS pela rede) |
 | Offline-first | O caixa vende sem internet e sincroniza sozinho, sem duplicar |
+| RF15–RF16 Troca, devolução e vale-troca (v2) | Devolução parcial com valor líquido do desconto, avaria, estorno em dinheiro, na forma original, em vale ou no fiado; vale com código, saldo e validade |
+| RF17–RF19 Compras (v2) | Fornecedores, nota de entrada digitada ou pelo XML da NF-e, conversão de embalagem, custo médio ponderado, parcelas e importação de produtos por planilha |
+| RF23–RF25 Financeiro (v2) | Contas a pagar, fiado com limite e parcelas, recebimento no caixa, fluxo de caixa realizado e previsto e DRE gerencial |
+| RF32 Clientes (v2) | Cadastro com LGPD, histórico, limite de fiado e extrato |
+| Balança e kits (v2) | Etiqueta EAN-13 com preço ou peso e produtos compostos que baixam o estoque dos itens |
 
 ---
 
@@ -80,15 +85,25 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | Módulo | O que faz |
 |---|---|
 | 🖥️ **Frente de caixa** | Tela cheia operada pelo teclado e pronta para touchscreen: busca, cupom, descontos, pagamento múltiplo, troco e orçamento |
-| 👤 **Clientes** | Cadastro com CPF/CNPJ validado, histórico de compras e LGPD (consentimento, exportação e exclusão dos dados). No caixa: tecla **Ins** para identificar o cliente ou só o CPF na nota |
-| 💳 **Formas de pagamento** | Configuráveis: dinheiro, PIX, cartões, vale-alimentação/refeição, cheque e outras, com regras de troco, exigência de cliente, taxa e prazo |
-| 💵 **Caixa** | Abertura com troco inicial, sangria, suprimento, leitura parcial e fechamento com conferência |
-| 🛡️ **Autorização do supervisor** | Desconto acima do limite, cancelamento de venda e sangria pedem usuário + PIN de um gerente |
+| ⚖️ **Etiqueta de balança** | Lê o EAN-13 da balança (prefixo 2, PLU de 4 a 6 dígitos) com **preço** ou **peso** embutido; no modo preço, cobra exatamente o valor da etiqueta |
+| 🎁 **Kits e combos** | Produto composto: a venda, o cancelamento e a devolução movimentam cada item; mostra quantos kits dá para montar e o custo pela soma dos itens |
+| 🔁 **Troca e devolução** | Pelo número da venda (tecla **F11** no caixa ou no relatório de vendas): devolução parcial, item avariado (perda), prazo configurável e autorização do gerente |
+| 🎟️ **Vale-troca** | Código `VT-…` com saldo, validade e uso parcial; na troca, entra sozinho no pagamento da próxima venda. Consulta e 2ª via no caixa |
+| 📒 **Fiado / crediário** | Venda para cliente identificado em até 12 parcelas, com limite por cliente, bloqueio de quem está em atraso (o gerente libera) e recebimento no caixa, abatendo as parcelas mais antigas |
+| 👤 **Clientes** | Cadastro com CPF/CNPJ validado, histórico de compras, limite e extrato do fiado e LGPD (consentimento, exportação e exclusão dos dados). No caixa: tecla **Ins** para identificar o cliente ou só o CPF na nota |
+| 💳 **Formas de pagamento** | Configuráveis: dinheiro, PIX, cartões, vale-alimentação/refeição, vale-troca, fiado, cheque e outras, com regras de troco, exigência de cliente, taxa e prazo de recebimento |
+| 💵 **Caixa** | Abertura com troco inicial, sangria, suprimento, leitura parcial e fechamento com conferência (com recebimentos de fiado e devoluções em dinheiro) |
+| 🛡️ **Autorização do supervisor** | Desconto acima do limite, cancelamento, sangria, devolução e fiado fora do limite pedem usuário + PIN de um gerente |
 | 📴 **Venda offline** | Sem internet o caixa continua vendendo, e as vendas sobem sozinhas quando a conexão volta |
-| 🧾 **Comprovantes** | Venda, orçamento, sangria e fechamento: bobina de 80/58 mm, A4 ou PDF, com reimpressão em 2ª via |
-| 📈 **Vendas** | Relatório por período: total, ticket médio, descontos, margem bruta, formas de pagamento, operadores e produtos mais vendidos. Exporta CSV |
+| 🧾 **Comprovantes** | Venda (no fiado, com parcelas e assinatura), orçamento, sangria, fechamento, devolução, vale-troca e recebimento: bobina de 80/58 mm, A4 ou PDF, com 2ª via |
+| 📈 **Vendas** | Relatório por período: total, ticket médio, descontos, devoluções, margem bruta, formas de pagamento, operadores e produtos mais vendidos. Exporta CSV |
+| 🚚 **Fornecedores** | Cadastro com CNPJ validado, prazo de entrega e condição de pagamento; produtos fornecidos com código no fornecedor, conversão, último custo e fornecedor preferido |
+| 📥 **Notas de entrada** | Digitada ou importada do **XML da NF-e** (associa os itens sozinho pelo código no fornecedor ou EAN), conversão de embalagem, rateio de frete/despesas/desconto, **custo médio ponderado** e parcelas que viram contas a pagar |
+| 📊 **Planilha de produtos** | Exporta o catálogo e importa CSV do Excel (inclusive Windows-1252): confere linha a linha antes de gravar e grava tudo ou nada |
+| 💸 **Contas a pagar** | Por categoria, parceladas ou fixas mensais, com pagamento (juros/multa), anexo do comprovante e painel de vencidas e a vencer |
+| 💰 **Fluxo de caixa e resultado** | Realizado e previsto dia a dia (cartão no dia em que cai, sem a taxa; fiado e contas no vencimento) e **DRE gerencial**: receita, devoluções, CMV, taxas, perdas, despesas e resultado |
 | 🎨 **White-label** | Nome, logotipo, cor, tema claro/escuro e textos dos comprovantes, tudo nas configurações |
-| 📦 **Produtos** | Cadastro com preço de custo e de venda, busca, filtros por situação e categoria e histórico |
+| 📦 **Produtos** | Cadastro com custo médio (4 casas), último custo e preço de venda, código de balança, kits, busca, filtros por situação e categoria e histórico |
 | ⬇️⬆️ **Entradas e saídas** | Pedido recebido, retorno, perdas e ajustes (ajuste só do administrador) |
 | 🔔 **Reposição (opcional por produto)** | EM, ES e PP calculados, com solicitação de pedido automática. Com o interruptor "Controlar consumo e reposição" desligado, o produto não pede consumo nem prazo e não gera solicitação |
 | 📋 **Pedidos e relatórios de estoque** | Fluxo Pendente → Pedido feito → Recebido, estoque parado e rupturas |
@@ -98,7 +113,8 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | 🗑️ **Lixeira** | Recupera produtos excluídos dentro do prazo, depois apaga automaticamente |
 | 🔑 **Esqueci minha senha** | Código de 6 números por e-mail (Gmail com senha de app ou outro SMTP), válido por 15 min |
 | ⚖️ **LGPD** | Termo de Uso e Política de Privacidade com aceite versionado, “Baixar meus dados”, anonimização e retenção automática |
-| ⚙️ **Configurações** | Regras ajustáveis sem programação |
+| ⚙️ **Configurações** | Regras ajustáveis sem programação (caixa, balança, trocas, vales, fiado, reposição, PIN e lixeira) |
+| 🧭 **Navegação** | Menu lateral em grupos (Operação, Vendas, Estoque, Financeiro, Administração), recolhível, e **busca rápida Ctrl+K** por telas, produtos e clientes |
 | 📴 **Estoque offline** | Entradas e saídas registradas sem internet sincronizam quando a conexão volta |
 | 🔌 **Integração PDV** | O caixa consulta o estoque e envia as vendas automaticamente |
 
@@ -125,6 +141,18 @@ O que vem a seguir (clientes, troca/devolução, fiado, compras com nota, financ
 | <img src="docs/screenshots/saida.png" width="440" /> | <img src="docs/screenshots/offline.png" width="440" /> |
 | **Relatórios de estoque** | **Solicitações de pedido** |
 | <img src="docs/screenshots/relatorios.png" width="440" /> | <img src="docs/screenshots/pedidos.png" width="440" /> |
+| **Troca / devolução (F11)** | **Venda no fiado em parcelas** |
+| <img src="docs/screenshots/pdv-troca.png" width="440" /> | <img src="docs/screenshots/pdv-fiado.png" width="440" /> |
+| **Etiqueta de balança e kit no cupom** | **Cadastro de kit** |
+| <img src="docs/screenshots/pdv-balanca-kit.png" width="440" /> | <img src="docs/screenshots/kit.png" width="440" /> |
+| **Nota de entrada importada do XML** | **Fornecedor e produtos fornecidos** |
+| <img src="docs/screenshots/compras-nota-xml.png" width="440" /> | <img src="docs/screenshots/fornecedor.png" width="440" /> |
+| **Contas a pagar** | **Fiado (contas a receber)** |
+| <img src="docs/screenshots/contas-a-pagar.png" width="440" /> | <img src="docs/screenshots/fiado.png" width="440" /> |
+| **Fluxo de caixa** | **Resultado do mês (DRE gerencial)** |
+| <img src="docs/screenshots/financeiro-fluxo.png" width="440" /> | <img src="docs/screenshots/financeiro-dre.png" width="440" /> |
+| **Menu recolhido** | **Busca rápida (Ctrl+K)** |
+| <img src="docs/screenshots/menu-recolhido.png" width="440" /> | <img src="docs/screenshots/busca-rapida.png" width="440" /> |
 | **Celular** | |
 | <img src="docs/screenshots/celular-painel.png" width="160" /> &nbsp; <img src="docs/screenshots/celular-menu.png" width="160" /> | |
 
@@ -146,6 +174,7 @@ O caixa (`/caixa`) funciona **inteiro pelo teclado**. O leitor de código de bar
 | **F8** | Orçamento em A4 ou PDF (não é venda e não baixa estoque) |
 | **F9** | Trocar operador (usuário + PIN) |
 | **F10** | Fechar caixa |
+| **F11** | Outras operações: **1** troca/devolução · **2** receber fiado · **3** consultar vale-troca |
 | **Ins** | Cliente da venda ou CPF/CNPJ na nota (busca, cadastro rápido) |
 | **Del** | Remover o item selecionado |
 | **Esc** | Cancelar a venda inteira (ou fechar a janela aberta) |
@@ -212,9 +241,16 @@ flowchart LR
         P8(["Cancelar venda"])
         P9(["Autorizar ação (supervisor)"])
         P10(["Relatório de vendas e caixas"])
+        P11(["Troca / devolução"])
+        P12(["Vender no fiado / receber fiado"])
+        P13(["Pagar com vale-troca"])
+        F1(["Contas a pagar"])
+        F2(["Fluxo de caixa e DRE"])
         E1(["Registrar entrada / saída"])
-        E2(["Cadastrar produto e preços"])
+        E2(["Cadastrar produto, kit e preços"])
         E3(["Pedidos e relatórios de estoque"])
+        E4(["Nota de entrada (XML da NF-e)"])
+        E5(["Importar planilha de produtos"])
         A1(["Usuários, configurações, marca"])
         A2(["Ajuste de estoque"])
         A3(["Auditoria"])
@@ -222,9 +258,9 @@ flowchart LR
         S2(["Limpar lixeira expirada"])
     end
 
-    OP --- P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8
-    GER --- P9 & P10
-    EST --- E1 & E2 & E3
+    OP --- P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P11 & P12 & P13
+    GER --- P9 & P10 & F1 & F2
+    EST --- E1 & E2 & E3 & E4 & E5
     ADM --- A1 & A2 & A3
     CRON --- S2
 
@@ -237,11 +273,14 @@ flowchart LR
     P6 -.->|"«extend» acima do limite"| P9
     P7 -.->|"«extend» sem permissão"| P9
     P8 -.->|"«extend» sem permissão"| P9
+    P11 -.->|"«extend» sem permissão"| P9
+    P12 -.->|"«extend» acima do limite / em atraso"| P9
+    E4 -.->|"«include» parcelas"| F1
 
     classDef actor fill:#0f766e,stroke:#0b4f49,color:#fff
     classDef uc fill:#ecfdf8,stroke:#0f766e,color:#0b4f49
     class OP,GER,EST,ADM,CRON actor
-    class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,E1,E2,E3,A1,A2,A3,S1,S2 uc
+    class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,F1,F2,E1,E2,E3,E4,E5,A1,A2,A3,S1,S2 uc
 ```
 
 ---
@@ -271,14 +310,17 @@ flowchart TB
         SEC["🛡️ Helmet · Rate limit · Anti-CSRF<br/>AuthGuard · PermissionsGuard · PinGuard"]
         subgraph MOD["Módulos"]
             direction LR
-            M0[pos<br/>caixa + vendas<br/>+ domain]
+            M0[pos<br/>caixa · vendas · troca<br/>vale · fiado + domain]
             M1[printing<br/>ESC/POS]
-            M2[products<br/>+ domain]
+            M2[products<br/>kits · balança<br/>planilha + domain]
             M3[stock]
             M4[auth · users]
             M5[settings<br/>white-label]
             M6[reports · purchase-<br/>requests · audit]
             M7[integration<br/>PDV externo]
+            M8[purchases<br/>fornecedores · NF-e<br/>custo médio + domain]
+            M9[finance<br/>contas a pagar · fluxo<br/>DRE + domain]
+            M10[customers<br/>LGPD · crédito]
         end
         ORM["Prisma ORM"]
         SEC --> MOD --> ORM
@@ -293,7 +335,7 @@ flowchart TB
 
     classDef box fill:#ecfdf8,stroke:#0f766e,color:#0b4f49
     classDef dark fill:#0f766e,stroke:#0b4f49,color:#fff
-    class UI,CART,RQ,SW,PRN,M0,M1,M2,M3,M4,M5,M6,M7,ORM box
+    class UI,CART,RQ,SW,PRN,M0,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,ORM box
     class SEC,DB,TERM dark
 ```
 
@@ -319,7 +361,12 @@ flowchart LR
 | **Um caixa aberto por terminal (índice único no banco)** | Nem dois cliques simultâneos abrem dois turnos no mesmo terminal |
 | **Autorização do supervisor por token** | O gerente libera uma ação com o PIN sem trocar de sessão. O token vale só para aquele operador e aquela ação (e para aquela venda, no desconto) |
 | **Livro de movimentações imutável** | Cada entrada e saída é um registro com o saldo resultante, auditável |
-| **Domínio puro** (`sale-calculator`, `cash-summary`, `escpos`, `replenishment`) | Mudar uma regra é mudar uma função testada, sem tocar em banco ou tela |
+| **Domínio puro** (`sale-calculator`, `cash-summary`, `post-sale`, `cash-flow`, `costing`, `nfe-xml`, `product-import`, `scale`, `escpos`, `replenishment`) | Mudar uma regra é mudar uma função testada, sem tocar em banco ou tela |
+| **Kit guardado na venda** | O item do kit grava a composição do momento (`kitComponents`). Cancelar ou devolver usa essa cópia, mesmo que o kit mude depois |
+| **Devolução pelo valor líquido** | O desconto no total é rateado entre os itens (maior resto); a última devolução de um item leva o centavo restante. Nunca devolve mais do que foi pago |
+| **Fiado por parcela** | Cada parcela é um título a receber; o recebimento é alocado da mais antiga para a mais nova e fica rastreável (`receipt_allocations`) |
+| **Custo com 4 casas** | O custo médio ponderado (nota com frete e desconto rateados) não perde precisão no CMV |
+| **Várias autorizações na mesma requisição** | `X-Supervisor-Token` aceita mais de um token (ex.: devolução + fiado acima do limite), cada um preso à sua permissão |
 | **White-label por configuração** | Um único código atende vários clientes: só muda o cadastro da marca |
 | **Impressão como adaptador** | Trocar de impressora (ou, no futuro, emitir NFC-e) afeta só o módulo de impressão/fiscal |
 
@@ -410,6 +457,65 @@ erDiagram
     }
 ```
 
+### Segunda fase: compras, pós-venda e financeiro
+
+```mermaid
+erDiagram
+    SUPPLIERS ||--o{ PURCHASE_INVOICES : "emite"
+    SUPPLIERS ||--o{ PRODUCT_SUPPLIERS : "fornece"
+    PRODUCTS ||--o{ PRODUCT_SUPPLIERS : "comprado de"
+    PURCHASE_INVOICES ||--|{ PURCHASE_INVOICE_ITEMS : "itens"
+    PURCHASE_INVOICES ||--o{ PAYABLES : "parcelas"
+    EXPENSE_CATEGORIES ||--o{ PAYABLES : "classifica"
+    PRODUCTS ||--o{ KIT_COMPONENTS : "kit"
+    SALES ||--o{ SALE_RETURNS : "devoluções"
+    SALE_RETURNS ||--|{ SALE_RETURN_ITEMS : "itens"
+    SALE_RETURNS |o--o| STORE_CREDITS : "gera vale"
+    STORE_CREDITS ||--o{ STORE_CREDIT_ENTRIES : "emissão e usos"
+    CUSTOMERS ||--o{ RECEIVABLES : "deve"
+    SALES ||--o{ RECEIVABLES : "parcelas do fiado"
+    CUSTOMERS ||--o{ CUSTOMER_RECEIPTS : "paga"
+    CUSTOMER_RECEIPTS ||--|{ RECEIPT_ALLOCATIONS : "abate"
+    RECEIVABLES ||--o{ RECEIPT_ALLOCATIONS : "recebido por"
+
+    PURCHASE_INVOICES {
+        uuid id PK
+        int number UK "nº da entrada"
+        string accessKey UK "chave da NF-e"
+        enum status "DRAFT, FINALIZED"
+        decimal freight
+        decimal discount
+    }
+    PURCHASE_INVOICE_ITEMS {
+        decimal quantity "unidade da nota"
+        decimal factor "conversão"
+        decimal unitCost
+    }
+    PAYABLES {
+        decimal amount
+        date dueDate
+        decimal paidAmount
+        enum status "OPEN, PAID, CANCELED"
+    }
+    SALE_RETURNS {
+        enum refundMethod "CASH, ORIGINAL, STORE_CREDIT, ACCOUNT"
+        decimal total
+        string reason
+        uuid authorizedById FK
+    }
+    STORE_CREDITS {
+        string code UK "VT-XXXXXXXX"
+        decimal balance
+        date expiresAt
+    }
+    RECEIVABLES {
+        int installment
+        date dueDate
+        decimal amount
+        decimal paidAmount
+    }
+```
+
 | Tabela | Finalidade | Observações |
 |---|---|---|
 | `cash_sessions` | Turnos de caixa por terminal | Resumo e diferença congelados no fechamento |
@@ -418,7 +524,15 @@ erDiagram
 | `products` | Catálogo, preços e saldo | Produto com vendas nunca é apagado da lixeira |
 | `stock_movements` | Livro de entradas e saídas | Venda: `OUT_SALE`. Cancelamento: `IN_SALE_CANCEL` |
 | `users` · `audit_logs` · `settings` | Acesso, rastro e configurações | `settings` guarda a marca, a impressão e as regras do caixa |
-| `categories` · `purchase_requests` | Estoque | Iguais à versão anterior |
+| `categories` · `purchase_requests` | Estoque | A solicitação indica o fornecedor preferido |
+| `kit_components` | Itens de cada kit | O kit não tem estoque próprio; a disponibilidade é calculada pelos itens |
+| `customers` · `payment_methods` | Clientes e formas de pagamento | Cliente com `creditLimit`; vale-troca e fiado são formas de fábrica protegidas |
+| `sale_returns` · `sale_return_items` | Trocas e devoluções | Movimentos `IN_SALE_RETURN` (e `OUT_LOSS` no item avariado) |
+| `store_credits` · `store_credit_entries` | Vale-troca | Saldo, validade e extrato de emissão, usos e cancelamento |
+| `receivables` · `customer_receipts` · `receipt_allocations` | Fiado | Parcelas, recebimentos no caixa e a alocação de cada recebimento |
+| `suppliers` · `product_suppliers` | Fornecedores | Código no fornecedor, conversão, último custo e preferido |
+| `purchase_invoices` · `purchase_invoice_items` | Notas de entrada | Rascunho → lançada; a chave da NF-e é única |
+| `expense_categories` · `payables` | Contas a pagar | Categoria `MERCHANDISE` (compra de mercadorias) fica fora das despesas do DRE |
 
 ---
 
@@ -560,6 +674,30 @@ sequenceDiagram
     C->>O: Imprime o relatório de fechamento (com assinatura)
 ```
 
+### Troca no caixa (devolução em vale + nova venda)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor O as 👤 Operador
+    participant C as 🖥️ Caixa
+    participant API as ⚙️ ReturnsService
+    participant D as 🧠 post-sale
+    participant DB as 🐘 PostgreSQL
+
+    O->>C: F11 › 1 · nº da venda
+    C->>API: GET /returns/preview?saleId=
+    API->>D: netItemValues() (desconto rateado)
+    API-->>C: Itens, quanto ainda pode devolver e valores
+    O->>C: 1 item em vale-troca, "trocar agora"
+    C->>API: POST /returns (403 → gerente autoriza com PIN)
+    API->>DB: BEGIN · devolução · IN_SALE_RETURN · vale VT-… · COMMIT
+    API-->>C: Devolução + código do vale
+    O->>C: Bipa os produtos novos · F5
+    C->>API: POST /sales {pagamento STORE_CREDIT + diferença}
+    API->>DB: Abate o saldo do vale e baixa o estoque
+```
+
 ---
 
 ## 🚦 Diagramas de estado
@@ -619,12 +757,40 @@ stateDiagram-v2
 | Total da venda | `Σ itens − desconto no total` (o desconto no total incide sobre os itens já com desconto) |
 | Desconto | Em R$ ou %, nunca maior que o valor. Acima do **limite do operador** (Configurações → Frente de caixa, padrão 0%) exige o gerente |
 | Troco | `pago − total`, e só pode sair do **dinheiro** (PIX e cartão não passam do valor que falta) |
-| Dinheiro esperado | `troco inicial + suprimentos − sangrias + dinheiro recebido − troco devolvido` |
+| Dinheiro esperado | `troco inicial + suprimentos − sangrias + vendas em dinheiro (líquidas de troco) + fiado recebido em dinheiro − devoluções em dinheiro` |
 | Diferença de caixa | `contado − esperado` (negativo é falta, positivo é sobra) |
 | Sangria | Justificativa obrigatória e não pode passar do dinheiro esperado na gaveta |
 | Preço | Online, o preço tem que ser o do cadastro (se mudou, o caixa pede para bipar de novo). Offline, vale o preço salvo no aparelho e a diferença vai para a auditoria |
 | Estoque | Por padrão o caixa vende mesmo com saldo zerado (o produto está na mão do cliente) e avisa. Há a opção de bloquear |
 | Vendas offline | Nunca são barradas por saldo e precisam ser enviadas antes do fechamento |
+
+### Pós-venda, fiado e balança
+
+| Regra | Detalhe |
+|---|---|
+| Valor da devolução | Proporcional ao que foi **pago** pelo item (desconto do item e rateio do desconto no total). Cada item só até a quantidade vendida, somando todas as devoluções |
+| Prazo de troca | `pos.returnDays` (padrão 30). Fora do prazo, só com `pos:return` (gerente) |
+| Estorno | Dinheiro (só com caixa aberto), forma original, vale-troca ou abatimento do fiado da própria venda (das últimas parcelas para as primeiras) |
+| Avariado | Entra como devolução e sai como perda (`OUT_LOSS`): não volta à prateleira |
+| Vale-troca | Código único, saldo, uso parcial e validade (`pos.voucherValidityDays`, padrão 180; 0 = não vence). Não dá troco |
+| Fiado | Exige cliente; até 12 parcelas; vencimentos `credit.firstDueDays` + `credit.intervalDays`. Acima do disponível ou com parcela vencida (`credit.blockOverdue`) exige `pos:credit` |
+| Recebimento | Abate as parcelas mais antigas (vencimento, data e número); não aceita valor maior que o devido; troco só em dinheiro |
+| Etiqueta de balança | EAN-13 válido com o prefixo configurado. Modo preço: quantidade que reproduz o valor exato da etiqueta (ou o maior valor abaixo dela); modo peso: gramas ÷ 1000 |
+| Kit | Disponível = `mín(saldo do item ÷ quantidade no kit)`; custo = `Σ custo dos itens`. Sem estoque próprio, sem kit dentro de kit |
+| Custo médio | `(saldo × custo médio + qtd × custo da nota) ÷ (saldo + qtd)`; com saldo ≤ 0, vale o custo da nota |
+
+### Fluxo de caixa e DRE
+
+| Linha | Regra |
+|---|---|
+| Venda no cartão | Entra em `data + prazo da forma`, já sem a taxa |
+| Fiado e contas a pagar | Previstos no vencimento; os vencidos aparecem à parte |
+| Receita líquida | `vendas − devoluções` |
+| CMV | `Σ quantidade × custo unitário da venda` − custo das devoluções que voltaram ao estoque |
+| Taxas | `Σ pagamento × taxa da forma` |
+| Perdas | Saídas `OUT_LOSS` × custo atual |
+| Despesas | Contas a pagar por vencimento no período, exceto a categoria de compra de mercadorias |
+| Resultado | `receita líquida − CMV − taxas − perdas − despesas` |
 
 ### Reposição (fórmulas do estoque)
 
@@ -653,6 +819,10 @@ stateDiagram-v2
 | Abrir gaveta nas vendas em dinheiro (impressora de rede) | Não |
 | Dias na lixeira · cobertura do pedido · estoque negativo em saídas manuais | 15 · 7 · Não |
 | PIN em entradas, saídas, cadastro e exclusão | Sim |
+| Prazo para troca · validade do vale-troca | 30 dias · 180 dias |
+| 1º vencimento do fiado · intervalo entre parcelas | 30 dias · 30 dias |
+| Limite de fiado para clientes novos · bloquear quem tem parcela vencida | R$ 0 · Sim |
+| Etiqueta de balança (ligada · prefixo · dígitos do PLU · modo) | Não · 2 · 4 · preço |
 
 ---
 
@@ -664,12 +834,17 @@ stateDiagram-v2
 | Desconto acima do limite | ✅ | ✅ | — | 🔑 com gerente |
 | Cancelar venda finalizada (estorna estoque) | ✅ | ✅ | — | 🔑 com gerente |
 | Sangria e suprimento | ✅ | ✅ | — | 🔑 com gerente |
+| Troca e devolução | ✅ | ✅ | — | 🔑 com gerente |
+| Vender com vale-troca · receber fiado | ✅ | ✅ | — | ✅ |
+| Fiado dentro do limite · acima do limite ou em atraso | ✅ | ✅ | — | ✅ · 🔑 com gerente |
 | Vendas, caixas e relatórios de vendas | ✅ | ✅ | — | só o turno aberto (reimpressão) |
 | Consultar produtos e saldo | ✅ | ✅ | ✅ | ✅ |
 | Entradas e saídas de estoque | ✅ | — | ✅ | — |
 | **Ajuste manual de estoque** | ✅ | — | — | — |
-| Cadastrar produtos, preços e categorias | ✅ | — | ✅ | — |
+| Cadastrar produtos, kits, preços e categorias · importar planilha | ✅ | — | ✅ | — |
 | Movimentações, pedidos e relatórios de estoque | ✅ | ✅ (consulta) | ✅ | — |
+| Fornecedores e notas de entrada | ✅ | consulta | ✅ | — |
+| Contas a pagar, fiado, fluxo de caixa e DRE | ✅ | ✅ | — | — |
 | Usuários, configurações, marca, lixeira e auditoria | ✅ | — | — | — |
 
 🔑 = o operador pede e um gerente autoriza **no próprio caixa** com usuário + PIN, sem trocar de sessão.
@@ -774,6 +949,13 @@ Prefixo `/api`. Autenticação por cookie de sessão. Quando a ação exige um s
 | `GET` `POST` `PATCH` | `/customers` · `/customers/:id` | customer:read / customer:write | Clientes (busca por nome, CPF ou telefone) |
 | `GET` `POST` | `/customers/:id/export` · `/customers/:id/anonymize` | customer:manage | LGPD: exportar e apagar dados pessoais |
 | `GET` `POST` `PATCH` `DELETE` | `/payment-methods` | logado / settings:manage | Formas de pagamento |
+| `GET` | `/products/lookup?code=&scale=true` | product:read | Busca pelo código da balança (PLU) |
+| `GET` `POST` | `/returns/preview?saleId=` · `/returns` | pos:sell (+ pos:return ou supervisor) | Prévia e registro da troca/devolução (idempotente pelo `id`) |
+| `GET` | `/returns` · `/returns/:id` | sales:read · pos:sell | Devoluções |
+| `GET` `POST` | `/store-credits/lookup?code=` · `/store-credits` · `/store-credits/:id/cancel` | pos:sell · customer:read · customer:manage | Vale-troca |
+| `GET` | `/customers/:id/credit` · `/customers/:id/statement` | customer:read | Limite, em aberto e extrato do fiado |
+| `POST` `GET` | `/receipts` · `/receipts/:id` | pos:sell | Recebimento de fiado no caixa |
+| `POST` | `/printing/document` | pos:sell | Imprime na térmica de rede um documento em blocos (devolução, vale, recebimento) |
 
 <details>
 <summary><b>Exemplo: registrar uma venda</b></summary>
@@ -817,6 +999,23 @@ Reenviar o mesmo `id` devolve a mesma venda, sem duplicar.
 | `GET` `PATCH` | `/settings` | — / settings:manage | Configurações (marca, impressão, caixa) |
 | `GET` | `/audit` | audit:read | Auditoria |
 | `GET` `POST` | `/integration/pdv/*` | X-API-Key | Integração com um PDV externo (opcional) |
+| `GET` · `POST` | `/products/export` · `/products/import` (`dryRun`) | product:read · product:write | Planilha de produtos (CSV) |
+| `GET` `POST` `PATCH` | `/suppliers` · `/suppliers/:id` | purchase:read / purchase:manage | Fornecedores |
+| `PUT` `DELETE` | `/suppliers/:id/products/:productId` · `GET /products/:id/suppliers` | purchase:manage · product:read | Vínculo produto–fornecedor |
+| `GET` `POST` `PUT` `DELETE` | `/purchase-invoices` · `/purchase-invoices/:id` | purchase:read / purchase:manage + stock:in | Notas de entrada (rascunho) |
+| `POST` | `/purchase-invoices/import-xml` · `/purchase-invoices/:id/finalize` | purchase:manage + stock:in | Importa o XML da NF-e · lança a nota (estoque, custo médio e contas a pagar) |
+
+### Financeiro
+
+| Método | Rota | Permissão | Descrição |
+|---|---|---|---|
+| `GET` `POST` `PATCH` | `/expense-categories` | finance:read / finance:manage | Categorias de despesa |
+| `GET` `POST` `PATCH` | `/payables` · `/payables/summary` · `/payables/:id` | finance:read / finance:manage | Contas a pagar (parceladas ou fixas mensais) |
+| `POST` | `/payables/:id/pay` · `/reopen` · `/cancel` | finance:manage | Pagar, desfazer o pagamento, cancelar |
+| `PUT` `GET` `DELETE` | `/payables/:id/attachment` | finance:manage / finance:read | Comprovante anexado (PDF ou imagem) |
+| `GET` `POST` | `/receivables` · `/receivables/summary` · `/receivables/:id/cancel` | finance:read / finance:manage | Fiado a receber, atraso por faixa, cancelar saldo |
+| `GET` | `/finance/cash-flow?from=&to=` | finance:read | Fluxo de caixa realizado e previsto, por dia e por categoria |
+| `GET` | `/finance/result?from=&to=` | finance:read | Resultado do período (DRE gerencial) |
 
 ---
 
@@ -929,7 +1128,8 @@ No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela 
 
 | Ação | Como |
 |---|---|
-| **Ligar** | Dois cliques em **`iniciar-sistema.bat`**. Abre a janela *SuaLojaAqui* e, em seguida, o navegador em **http://localhost:3000** |
+| **Ligar** | Dois cliques em **`iniciar-sistema.bat`**. Ele aplica as atualizações do banco (migrations), abre a janela *SuaLojaAqui* e, em seguida, o navegador em **http://localhost:3000** |
+| **Atualizar** | Feche o sistema, `git pull`, `npm.cmd install` e `npm.cmd run build`. Ao ligar de novo, o banco é atualizado sozinho, sem perder dados |
 | **Desligar** | Fechar a janela *SuaLojaAqui* (o banco desliga com segurança) |
 | **Ligar com o Windows** | Windows + R → `shell:startup` → colocar um atalho do `iniciar-sistema.bat` |
 | **Outros PCs, tablets e celulares** | Na mesma rede: `http://IP-DO-COMPUTADOR:3000` (veja o IP com `ipconfig`). Se não abrir, libere a porta TCP 3000 no Firewall do Windows |
@@ -939,9 +1139,11 @@ No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela 
 
 1. Entre como `admin`, troque a senha e crie seu **PIN** em *Meu perfil*.
 2. **Configurações → Identidade da loja:** nome, logotipo, cor, CNPJ e endereço. **→ Impressão:** papel e impressora, depois *Imprimir página de teste*.
-3. **Produtos:** cadastre com **preço de venda** (e de custo, para a margem). "Controlar consumo e reposição" é opcional por produto.
-4. **Usuários:** crie operadores de caixa e gerentes, todos **com PIN**.
-5. No computador do caixa, entre como operador. Ele cai direto na frente de caixa: informe o troco inicial e **abra o caixa**.
+3. **Configurações → Trocas, vales e fiado / Balança / Formas de pagamento:** prazos, limite de fiado, leitura da etiqueta e taxas e prazos dos cartões.
+4. **Produtos:** cadastre (ou importe a planilha) com **preço de venda** e custo. "Controlar consumo e reposição" é opcional por produto. Monte os **kits** e informe o **código na balança** dos pesados.
+5. **Fornecedores e notas de entrada:** importe o XML das próximas compras para manter estoque e custo médio em dia.
+6. **Usuários:** crie operadores de caixa e gerentes, todos **com PIN**.
+7. No computador do caixa, entre como operador. Ele cai direto na frente de caixa: informe o troco inicial e **abra o caixa**.
 
 ### Para desenvolvedores
 
@@ -951,7 +1153,9 @@ No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela 
 | `npm run build` · `npm start` | Build e execução em produção (http://localhost:3000) |
 | `npm test` | Testes das regras de negócio (Vitest) |
 | `npm run typecheck` | Verificação de tipos da API e do front |
-| `npm run db:deploy -w @vl/api` | Aplica as migrations (rode após atualizar o sistema) |
+| `npm run db:deploy -w @vl/api` | Aplica as migrations (o `iniciar-sistema.bat` já faz isso ao ligar) |
+| `npm run manual` | Gera o manual em PDF a partir de `docs/manual/manual.html` (Edge ou Chrome) |
+| `npm run dist` | Gera o manual e o instalador do Windows (`apps/desktop`) |
 | `npm run db:demo -w @vl/api` | Dados de demonstração |
 | `npm run db:stop -w @vl/api` | Desliga o banco embutido |
 
@@ -967,7 +1171,7 @@ No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela 
 
 > 💾 Os dados ficam em `%LOCALAPPDATA%\vl-estoque\pgdata` (ou na pasta de `DB_DATA_DIR`), **fora do OneDrive** de propósito, porque a sincronização de arquivos corrompe bancos de dados. **Backup:** desligue o sistema e copie essa pasta **e** o `apps/api/.env` para um HD externo. Para publicar na nuvem, troque a `DATABASE_URL`, use **HTTPS** e defina `COOKIE_SECURE=true`.
 
-> 🖥️ **App desktop:** o instalador do Windows (`apps/desktop`) ainda é o da versão anterior, só de estoque. A frente de caixa roda pelo navegador (instalável como PWA).
+> 🖥️ **App desktop:** o instalador publicado (1.3.1) ainda é o da versão anterior, só de estoque. Para a versão completa, gere um novo com `npm run dist` ou use a Opção B. A frente de caixa também roda pelo navegador (instalável como PWA).
 
 ---
 
@@ -980,10 +1184,19 @@ No fim do `setup` aparece a **senha provisória do `admin`**. Anote, porque ela 
 | `cash-summary.spec.ts` | Dinheiro esperado, totais por forma de pagamento, vendas canceladas e diferença de caixa |
 | `escpos.spec.ts` | Acentuação PC860, layout da bobina, gaveta e corte de papel |
 | `replenishment.spec.ts` | Fórmulas de reposição (EM, ES, PP e quantidade sugerida) |
+| `post-sale.spec.ts` | Valor líquido de cada item (rateio do desconto), devoluções parciais sem passar do pago, alocação do recebimento nas parcelas mais antigas, redução de parcelas, código do vale e situação do crédito |
+| `cash-flow.spec.ts` | Fluxo de caixa dia a dia (cartão em D+N sem a taxa, previstos e vencidos) e linhas do DRE |
+| `costing.spec.ts` | Rateio de frete/desconto, custo por unidade com conversão, custo médio ponderado e divisão em parcelas |
+| `nfe-xml.spec.ts` | Leitura do XML da NF-e (emitente, itens, totais, duplicatas, entidades e acentos) |
+| `product-import.spec.ts` | Planilha: cabeçalhos, números em formato brasileiro, validações por linha e modos de importação |
+| `scale.spec.ts` | Etiqueta de balança (EAN-13, prefixo, PLU, preço ou peso) e quantidade que bate com o valor impresso |
+| `document.spec.ts` | Validação de CPF e CNPJ |
 
 ```bash
 npm test
 ```
+
+Além dos testes de unidade, cada entrega foi validada ponta a ponta contra um banco isolado (vendas, caixa, compras, pós-venda, balança, kits e financeiro, mais de 240 verificações pela API) e no navegador.
 
 ---
 
@@ -996,11 +1209,16 @@ npm test
 │   │   └── src/
 │   │       ├── common/                   # auth, permissões, segurança, erros, ids
 │   │       └── modules/
-│   │           ├── pos/                  # 🧾 caixa, vendas, relatório, autorização do supervisor
-│   │           │   └── domain/           # 🧠 cálculo da venda + fechamento de caixa (+ testes)
+│   │           ├── pos/                  # 🧾 caixa, vendas, troca/devolução, vale-troca, fiado, autorização
+│   │           │   └── domain/           # 🧠 cálculo da venda, fechamento, pós-venda (+ testes)
+│   │           ├── purchases/            # 🚚 fornecedores e notas de entrada
+│   │           │   └── domain/           # 🧠 leitor do XML da NF-e e custo médio (+ testes)
+│   │           ├── finance/              # 💰 contas a pagar, fluxo de caixa e DRE
+│   │           │   └── domain/           # 🧠 fluxo de caixa e resultado (+ testes)
+│   │           ├── customers/ payment-methods/
 │   │           ├── printing/             # 🖨️ ESC/POS (+ testes) e envio para a térmica de rede
 │   │           ├── settings/             # 🎨 white-label, impressão e regras do caixa
-│   │           ├── products/domain/      # 🧠 EM · ES · PP (+ testes)
+│   │           ├── products/domain/      # 🧠 EM · ES · PP, balança e planilha (+ testes)
 │   │           ├── products/ stock/ purchase-requests/ reports/
 │   │           ├── auth/ users/ audit/ categories/
 │   │           └── integration/          # 🔌 PDV externo (opcional)
@@ -1008,6 +1226,9 @@ npm test
 │   │   └── src/
 │   │       ├── features/pos/             # 🖥️ frente de caixa (carrinho, pagamento, caixa)
 │   │       ├── features/sales/           # 📈 vendas e caixas
+│   │       ├── features/invoices/ suppliers/   # 🚚 notas de entrada e fornecedores
+│   │       ├── features/finance/         # 💰 contas a pagar, fiado, fluxo de caixa e resultado
+│   │       ├── features/customers/       # 👤 clientes e crédito
 │   │       ├── features/printing/        # 🧾 comprovantes: HTML 80/58 mm, A4 e PDF
 │   │       ├── features/branding/        # 🎨 marca e tema claro/escuro
 │   │       └── features/…                # estoque, usuários, configurações...
@@ -1015,7 +1236,7 @@ npm test
 ├── docs/
 │   ├── manual/                           # 📘 Fonte do manual (HTML); o PDF sai em apps/web/public/manual-de-uso.pdf (npm run manual)
 │   ├── DRS-PDV.md                        # Requisitos v1 e rastreabilidade
-│   ├── DRS-v2.md                         # Backlog priorizado da próxima versão
+│   ├── DRS-v2.md                         # Requisitos da segunda fase e situação de cada um
 │   └── screenshots/
 └── scripts/setup.mjs
 ```
@@ -1037,11 +1258,16 @@ npm test
 
 O backlog completo, com prioridades, fases e critérios de aceite, está no **[DRS v2](docs/DRS-v2.md)**. Destaques:
 
-- [ ] **Módulo fiscal** (NFC-e/SAT) como adaptador separado, mantendo o PDV não fiscal.
-- [ ] **App desktop do PDV** (Electron), com impressão silenciosa sem `--kiosk-printing`.
-- [ ] **TEF** (maquininha integrada) e **PIX dinâmico** com QR Code no caixa.
-- [ ] **Etiquetas de balança** (EAN-13 com prefixo 2, com peso ou preço embutido).
-- [ ] Ficha técnica da padaria (baixa de insumos ao produzir).
+- [x] Clientes com LGPD, troca/devolução, vale-troca e fiado com recebimento no caixa.
+- [x] Fornecedores, notas de entrada pelo XML da NF-e, custo médio e planilha de produtos.
+- [x] Etiqueta de balança e kits/combos.
+- [x] Contas a pagar, fluxo de caixa e resultado do mês (DRE gerencial).
+- [ ] **Comprovante por WhatsApp** e **PIX com QR Code** (estático) no caixa.
+- [ ] **Inventário por contagem** (bipar a loja e ajustar as diferenças) e etiquetas de gôndola.
+- [ ] **Promoções** (preço por período, leve 3 pague 2) e preço por quantidade.
+- [ ] **Instalador novo** do app desktop com a frente de caixa e impressão silenciosa sem `--kiosk-printing`.
+- [ ] **Módulo fiscal** (NFC-e/SAT) como adaptador separado, mantendo o PDV não fiscal; **TEF** e PIX dinâmico.
+- [ ] Catálogo online / pedidos pelo WhatsApp e ficha técnica da padaria (baixa de insumos ao produzir).
 
 ---
 

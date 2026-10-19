@@ -270,14 +270,16 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
                         {c.sku} · custo {formatMoney(c.costPrice)}
                       </span>
                     </span>
-                    <Input
-                      value={c.quantity}
-                      inputMode="decimal"
-                      onChange={(e) => setComponents(components.map((x) => (x.productId === c.productId ? { ...x, quantity: e.target.value } : x)))}
-                      className="h-8 w-20 text-right"
-                      aria-label={`Quantidade de ${c.name} no kit`}
-                    />
-                    <span className="w-8 text-xs text-slate-500">{UNIT_SHORT[c.unit]}</span>
+                    <div className="w-20 shrink-0">
+                      <Input
+                        value={c.quantity}
+                        inputMode="decimal"
+                        onChange={(e) => setComponents(components.map((x) => (x.productId === c.productId ? { ...x, quantity: e.target.value } : x)))}
+                        className="h-8 text-right"
+                        aria-label={`Quantidade de ${c.name} no kit`}
+                      />
+                    </div>
+                    <span className="w-8 shrink-0 text-xs text-slate-500">{UNIT_SHORT[c.unit]}</span>
                     <IconButton label="Tirar do kit" onClick={() => setComponents(components.filter((x) => x.productId !== c.productId))}>
                       <Trash2 className="size-4" />
                     </IconButton>

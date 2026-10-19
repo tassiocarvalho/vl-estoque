@@ -77,7 +77,7 @@
   </div>
   <img class="hero" src="../screenshots/pdv-caixa.png" alt="">
   <div class="meta">
-    Versão de outubro de 2026. O sistema é <i>white-label</i>: o nome “SuaLojaAqui”, o logotipo e as cores mostrados aqui são os padrões e podem ser trocados em <b>Configurações</b>.<br>
+    Versão de outubro de 2026 (com compras, trocas e devoluções, vale-troca, fiado, balança, kits e financeiro). O sistema é <i>white-label</i>: o nome “SuaLojaAqui”, o logotipo e as cores mostrados aqui são os padrões e podem ser trocados em <b>Configurações</b>.<br>
     Este manual também está disponível dentro do sistema, no menu <b>Manual de uso</b>.
   </div>
 </div>
@@ -88,15 +88,18 @@
     <li>Instalar, abrir e atualizar <span>aplicativo ou código-fonte</span></li>
     <li>Primeiro acesso <span>senha, PIN, e-mail e termo</span></li>
     <li>Entrando no sistema <span>login, PIN rápido, senha esquecida, perfis</span></li>
-    <li>Configurar a loja <span>marca, pagamentos, impressão, e-mail, empresa</span></li>
+    <li>Menu e busca rápida <span>menu recolhível, Ctrl+K</span></li>
+    <li>Configurar a loja <span>marca, pagamentos, impressão, balança, trocas e fiado</span></li>
     <li>Usuários e permissões <span>administrador</span></li>
-    <li>Produtos e categorias <span>preços e reposição</span></li>
-    <li>Clientes <span>cadastro, histórico e LGPD</span></li>
-    <li>Frente de caixa <span>abrir, vender, receber, fechar</span></li>
+    <li>Produtos e categorias <span>preços, reposição, planilha, kits e balança</span></li>
+    <li>Clientes <span>cadastro, limite de fiado e LGPD</span></li>
+    <li>Frente de caixa <span>vender, troca, vale, fiado, fechar</span></li>
     <li>Entradas e saídas de estoque <span>bipagem</span></li>
+    <li>Compras <span>fornecedores, notas de entrada e XML</span></li>
     <li>Alertas e solicitações de pedido <span>reposição</span></li>
     <li>Relatórios de estoque <span>por período e por produto</span></li>
-    <li>Gerência: vendas e caixas <span>relatório e conferência</span></li>
+    <li>Gerência: vendas e caixas <span>relatório, devoluções e conferência</span></li>
+    <li>Financeiro <span>contas a pagar, fiado, fluxo de caixa e resultado</span></li>
     <li>Excluir e recuperar produtos <span>lixeira</span></li>
     <li>Impressoras <span>térmica, A4 e PDF</span></li>
     <li>Backup <span>proteção dos dados</span></li>
@@ -114,24 +117,24 @@
 
   <h3>1.1 O que é necessário</h3>
   <table>
-    <tr><th style="width:34%">Item</th><th>Mínimo</th></tr>
+    <thead><tr><th style="width:34%">Item</th><th>Mínimo</th></tr></thead>
     <tr><td><b>Sistema</b></td><td>Windows 10 ou 11, 64 bits</td></tr>
     <tr><td><b>Memória (RAM)</b></td><td>4 GB (recomendado 8 GB)</td></tr>
     <tr><td><b>Espaço em disco</b></td><td>cerca de 1 GB para o programa, mais o espaço dos dados (poucos GB em anos de uso)</td></tr>
     <tr><td><b>Leitor de código de barras</b></td><td>Qualquer leitor USB que funcione como teclado (o comum nas lojas)</td></tr>
-    <tr><td><b>Impressora (opcional)</b></td><td>Térmica de 80 ou 58 mm (USB, serial ou rede) ou impressora comum A4 (capítulo 14)</td></tr>
+    <tr><td><b>Impressora (opcional)</b></td><td>Térmica de 80 ou 58 mm (USB, serial ou rede) ou impressora comum A4 (capítulo 17)</td></tr>
     <tr><td><b>Internet</b></td><td>Não é necessária para vender. É usada pelo backup no Google Drive e pelo envio do código de recuperação de senha</td></tr>
   </table>
 
   <h3>1.2 Duas formas de instalar</h3>
   <table>
-    <tr><th style="width:20%"></th><th style="width:40%">A) Aplicativo para Windows</th><th>B) Pelo código-fonte</th></tr>
+    <thead><tr><th style="width:20%"></th><th style="width:40%">A) Aplicativo para Windows</th><th>B) Pelo código-fonte</th></tr></thead>
     <tr><td><b>Como abre</b></td><td>Atalho do aplicativo na Área de Trabalho e no Menu Iniciar</td><td>Dois cliques em <i>iniciar-sistema.bat</i>, na pasta do projeto</td></tr>
     <tr><td><b>Endereço</b></td><td>Janela própria; no navegador: <b>http://localhost:3030</b></td><td>Navegador: <b>http://localhost:3000</b></td></tr>
     <tr><td><b>Precisa instalar</b></td><td>Só o aplicativo</td><td>O Node.js (versão 22 ou mais nova)</td></tr>
     <tr><td><b>Indicado para</b></td><td>Loja que usa um computador só</td><td>Quem atualiza o sistema pelo código ou testa novas versões</td></tr>
   </table>
-  <div class="warn"><b>Versão do instalador</b>O instalador publicado no GitHub (1.3.1) é a versão só de estoque. Para o aplicativo com a frente de caixa, gere um instalador novo com <code>npm run dist</code> na pasta do projeto, ou use a forma B.</div>
+  <div class="warn"><b>Versão do instalador</b>O instalador publicado no GitHub (1.3.1) é a versão só de estoque. Para o aplicativo com a frente de caixa, as compras e o financeiro, gere um instalador novo com <code>npm run dist</code> na pasta do projeto (ele também gera este manual em PDF), ou use a forma B.</div>
 
   <h3>1.3 Forma A: instalar o aplicativo</h3>
   <ol class="steps">
@@ -160,25 +163,25 @@ npm.cmd run setup</pre>
   <h3>1.5 Atualizar para uma nova versão</h3>
   <ol class="steps">
     <li>Feche o sistema.</li>
-    <li><b>Aplicativo:</b> execute o instalador da nova versão <b>por cima</b> da atual, sem desinstalar. <b>Código-fonte:</b> atualize os arquivos e rode <code>npm.cmd install</code>, <code>npm.cmd run db:deploy -w @vl/api</code> e <code>npm.cmd run build</code>.</li>
-    <li>Abra o sistema. O banco de dados é ajustado para a nova versão automaticamente; os dados são mantidos.</li>
+    <li><b>Aplicativo:</b> execute o instalador da nova versão <b>por cima</b> da atual, sem desinstalar. <b>Código-fonte:</b> atualize os arquivos (<code>git pull</code>) e rode <code>npm.cmd install</code> e <code>npm.cmd run build</code>. O <b>iniciar-sistema.bat</b> aplica sozinho as atualizações do banco de dados toda vez que liga o sistema.</li>
+    <li>Abra o sistema. O banco de dados é ajustado para a nova versão automaticamente; os dados são mantidos. Por precaução, faça um backup antes (capítulo 18).</li>
     <li>Se a nova versão trouxer um Termo de Uso atualizado, cada usuário lê e aceita de novo no próximo acesso.</li>
   </ol>
 
   <h3>1.6 Onde fica cada arquivo</h3>
   <p>Para abrir uma pasta que começa com <i>%LOCALAPPDATA%</i>, aperte <kbd>Windows</kbd>+<kbd>R</kbd>, cole o caminho e tecle <kbd>Enter</kbd>.</p>
   <table>
-    <tr><th style="width:30%">O quê</th><th style="width:35%">Aplicativo (A)</th><th>Código-fonte (B)</th></tr>
+    <thead><tr><th style="width:30%">O quê</th><th style="width:35%">Aplicativo (A)</th><th>Código-fonte (B)</th></tr></thead>
     <tr><td><b>Dados</b> (não mexa)</td><td><i>%LOCALAPPDATA%\VLEstoque\pgdata</i></td><td>Pasta de <code>DB_DATA_DIR</code> no <i>.env</i> (padrão <i>%LOCALAPPDATA%\vl-estoque\pgdata</i>)</td></tr>
     <tr><td>Configuração e chaves</td><td><i>%LOCALAPPDATA%\VLEstoque\config.json</i></td><td><i>apps\api\.env</i></td></tr>
     <tr><td>Registros (logs)</td><td><i>%LOCALAPPDATA%\VLEstoque\logs</i></td><td>Na janela preta</td></tr>
-    <tr><td>Backups</td><td colspan="2">Capítulo 15</td></tr>
+    <tr><td>Backups</td><td colspan="2">Capítulo 18</td></tr>
   </table>
   <div class="danger"><b>Não compartilhe os arquivos de configuração</b><i>config.json</i> e <i>.env</i> guardam as chaves de segurança do sistema. Nunca envie esses arquivos a ninguém nem os coloque em pastas compartilhadas.</div>
 
   <h3>1.7 Se o sistema não abrir</h3>
   <table>
-    <tr><th style="width:38%">O que aparece</th><th>O que fazer</th></tr>
+    <thead><tr><th style="width:38%">O que aparece</th><th>O que fazer</th></tr></thead>
     <tr><td>“O Windows protegeu o computador”</td><td><span class="ui">Mais informações</span> › <span class="ui">Executar assim mesmo</span>.</td></tr>
     <tr><td>“A execução de scripts foi desabilitada”</td><td>Use <code>npm.cmd</code> em vez de <code>npm</code> (item 1.4).</td></tr>
     <tr><td>“Authentication failed” (senha do banco)</td><td>O <i>.env</i> tem uma senha diferente da do banco que já existe no computador. Use o <i>.env</i> antigo ou aponte <code>DB_DATA_DIR</code> para uma pasta nova (banco novo).</td></tr>
@@ -202,7 +205,7 @@ npm.cmd run setup</pre>
   </ol>
   <figure class="half"><img src="img/termo-modal.png" alt=""><figcaption>O termo abre numa janela, sem sair da tela de primeiro acesso</figcaption></figure>
   <p>Os funcionários que você cadastrar passam pelo mesmo processo no primeiro login com a senha provisória que você definir. O operador de caixa, depois disso, cai direto na frente de caixa.</p>
-  <div class="tip"><b>Depois do primeiro acesso</b>Siga para o capítulo 4 e configure a loja: nome e logotipo, formas de pagamento, impressora e a conta de e-mail da recuperação de senha. Depois cadastre os funcionários (capítulo 5) e os produtos (capítulo 6).</div>
+  <div class="tip"><b>Depois do primeiro acesso</b>Siga para o capítulo 5 e configure a loja: nome e logotipo, formas de pagamento, impressora, regras de troca e fiado e a conta de e-mail da recuperação de senha. Depois cadastre os funcionários (capítulo 6), os fornecedores (capítulo 11) e os produtos (capítulo 7; uma planilha do Excel agiliza).</div>
 </section>
 
 <!-- 3 -->
@@ -228,27 +231,41 @@ npm.cmd run setup</pre>
     <figure><img src="img/codigo-recuperacao.png" alt=""><figcaption>3. Digite o código e a nova senha</figcaption></figure>
   </div>
   <figure class="half"><img src="img/email-codigo.png" alt=""><figcaption>2. O e-mail com o código</figcaption></figure>
-  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro; são no máximo 3 pedidos por hora. Ao redefinir, as sessões abertas em outros aparelhos são encerradas. Quem não tem e-mail cadastrado, ou se a recuperação ainda não foi configurada (capítulo 4), pede a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
+  <div class="tip"><b>Bom saber</b>O código vale por <b>15 minutos</b> e só pode ser usado uma vez. Depois de 5 códigos errados é preciso pedir outro; são no máximo 3 pedidos por hora. Ao redefinir, as sessões abertas em outros aparelhos são encerradas. Quem não tem e-mail cadastrado, ou se a recuperação ainda não foi configurada (capítulo 5), pede a um administrador para usar <span class="ui">Redefinir senha</span>.</div>
 
   <h3>Perfis de acesso</h3>
   <table>
-    <tr><th style="width:24%">Perfil</th><th>O que pode fazer</th></tr>
-    <tr><td><b>Operador de caixa</b></td><td>Abre e fecha o caixa, vende, cadastra clientes, consulta produtos e reimprime comprovantes do turno. Entra direto na frente de caixa.</td></tr>
-    <tr><td><b>Gerente</b></td><td>Tudo do operador, mais: descontos sem limite, cancelamento de vendas, sangria e suprimento, <b>autorizar</b> essas ações para o operador com o próprio PIN, relatórios de vendas e caixas, exportar e apagar dados de clientes (LGPD).</td></tr>
-    <tr><td><b>Estoquista</b></td><td>Cadastra produtos e preços, registra entradas e saídas, solicitações de pedido e relatórios de estoque.</td></tr>
+    <thead><tr><th style="width:24%">Perfil</th><th>O que pode fazer</th></tr></thead>
+    <tr><td><b>Operador de caixa</b></td><td>Abre e fecha o caixa, vende (inclusive com vale-troca e no fiado, dentro do limite do cliente), recebe fiado, consulta vales, cadastra clientes, consulta produtos e reimprime comprovantes do turno. Entra direto na frente de caixa.</td></tr>
+    <tr><td><b>Gerente</b></td><td>Tudo do operador, mais: descontos sem limite, cancelamento de vendas, <b>trocas e devoluções</b>, liberar fiado acima do limite ou de cliente em atraso, sangria e suprimento, <b>autorizar</b> essas ações para o operador com o próprio PIN, relatórios de vendas e caixas, consulta das notas de entrada, <b>financeiro</b> (contas a pagar, fiado, fluxo de caixa e resultado), exportar e apagar dados de clientes (LGPD).</td></tr>
+    <tr><td><b>Estoquista</b></td><td>Cadastra produtos, preços e kits, importa planilhas, registra entradas e saídas, cadastra fornecedores, lança notas de entrada (inclusive pelo XML), solicitações de pedido e relatórios de estoque.</td></tr>
     <tr><td><b>Administrador</b></td><td>Acesso total: usuários, configurações, ajustes de estoque, lixeira e auditoria.</td></tr>
   </table>
 </section>
 
 <!-- 4 -->
 <section>
-  <h2>4. Configurar a loja</h2>
+  <h2>4. Menu e busca rápida</h2>
+  <p>O menu lateral reúne as telas em grupos: <b>Operação</b> (painel, frente de caixa, entradas e saídas), <b>Vendas</b> (vendas, caixas e clientes), <b>Estoque</b> (produtos, categorias, movimentações, pedidos, notas de entrada, fornecedores e relatórios), <b>Financeiro</b> (fluxo de caixa e resultado, fiado e contas a pagar) e <b>Administração</b>. Cada pessoa só vê as telas que o seu perfil permite.</p>
+  <h3>4.1 Recolher o menu</h3>
+  <p>Clique em <span class="ui">Recolher menu</span>, no fim do menu, para deixar só os ícones e ganhar espaço na tela (passe o mouse sobre um ícone para ver o nome). Clique de novo para abrir. Cada computador lembra a sua escolha.</p>
+  <h3>4.2 Busca rápida (<kbd>Ctrl</kbd>+<kbd>K</kbd>)</h3>
+  <p>Em qualquer tela, tecle <kbd>Ctrl</kbd>+<kbd>K</kbd> (ou clique em <span class="ui">Buscar…</span>, no topo do menu) e digite o que procura: o nome de uma tela (“fiado”, “nota”, “aluguel”…), um <b>produto</b> (nome, SKU ou código de barras) ou um <b>cliente</b>. Use <kbd>↑</kbd> <kbd>↓</kbd> e <kbd>Enter</kbd> para abrir; <kbd>Esc</kbd> fecha.</p>
+  <div class="pair">
+    <figure><img src="img/menu-recolhido.png" alt=""><figcaption>Menu recolhido: só os ícones</figcaption></figure>
+    <figure><img src="img/busca-rapida.png" alt=""><figcaption>Busca rápida com Ctrl+K</figcaption></figure>
+  </div>
+</section>
+
+<!-- 5 -->
+<section>
+  <h2>5. Configurar a loja</h2>
   <p><i>Somente o administrador.</i> Tudo fica no menu <span class="ui">Configurações</span>. Depois de alterar, clique em <span class="ui">Salvar alterações</span>, no topo (os quadros de formas de pagamento, e-mail e empresa têm botões próprios).</p>
 
-  <h3>4.1 Identidade da loja</h3>
+  <h3>5.1 Identidade da loja</h3>
   <figure><img src="../screenshots/configuracoes.png" alt=""><figcaption>Configurações › Identidade da loja</figcaption></figure>
   <table>
-    <tr><th style="width:32%">Campo</th><th>Onde aparece</th></tr>
+    <thead><tr><th style="width:32%">Campo</th><th>Onde aparece</th></tr></thead>
     <tr><td><b>Nome da loja e slogan</b></td><td>Menu, login, aba do navegador, rodapé do caixa, comprovantes e e-mails</td></tr>
     <tr><td><b>Logotipo</b> (PNG, JPEG, WebP ou SVG até 150 KB)</td><td>Menu, login e cabeçalho dos comprovantes</td></tr>
     <tr><td><b>Cor principal</b></td><td>O sistema inteiro: os tons são derivados dessa cor</td></tr>
@@ -257,24 +274,24 @@ npm.cmd run setup</pre>
     <tr><td><b>Mensagem no rodapé</b></td><td>Rodapé do comprovante (ex.: “Obrigado pela preferência!”)</td></tr>
   </table>
 
-  <h3>4.2 Formas de pagamento</h3>
+  <h3>5.2 Formas de pagamento</h3>
   <figure><img src="img/formas-pagamento.png" alt=""><figcaption>Configurações › Formas de pagamento</figcaption></figure>
-  <p>Já vêm prontas: Dinheiro, PIX, Cartão de crédito, Cartão de débito, Vale-alimentação e Vale-refeição (ativas), além de Cheque e Outros (desativadas). Em <span class="ui">Nova forma</span> você cria outras. Para cada forma:</p>
+  <p>Já vêm prontas: Dinheiro, PIX, Cartão de crédito, Cartão de débito, Vale-alimentação, Vale-refeição, <b>Vale-troca / crédito</b> e <b>Fiado / crediário</b> (ativas), além de Cheque e Outros (desativadas). Em <span class="ui">Nova forma</span> você cria outras. Para cada forma:</p>
   <table>
-    <tr><th style="width:32%">Opção</th><th>O que faz</th></tr>
+    <thead><tr><th style="width:32%">Opção</th><th>O que faz</th></tr></thead>
     <tr><td><b>Ordem</b> (setas ↑ ↓)</td><td>Ordem no caixa. As oito primeiras ativas ganham os atalhos <kbd>F1</kbd>–<kbd>F4</kbd> e <kbd>F6</kbd>–<kbd>F9</kbd> na tela de pagamento (<kbd>F5</kbd> confirma).</td></tr>
     <tr><td><b>Ativa</b></td><td>Desativada, não aparece no caixa; o histórico continua. Formas já usadas não podem ser excluídas, só desativadas.</td></tr>
     <tr><td><b>Dá troco</b></td><td>Aceita valor maior que o devido (normalmente só o dinheiro). O troco sai sempre da gaveta.</td></tr>
     <tr><td><b>Exige cliente</b></td><td>Só aceita a forma com o cliente da venda identificado (ex.: crediário).</td></tr>
-    <tr><td><b>Taxa e prazo</b></td><td>Taxa da operadora e dias para receber (ex.: crédito D+30), guardados para o controle financeiro.</td></tr>
+    <tr><td><b>Taxa e prazo</b></td><td>Taxa da operadora (%) e dias para o dinheiro cair (ex.: crédito 3,49% em D+30, débito 1,39% em D+1). O <b>fluxo de caixa</b> coloca cada venda no cartão no dia em que o dinheiro cai, já sem a taxa, e o <b>resultado</b> do mês desconta as taxas (capítulo 15).</td></tr>
   </table>
-  <p>A forma <b>Dinheiro</b> é a única que entra na gaveta e não pode ser desativada.</p>
+  <p>A forma <b>Dinheiro</b> é a única que entra na gaveta e não pode ser desativada. <b>Vale-troca</b> e <b>Fiado</b> são formas especiais: não dão troco, o tipo não pode ser mudado e o fiado sempre exige o cliente. Se a loja não trabalha com fiado, basta desativar a forma.</p>
 
-  <h3>4.3 Impressão e frente de caixa</h3>
+  <h3>5.3 Impressão e frente de caixa</h3>
   <figure><img src="img/configuracoes-impressao.png" alt=""><figcaption>Impressão, regras do caixa e PIN</figcaption></figure>
   <table>
-    <tr><th style="width:38%">Configuração</th><th>Para que serve</th></tr>
-    <tr><td><b>Papel e conexão da impressora</b></td><td>Bobina de 80 mm, 58 mm ou A4; impressora do Windows ou térmica de rede (capítulo 14). Use <span class="ui">Imprimir página de teste</span>.</td></tr>
+    <thead><tr><th style="width:38%">Configuração</th><th>Para que serve</th></tr></thead>
+    <tr><td><b>Papel e conexão da impressora</b></td><td>Bobina de 80 mm, 58 mm ou A4; impressora do Windows ou térmica de rede (capítulo 17). Use <span class="ui">Imprimir página de teste</span>.</td></tr>
     <tr><td><b>Imprimir automaticamente</b></td><td>O comprovante sai sozinho ao finalizar a venda.</td></tr>
     <tr><td><b>Desconto máximo do operador sem autorização (%)</b></td><td>Até esse percentual, o operador dá desconto sozinho. Acima, um gerente autoriza com o PIN. <b>0</b> exige autorização em qualquer desconto.</td></tr>
     <tr><td><b>Bloquear venda de item sem estoque</b></td><td>Desligado (padrão): o caixa vende e só avisa. Ligado: não deixa vender.</td></tr>
@@ -282,7 +299,29 @@ npm.cmd run setup</pre>
     <tr><td><b>Reposição e lixeira</b></td><td>Dias de cobertura do pedido sugerido (padrão 7), estoque negativo nas saídas manuais e dias na lixeira (padrão 15).</td></tr>
   </table>
 
-  <h3>4.4 Recuperação de senha por e-mail (Gmail)</h3>
+  <h3>5.4 Balança (etiqueta com peso ou preço)</h3>
+  <p>Para a balança que imprime etiqueta com código de barras (frios, carnes, hortifrúti a granel). A etiqueta segue o formato mais comum no Brasil: <span class="formula">2 CCCC 0PPPPP D</span>, em que <b>2</b> é o primeiro dígito, <b>CCCC</b> é o código do produto na balança (PLU), <b>PPPPP</b> é o preço total (em centavos) ou o peso (em gramas) e <b>D</b> é o dígito verificador.</p>
+  <figure class="half"><img src="img/config-balanca.png" alt=""><figcaption>Configurações › Balança</figcaption></figure>
+  <ol class="steps">
+    <li>Ligue <span class="ui">Ler etiquetas da balança no caixa</span>.</li>
+    <li>Em <b>A etiqueta traz</b>, escolha o que a balança imprime: o <b>preço total</b> (mais comum) ou o <b>peso</b> em gramas.</li>
+    <li>Informe quantos <b>dígitos tem o código do produto</b> (4, 5 ou 6, igual ao programado na balança) e o <b>primeiro dígito</b> da etiqueta (quase sempre 2). Salve.</li>
+    <li>Em cada produto pesado, preencha o <b>Código na balança (PLU)</b> com o mesmo número cadastrado na balança (capítulo 7).</li>
+  </ol>
+  <div class="tip"><b>Como o caixa calcula</b>Na etiqueta de <b>preço</b>, o caixa calcula o peso a partir do preço do cadastro e cobra exatamente o valor impresso (nunca mais). Na etiqueta de <b>peso</b>, cobra o peso × o preço do cadastro. O estoque baixa pelo peso.</div>
+
+  <h3>5.5 Trocas, vales e fiado</h3>
+  <figure class="half"><img src="img/config-trocas.png" alt=""><figcaption>Regras da devolução, do vale-troca e do fiado</figcaption></figure>
+  <table>
+    <thead><tr><th style="width:38%">Configuração</th><th>Para que serve</th></tr></thead>
+    <tr><td><b>Prazo para troca (dias)</b></td><td>Padrão 30. Depois disso, a devolução só com o gerente. 0 = sem prazo.</td></tr>
+    <tr><td><b>Validade do vale-troca (dias)</b></td><td>Padrão 180. 0 = o vale não vence.</td></tr>
+    <tr><td><b>1º vencimento do fiado</b> e <b>dias entre as parcelas</b></td><td>Padrão 30 e 30: a 1ª parcela vence 30 dias depois da compra, a 2ª 60 dias, e assim por diante.</td></tr>
+    <tr><td><b>Limite de fiado para clientes novos (R$)</b></td><td>Limite que o cliente recebe ao ser cadastrado. 0 = o gerente define o limite cliente por cliente.</td></tr>
+    <tr><td><b>Bloquear fiado de cliente com parcela vencida</b></td><td>Ligado (padrão): o caixa só vende fiado para quem está em atraso com a liberação do gerente.</td></tr>
+  </table>
+
+  <h3>5.6 Recuperação de senha por e-mail (Gmail)</h3>
   <ol class="steps">
     <li>Na Conta Google da loja, ative a <b>Verificação em duas etapas</b> (myaccount.google.com › Segurança).</li>
     <li>Abra <b>myaccount.google.com/apppasswords</b>, crie uma <b>senha de app</b> com o nome do sistema (ex.: “Caixa da loja”) e copie os 16 caracteres.</li>
@@ -292,14 +331,14 @@ npm.cmd run setup</pre>
   <figure class="half"><img src="img/config-email.png" alt=""><figcaption>Recuperação de senha por e-mail</figcaption></figure>
   <div class="tip"><b>Segurança</b>Use sempre a <b>senha de app</b>, nunca a senha normal do Gmail. Ela fica guardada <b>criptografada</b> no sistema, não aparece em nenhuma tela e pode ser revogada a qualquer momento na Conta Google. Outros provedores funcionam pela opção SMTP.</div>
 
-  <h3>4.5 Empresa e privacidade (LGPD)</h3>
+  <h3>5.7 Empresa e privacidade (LGPD)</h3>
   <p>Razão social, CNPJ, endereço e o <b>encarregado de dados</b> (nome e e-mail). Aparecem no Termo de Uso. Se a razão social ficar em branco, o termo usa o nome da loja.</p>
   <figure class="half"><img src="img/config-empresa.png" alt=""><figcaption>Configurações › Empresa e privacidade</figcaption></figure>
 </section>
 
-<!-- 5 -->
+<!-- 6 -->
 <section>
-  <h2>5. Usuários e permissões</h2>
+  <h2>6. Usuários e permissões</h2>
   <p><i>Somente o administrador.</i> Cada funcionário deve ter o próprio usuário: o sistema registra quem fez cada operação.</p>
   <ol class="steps">
     <li>No menu, clique em <span class="ui">Usuários</span> e em <span class="ui">Novo usuário</span>.</li>
@@ -307,22 +346,22 @@ npm.cmd run setup</pre>
     <li>Passe o login e a senha provisória ao funcionário. No primeiro acesso, ele cria a própria senha e o PIN e lê o termo.</li>
   </ol>
   <figure class="narrow"><img src="img/usuario-novo.png" alt=""><figcaption>Cadastro de usuário: escolha o perfil</figcaption></figure>
-  <div class="tip"><b>Todo operador e gerente deve ter PIN</b>O PIN serve para trocar de operador no caixa e, no caso dos gerentes, para autorizar descontos, cancelamentos e sangrias.</div>
+  <div class="tip"><b>Todo operador e gerente deve ter PIN</b>O PIN serve para trocar de operador no caixa e, no caso dos gerentes, para autorizar descontos, cancelamentos, sangrias, trocas e devoluções e o fiado fora do limite.</div>
   <figure><img src="img/usuarios.png" alt=""><figcaption>Lista de usuários</figcaption></figure>
   <table>
-    <tr><th style="width:32%">Situação</th><th>O que fazer</th></tr>
+    <thead><tr><th style="width:32%">Situação</th><th>O que fazer</th></tr></thead>
     <tr><td>Esqueceu a senha</td><td>Com e-mail cadastrado: o próprio funcionário usa <span class="ui">Esqueci minha senha</span>. Sem e-mail: <span class="ui">Redefinir senha</span> (nova senha provisória).</td></tr>
     <tr><td>Esqueceu o PIN</td><td><span class="ui">Redefinir PIN</span>.</td></tr>
     <tr><td>Saiu da loja</td><td><span class="ui">Desativar</span>: o acesso é bloqueado na hora e o histórico é mantido. Dá para <span class="ui">Reativar</span> depois.</td></tr>
-    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 16).</td></tr>
+    <tr><td>Ex-funcionário pediu a exclusão dos dados</td><td>Com o usuário desativado, <span class="ui">Anonimizar dados (LGPD)</span> (capítulo 19).</td></tr>
   </table>
   <p>Em <span class="ui">Auditoria</span>, o administrador vê o registro de tudo o que foi feito: logins, vendas, descontos (e quem autorizou), itens removidos do cupom, cancelamentos, sangrias, cadastros, exclusões e alterações. Cada pessoa troca a própria senha, PIN e e-mail em <span class="ui">Meu perfil</span>, clicando no próprio nome no fim do menu.</p>
   <figure><img src="img/auditoria.png" alt=""><figcaption>Auditoria</figcaption></figure>
 </section>
 
-<!-- 6 -->
+<!-- 7 -->
 <section>
-  <h2>6. Produtos e categorias</h2>
+  <h2>7. Produtos e categorias</h2>
   <p><b>Categorias:</b> menu <span class="ui">Categorias</span>. O sistema já vem com categorias de mercadinho e padaria, em dois níveis (categoria e subcategoria). Crie, renomeie ou exclua conforme a loja.</p>
   <h3>Cadastrar um produto</h3>
   <ol class="steps">
@@ -331,14 +370,16 @@ npm.cmd run setup</pre>
     <li>Clique em <span class="ui">Cadastrar produto</span> e confirme com o PIN.</li>
   </ol>
   <table>
-    <tr><th style="width:30%">Campo</th><th>O que colocar</th></tr>
+    <thead><tr><th style="width:30%">Campo</th><th>O que colocar</th></tr></thead>
     <tr><td><b>Nome</b></td><td>Marca, tipo e tamanho. Ex.: <i>Arroz Tio João Tipo 1 5kg</i>.</td></tr>
     <tr><td><b>SKU</b></td><td>Código interno, sem espaços (ex.: <i>ARROZ-TJ-5KG</i>). Também serve para vender no caixa.</td></tr>
     <tr><td><b>Código de barras (EAN)</b></td><td>Bipe a embalagem. Pão e frios podem ficar sem: vendem pelo SKU ou pelo nome.</td></tr>
     <tr><td><b>Categoria e unidade</b></td><td>A unidade define como é vendido: UN, KG (por peso), L, CX, PCT…</td></tr>
     <tr><td><b>Preço de venda</b></td><td>O valor cobrado no caixa. <b>Sem preço, o produto não pode ser vendido no caixa.</b></td></tr>
-    <tr><td><b>Preço de custo</b></td><td>Usado na margem do relatório de vendas.</td></tr>
+    <tr><td><b>Custo</b></td><td>Custo médio do produto, usado na margem e no resultado do mês. Aceita até 4 casas decimais. Depois que você lança <b>notas de entrada</b> (capítulo 11), o sistema atualiza o custo médio sozinho e guarda o <b>último custo</b>.</td></tr>
     <tr><td><b>Estoque inicial</b></td><td>O que já existe na loja hoje (só no cadastro).</td></tr>
+    <tr><td><b>Código na balança (PLU)</b></td><td>Só para produtos pesados na balança que imprime etiqueta: o mesmo número programado na balança (capítulo 5.4). Não pode repetir entre produtos.</td></tr>
+    <tr><td><b>Kit / combo</b></td><td>Liga quando o produto é um conjunto de outros produtos (veja abaixo).</td></tr>
   </table>
   <h3>Controlar consumo e reposição (opcional)</h3>
   <div class="pair">
@@ -347,7 +388,7 @@ npm.cmd run setup</pre>
   </div>
   <p><b>Ligado</b> (padrão): informe o consumo médio por dia, o consumo máximo por dia e o prazo de entrega. O sistema calcula:</p>
   <table>
-    <tr><th style="width:30%">Indicador</th><th style="width:40%">Fórmula</th><th>Para que serve</th></tr>
+    <thead><tr><th style="width:30%">Indicador</th><th style="width:40%">Fórmula</th><th>Para que serve</th></tr></thead>
     <tr><td><b>Estoque mínimo (EM)</b></td><td><span class="formula">consumo médio × prazo</span></td><td>O que se consome enquanto a entrega não chega.</td></tr>
     <tr><td><b>Estoque de segurança (ES)</b></td><td><span class="formula">(máximo − médio) × prazo</span></td><td>Proteção contra dias de pico.</td></tr>
     <tr><td><b>Ponto de pedido (PP)</b></td><td><span class="formula">EM + ES</span></td><td>Ao chegar nele, o sistema gera a solicitação de pedido.</td></tr>
@@ -356,12 +397,37 @@ npm.cmd run setup</pre>
   <div class="tip"><b>Exemplo</b>Pão de forma: média 10 por dia, máximo 16, entrega em 3 dias. EM = 10 × 3 = <b>30</b>; ES = (16 − 10) × 3 = <b>18</b>; PP = <b>48</b>. Com 48 ou menos, o sistema pede reposição.</div>
   <p><b>Encontrar e editar:</b> em <span class="ui">Produtos</span>, busque por nome, SKU ou código. As abas filtram por situação. Clique no produto para ver os detalhes, o histórico e o botão <span class="ui">Editar</span>.</p>
   <figure><img src="../screenshots/produtos.png" alt=""><figcaption>Lista de produtos</figcaption></figure>
+  <p>Na tela do produto aparecem também o <b>custo médio</b>, o <b>último custo</b> pago na nota, a <b>margem</b> sobre a venda e os <b>fornecedores</b> que já entregaram o produto, com o código dele no fornecedor e a embalagem (ex.: caixa com 12).</p>
+  <figure><img src="img/produto-fornecedores.png" alt=""><figcaption>Produto com custo médio, último custo e fornecedor</figcaption></figure>
+
+  <h3>Kits e combos</h3>
+  <p>Um kit é um produto vendido como um item só, mas formado por outros produtos: cesta básica, “café da manhã”, combo de lanche. Ele não tem estoque próprio: <b>a venda do kit baixa o estoque de cada item</b>.</p>
+  <ol class="steps">
+    <li><span class="ui">Novo produto</span>, preencha nome, SKU e categoria e ligue <span class="ui">Kit / combo</span>.</li>
+    <li>Em <b>Itens do kit</b>, clique em <span class="ui">Adicionar item</span>, escolha cada produto e a quantidade que vai no kit.</li>
+    <li>Defina o <b>preço de venda</b> do kit. O <b>custo</b> é a soma dos itens e a margem aparece na hora.</li>
+  </ol>
+  <figure class="half"><img src="img/kit-cadastro.png" alt=""><figcaption>Cadastro de kit: itens, custo e margem</figcaption></figure>
+  <p>Na tela do kit, <b>Kits disponíveis</b> mostra quantos dá para montar com o estoque atual dos itens. Kits não recebem entrada de estoque, não entram em nota de entrada e não geram pedido de reposição (os itens, sim). Cancelar ou devolver um kit devolve os itens ao estoque.</p>
+  <figure><img src="img/kit-detalhe.png" alt=""><figcaption>Kit: itens e quantos dá para montar</figcaption></figure>
+
+  <h3>Cadastrar e atualizar por planilha (Excel)</h3>
+  <p>Para cadastrar muitos produtos de uma vez ou atualizar preços em massa.</p>
+  <ol class="steps">
+    <li>Em <span class="ui">Produtos</span>, clique em <span class="ui">Importar planilha</span> e baixe o <b>modelo</b> (ou use <span class="ui">Exportar planilha</span> para baixar o catálogo atual já no formato certo).</li>
+    <li>Preencha no Excel: nome, SKU, código de barras, categoria, subcategoria, unidade, preço de venda, custo, estoque inicial e reposição (sim/não). Salve como <b>CSV (separado por ponto e vírgula)</b>.</li>
+    <li>Escolha o arquivo e o modo: <b>Cadastrar e atualizar</b> (SKU que já existe é atualizado; célula vazia mantém o valor) ou <b>Só cadastrar novos</b>. Se quiser, deixe o sistema criar as categorias que faltam.</li>
+    <li>Clique em <span class="ui">Conferir planilha</span>. O sistema mostra quantos produtos são novos, quantos serão atualizados e os <b>erros linha a linha</b>. Nada é gravado nessa etapa.</li>
+    <li>Com tudo certo, clique em <span class="ui">Importar</span>. Ou é tudo gravado, ou nada.</li>
+  </ol>
+  <figure class="half"><img src="img/planilha.png" alt=""><figcaption>Planilha conferida, pronta para importar</figcaption></figure>
+  <div class="tip"><b>Acentos e códigos de barras</b>O sistema entende o CSV salvo pelo Excel em português (acentos preservados). Formate a coluna do código de barras como <b>texto</b>, senão o Excel transforma o número em notação científica. O estoque inicial só vale para produtos novos: para corrigir o saldo de um produto existente, use um ajuste de estoque.</div>
 </section>
 
-<!-- 7 -->
+<!-- 8 -->
 <section>
-  <h2>7. Clientes</h2>
-  <p>O cadastro de clientes é opcional. Ele permite identificar o cliente na venda, imprimir o CPF/CNPJ no comprovante e ver o histórico de compras. Menu <span class="ui">Clientes</span>, ou direto no caixa pela tecla <kbd>Ins</kbd> (capítulo 8).</p>
+  <h2>8. Clientes</h2>
+  <p>O cadastro de clientes é opcional. Ele permite identificar o cliente na venda, imprimir o CPF/CNPJ no comprovante e ver o histórico de compras. Menu <span class="ui">Clientes</span>, ou direto no caixa pela tecla <kbd>Ins</kbd> (capítulo 9).</p>
   <figure><img src="img/clientes.png" alt=""><figcaption>Lista de clientes</figcaption></figure>
   <h3>Cadastrar</h3>
   <ol class="steps">
@@ -370,22 +436,26 @@ npm.cmd run setup</pre>
     <li>“Aceita receber ofertas” é um consentimento separado, só para comunicação de marketing.</li>
   </ol>
   <figure class="narrow"><img src="img/cliente-form.png" alt=""><figcaption>Cadastro com a autorização do cliente (LGPD)</figcaption></figure>
+  <h3>Limite de fiado</h3>
+  <p>No cadastro, o campo <b>Limite de fiado (R$)</b> define quanto o cliente pode dever ao mesmo tempo. O cliente novo recebe o limite padrão das configurações (capítulo 5.5). Com limite zero, cada venda no fiado precisa da liberação do gerente.</p>
   <h3>Consultar e atender pedidos do cliente</h3>
-  <p>Clique no cliente para ver o resumo (número de compras, total e ticket médio), os dados e as compras. Gerente e administrador também têm:</p>
+  <p>Clique no cliente para ver o resumo (número de compras, total e ticket médio), os dados e as compras. O quadro de <b>fiado</b> mostra o limite, o valor em aberto, o vencido e o disponível, com as abas <b>Parcelas</b>, <b>Recebimentos</b> e <b>Vales-troca</b> do cliente.</p>
+  <figure class="half"><img src="img/cliente-fiado.png" alt=""><figcaption>Cliente com fiado: limite, em aberto e parcelas</figcaption></figure>
+  <p>Gerente e administrador também têm:</p>
   <table>
-    <tr><th style="width:30%">Botão</th><th>Quando usar</th></tr>
+    <thead><tr><th style="width:30%">Botão</th><th>Quando usar</th></tr></thead>
     <tr><td><span class="ui">Inativar</span></td><td>Cliente que não compra mais: some das buscas do caixa, o histórico continua.</td></tr>
     <tr><td><span class="ui">Exportar dados</span></td><td>O cliente pediu uma cópia dos dados: baixa um arquivo com o cadastro e as compras para entregar a ele.</td></tr>
-    <tr><td><span class="ui">Apagar dados (LGPD)</span></td><td>O cliente pediu a exclusão: nome, CPF, telefone, e-mail, endereço e observações são apagados <b>definitivamente</b>. As compras continuam registradas, sem identificar a pessoa. Se ele pediu também a cópia, exporte antes.</td></tr>
+    <tr><td><span class="ui">Apagar dados (LGPD)</span></td><td>O cliente pediu a exclusão: nome, CPF, telefone, e-mail, endereço e observações são apagados <b>definitivamente</b>. As compras continuam registradas, sem identificar a pessoa. Se ele pediu também a cópia, exporte antes. Cliente com <b>fiado em aberto</b> não pode ser apagado até quitar (ou o gerente cancelar o saldo).</td></tr>
   </table>
 </section>
 
-<!-- 8 -->
+<!-- 9 -->
 <section>
-  <h2>8. Frente de caixa</h2>
+  <h2>9. Frente de caixa</h2>
   <p>A frente de caixa ocupa a tela inteira e funciona <strong>toda pelo teclado</strong>; as teclas também aparecem como botões para telas touch. O operador de caixa entra direto nela; os demais perfis usam o menu <span class="ui">Frente de caixa</span>.</p>
 
-  <h3>8.1 Abrir o caixa</h3>
+  <h3>9.1 Abrir o caixa</h3>
   <ol class="steps">
     <li>Confira o nome do <b>terminal</b> (ex.: <i>Caixa 01</i>). Cada computador de caixa tem um nome diferente, que fica salvo nele.</li>
     <li>Conte o dinheiro de troco colocado na gaveta e digite em <span class="ui">Troco inicial</span>.</li>
@@ -393,7 +463,7 @@ npm.cmd run setup</pre>
   </ol>
   <figure class="half"><img src="img/caixa-abrir.png" alt=""><figcaption>Abertura do caixa</figcaption></figure>
 
-  <h3>8.2 Registrar uma venda</h3>
+  <h3>9.2 Registrar uma venda</h3>
   <figure><img src="img/caixa-com-cliente.png" alt=""><figcaption>Esquerda: busca e itens. Direita: item selecionado, cliente, total e atalhos. Rodapé: caixa, operador e conexão.</figcaption></figure>
   <ol class="steps">
     <li><b>Bipe</b> o produto. Ele entra no cupom com um bipe curto; bipar de novo soma a quantidade.</li>
@@ -401,14 +471,17 @@ npm.cmd run setup</pre>
     <li><b>Várias unidades:</b> quantidade, asterisco e código: <code>3*7891234567890</code>.</li>
     <li><b>Quantidade e peso:</b> <kbd>F2</kbd> (aceita <code>0,455</code> kg) ou <kbd>+</kbd> / <kbd>−</kbd>.</li>
     <li><b>Remover item:</b> <kbd>Del</kbd>. <b>Cancelar o cupom inteiro:</b> <kbd>Esc</kbd>. Os dois ficam na auditoria.</li>
+    <li><b>Etiqueta da balança:</b> bipe a etiqueta normalmente. O caixa reconhece o produto pelo código da balança e lança o peso e o valor da etiqueta (com a balança configurada, capítulo 5.4).</li>
+    <li><b>Kit / combo:</b> entra como um item só, com o preço do kit; o estoque baixa de cada item do kit.</li>
     <li>Ao terminar, tecle <kbd>F5</kbd> (Finalizar venda).</li>
   </ol>
+  <figure><img src="img/caixa-balanca-kit.png" alt=""><figcaption>Etiqueta da balança (queijo, 0,318 kg = R$ 15,87) e um kit no cupom</figcaption></figure>
   <div class="pair">
     <figure><img src="img/caixa-busca.png" alt=""><figcaption>Busca por nome, com preço e estoque</figcaption></figure>
     <figure><img src="img/caixa-quantidade.png" alt=""><figcaption>Quantidade ou peso (F2)</figcaption></figure>
   </div>
 
-  <h3>8.3 Cliente e CPF na nota (<kbd>Ins</kbd>)</h3>
+  <h3>9.3 Cliente e CPF na nota (<kbd>Ins</kbd>)</h3>
   <ol class="steps">
     <li>Tecle <kbd>Ins</kbd> e busque o cliente por nome, CPF ou telefone. <kbd>Enter</kbd> escolhe.</li>
     <li>Só o <b>CPF/CNPJ na nota</b>, sem cadastro: digite o documento e tecle <kbd>Enter</kbd> (ou <span class="ui">Usar só o documento</span>).</li>
@@ -417,14 +490,14 @@ npm.cmd run setup</pre>
   <figure class="half"><img src="img/caixa-cliente-busca.png" alt=""><figcaption>Cliente da venda</figcaption></figure>
   <p>O cliente e o documento saem no comprovante. Sem internet, a busca usa os clientes salvos no computador do caixa; o cadastro de cliente novo precisa de conexão.</p>
 
-  <h3>8.4 Descontos e autorização do gerente</h3>
+  <h3>9.4 Descontos e autorização do gerente</h3>
   <p><kbd>F3</kbd>: desconto no item selecionado. <kbd>F4</kbd>: no total. Escolha <b>%</b> ou <b>R$</b>. Acima do limite do operador, abre a <span class="ui">Autorização do supervisor</span>: o gerente digita o próprio usuário e PIN ali mesmo.</p>
   <div class="pair">
     <figure><img src="img/caixa-desconto.png" alt=""><figcaption>Desconto no total</figcaption></figure>
     <figure><img src="img/caixa-supervisor.png" alt=""><figcaption>Gerente autorizando com o PIN</figcaption></figure>
   </div>
 
-  <h3>8.5 Pagamento e troco</h3>
+  <h3>9.5 Pagamento e troco</h3>
   <ol class="steps">
     <li>Escolha a forma de pagamento pelas teclas mostradas em cada botão (<kbd>F1</kbd> a <kbd>F4</kbd>, <kbd>F6</kbd> a <kbd>F9</kbd>, conforme a ordem em Configurações).</li>
     <li>Digite o valor e tecle <kbd>Enter</kbd>. O sistema sugere o valor que falta.</li>
@@ -435,7 +508,21 @@ npm.cmd run setup</pre>
   <figure><img src="img/pagamento-formas.png" alt=""><figcaption>Pagamento com as formas cadastradas</figcaption></figure>
   <div class="tip"><b>Regras</b>Troco só sai de forma que “dá troco” (o dinheiro). Formas marcadas como “exige cliente” só ficam disponíveis com o cliente identificado (<kbd>Ins</kbd>).</div>
 
-  <h3>8.6 Comprovante, PDF e orçamento</h3>
+  <h3>Pagar com vale-troca</h3>
+  <p>Escolha <span class="ui">Vale-troca / crédito</span>, digite o <b>código do vale</b> (ex.: <i>VT-LUT6R27T</i>) e confirme: o sistema mostra o saldo e lança o valor (no máximo o que falta). Se sobrar saldo, o vale continua valendo para outra compra. Na <b>troca</b> feita pelo próprio caixa (item 9.10), o vale já entra sozinho no pagamento.</p>
+  <figure class="half"><img src="img/pagamento-vale.png" alt=""><figcaption>O vale da troca já lançado; falta pagar a diferença</figcaption></figure>
+
+  <h3>Vender no fiado (crediário)</h3>
+  <ol class="steps">
+    <li>Identifique o cliente com <kbd>Ins</kbd> antes de finalizar.</li>
+    <li>No pagamento, escolha <span class="ui">Fiado / crediário</span>. Aparecem o <b>limite</b>, o valor <b>em aberto</b> e o <b>disponível</b> do cliente.</li>
+    <li>Escolha em quantas <b>parcelas</b> (à vista até 12x). Os vencimentos seguem as configurações (padrão: 30, 60, 90 dias…).</li>
+    <li>Tecle <kbd>Enter</kbd> e confirme. O comprovante sai com as parcelas e um espaço para a <b>assinatura do cliente</b>.</li>
+  </ol>
+  <figure class="half"><img src="img/pagamento-fiado.png" alt=""><figcaption>Fiado em 2 parcelas, com limite e disponível do cliente</figcaption></figure>
+  <div class="warn"><b>Quando o gerente precisa liberar</b>Se a compra passar do <b>disponível</b> ou se o cliente tiver <b>parcela vencida</b> (com o bloqueio ligado), abre a autorização do supervisor. Vale-troca e fiado precisam de conexão com o computador principal.</div>
+
+  <h3>9.6 Comprovante, PDF e orçamento</h3>
   <p>Ao confirmar, aparece <b>Venda concluída</b> com o número e o troco. Escolha <span class="ui">Imprimir</span> ou <span class="ui">PDF</span>; <kbd>Esc</kbd> começa a próxima venda.</p>
   <div class="pair">
     <figure><img src="../screenshots/pdv-venda-concluida.png" alt=""><figcaption>Venda concluída</figcaption></figure>
@@ -444,32 +531,62 @@ npm.cmd run setup</pre>
   <p><b>Orçamento (<kbd>F8</kbd>):</b> com itens no cupom, gera um orçamento em A4 ou PDF. Não é venda e não baixa estoque.</p>
   <figure class="half"><img src="img/caixa-orcamento.png" alt=""><figcaption>Orçamento</figcaption></figure>
 
-  <h3>8.7 Sangria e suprimento (<kbd>F6</kbd>)</h3>
+  <h3>9.7 Sangria e suprimento (<kbd>F6</kbd>)</h3>
   <p><b>Sangria</b> é retirar dinheiro da gaveta; <b>suprimento</b>, colocar. A justificativa é obrigatória, o operador precisa da autorização de um gerente e sai um comprovante para assinatura. A sangria não pode passar do dinheiro esperado na gaveta.</p>
   <figure class="half"><img src="img/caixa-sangria.png" alt=""><figcaption>Sangria para o cofre</figcaption></figure>
 
-  <h3>8.8 Reimprimir e cancelar vendas (<kbd>F7</kbd>)</h3>
+  <h3>9.8 Reimprimir e cancelar vendas (<kbd>F7</kbd>)</h3>
   <p><kbd>F7</kbd> lista as vendas do caixa aberto. Clique numa venda para <span class="ui">Reimprimir</span> (2ª via), gerar <span class="ui">PDF</span> ou <span class="ui">Cancelar venda</span> com motivo: os produtos <b>voltam ao estoque</b>. O operador precisa da autorização do gerente; só dá para cancelar vendas do caixa ainda aberto.</p>
   <div class="pair">
     <figure><img src="img/caixa-vendas.png" alt=""><figcaption>Vendas deste caixa</figcaption></figure>
     <figure><img src="img/caixa-venda-detalhe.png" alt=""><figcaption>Reimprimir, PDF ou cancelar</figcaption></figure>
   </div>
 
-  <h3>8.9 Trocar de operador (<kbd>F9</kbd>)</h3>
+  <h3>9.9 Trocar de operador (<kbd>F9</kbd>)</h3>
   <p>Com o cupom vazio, o próximo operador digita o usuário e o PIN. O caixa continua aberto e as vendas seguintes ficam no nome dele.</p>
   <figure class="half"><img src="img/caixa-trocar-operador.png" alt=""><figcaption>Troca de operador</figcaption></figure>
 
-  <h3>8.10 Fechar o caixa (<kbd>F10</kbd>)</h3>
+  <h3>9.10 Troca, devolução, fiado e vale (<kbd>F11</kbd>)</h3>
+  <p>Com o cupom vazio, <kbd>F11</kbd> abre <span class="ui">Outras operações</span>. Tecle o número da opção:</p>
+  <figure class="half"><img src="img/caixa-outras-operacoes.png" alt=""><figcaption>Outras operações do caixa</figcaption></figure>
+
+  <p><b>1 — Troca / devolução</b></p>
   <ol class="steps">
-    <li>Com o cupom vazio, tecle <kbd>F10</kbd>. Aparece o resumo: vendas, totais por forma de pagamento, troco inicial, sangrias, suprimentos e o <b>dinheiro esperado na gaveta</b>.</li>
+    <li>Digite o <b>número da venda</b> (está no comprovante) e clique em <span class="ui">Buscar</span>.</li>
+    <li>Em cada item, informe a <b>quantidade a devolver</b> (ou <span class="ui">Tudo</span>). Marque <b>Avariado</b> se o produto não pode voltar à prateleira: ele não volta ao estoque e fica registrado como perda.</li>
+    <li>Escolha como devolver o dinheiro: <b>Vale-troca</b> (crédito para outra compra), <b>Dinheiro</b> (sai da gaveta deste caixa), <b>Estorno na forma original</b> (ex.: estorno no cartão, feito na maquininha) ou <b>Abater do fiado</b> (quando a venda foi no fiado).</li>
+    <li>Para uma <b>troca</b>, deixe ligado <span class="ui">Trocar agora por outros produtos</span>: o vale entra sozinho como pagamento da próxima venda. Escreva o <b>motivo</b>.</li>
+    <li>Clique em <span class="ui">Devolver e trocar</span> (ou <span class="ui">Confirmar devolução</span>). Sai o comprovante da devolução e, se for o caso, o do vale.</li>
+  </ol>
+  <div class="pair">
+    <figure><img src="img/troca-devolucao.png" alt=""><figcaption>Devolução de 1 item em vale-troca, para trocar na hora</figcaption></figure>
+    <figure><img src="img/autorizacao-devolucao.png" alt=""><figcaption>O operador precisa da autorização do gerente</figcaption></figure>
+  </div>
+  <div class="tip"><b>Como o valor é calculado</b>Devolve-se o que o cliente <b>pagou</b> pelo item: se a venda teve desconto no total, o desconto é dividido entre os itens. Cada item só pode ser devolvido até a quantidade vendida, mesmo em várias devoluções. Kits devolvem os itens ao estoque. Fora do prazo de troca (padrão 30 dias), só o gerente.</div>
+
+  <p><b>2 — Receber fiado</b></p>
+  <ol class="steps">
+    <li>Busque o cliente. Aparecem as parcelas em aberto, com as vencidas destacadas.</li>
+    <li>Digite o <b>valor a pagar</b> (pode ser parcial) e escolha a forma: dinheiro, PIX, cartão etc. No dinheiro, informe o valor entregue para ver o troco.</li>
+    <li>Clique em <span class="ui">Receber</span>. O valor abate <b>primeiro das parcelas mais antigas</b> e sai o comprovante de recebimento.</li>
+  </ol>
+  <figure class="half"><img src="img/recebimento-fiado.png" alt=""><figcaption>Recebimento de fiado com troco</figcaption></figure>
+
+  <p><b>3 — Consultar vale-troca</b>: digite o código do vale para ver o saldo, a validade, a origem e o histórico de uso, e imprimir a 2ª via.</p>
+  <figure class="half"><img src="img/consulta-vale.png" alt=""><figcaption>Consulta de vale-troca</figcaption></figure>
+
+  <h3>9.11 Fechar o caixa (<kbd>F10</kbd>)</h3>
+  <ol class="steps">
+    <li>Com o cupom vazio, tecle <kbd>F10</kbd>. Aparece o resumo: vendas, totais por forma de pagamento, <b>recebimentos de fiado</b>, <b>devoluções</b>, troco inicial, sangrias, suprimentos e o <b>dinheiro esperado na gaveta</b>.</li>
     <li><b>Conte o dinheiro</b> e digite em <span class="ui">Dinheiro contado</span>. O sistema mostra se <b>confere</b>, tem <b>falta</b> ou <b>sobra</b>.</li>
     <li>Clique em <span class="ui">Fechar caixa e imprimir</span>. O relatório sai para assinatura.</li>
   </ol>
-  <figure class="half"><img src="../screenshots/pdv-fechamento.png" alt=""><figcaption>Fechamento com a conferência do dinheiro</figcaption></figure>
+  <p class="formula" style="display:block;margin-bottom:3mm">Dinheiro esperado = troco inicial + suprimentos − sangrias + vendas em dinheiro + fiado recebido em dinheiro − devoluções em dinheiro</p>
+  <figure class="half"><img src="img/fechamento-caixa.png" alt=""><figcaption>Fechamento com vendas, recebimentos de fiado e devoluções</figcaption></figure>
 
-  <h3>8.11 Tabela de atalhos</h3>
+  <h3>9.12 Tabela de atalhos</h3>
   <table>
-    <tr><th style="width:20%">Tecla</th><th>Ação</th></tr>
+    <thead><tr><th style="width:20%">Tecla</th><th>Ação</th></tr></thead>
     <tr><td><kbd>F1</kbd></td><td>Busca de produto</td></tr>
     <tr><td><kbd>F2</kbd></td><td>Quantidade do item selecionado</td></tr>
     <tr><td><kbd>F3</kbd> / <kbd>F4</kbd></td><td>Desconto no item / no total</td></tr>
@@ -479,6 +596,7 @@ npm.cmd run setup</pre>
     <tr><td><kbd>F8</kbd></td><td>Orçamento</td></tr>
     <tr><td><kbd>F9</kbd></td><td>Trocar operador</td></tr>
     <tr><td><kbd>F10</kbd></td><td>Fechar caixa</td></tr>
+    <tr><td><kbd>F11</kbd></td><td>Outras operações: troca/devolução, receber fiado, consultar vale-troca</td></tr>
     <tr><td><kbd>Ins</kbd></td><td>Cliente da venda / CPF na nota</td></tr>
     <tr><td><kbd>Del</kbd> · <kbd>Esc</kbd></td><td>Remover item · fechar janela ou cancelar a venda</td></tr>
     <tr><td><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>+</kbd> <kbd>−</kbd></td><td>Selecionar item · mudar quantidade</td></tr>
@@ -487,9 +605,9 @@ npm.cmd run setup</pre>
   <div class="tip"><b>A venda em andamento não se perde</b>Se a página fechar ou o computador travar no meio de uma venda, o cupom continua lá ao abrir o caixa de novo.</div>
 </section>
 
-<!-- 9 -->
+<!-- 10 -->
 <section>
-  <h2>9. Entradas e saídas de estoque</h2>
+  <h2>10. Entradas e saídas de estoque</h2>
   <p>As vendas do caixa já baixam o estoque sozinhas. Estas telas são para o que <b>não</b> passa pelo caixa.</p>
   <h3>Registrar entrada</h3>
   <ol class="steps">
@@ -502,39 +620,78 @@ npm.cmd run setup</pre>
   <p>Menu <span class="ui">Registrar saída</span>, tipo <b>Perda / quebra / vencimento</b>, para produtos estragados, quebrados ou vencidos.</p>
   <div class="warn"><b>Ajustes de inventário</b>Os tipos <b>Ajuste (entrada)</b> e <b>Ajuste (saída)</b>, usados depois de contar o estoque, só aparecem para o <b>administrador</b>.</div>
   <h3>Movimentações</h3>
-  <p>Menu <span class="ui">Movimentações</span>: histórico completo, com filtros por tipo e período. As vendas aparecem como <i>Venda</i> e os cancelamentos como <i>Estorno de venda cancelada</i>.</p>
+  <p>Menu <span class="ui">Movimentações</span>: histórico completo, com filtros por tipo e período. As vendas aparecem como <i>Venda</i> (com o nome do kit, quando o item saiu num kit), os cancelamentos como <i>Estorno de venda cancelada</i>, as devoluções como <i>Devolução de venda</i> e as notas de entrada como <i>Pedido recebido</i>, com o número da nota.</p>
   <figure><img src="img/movimentacoes.png" alt=""><figcaption>Histórico de movimentações</figcaption></figure>
+  <div class="tip"><b>Mercadoria com nota fiscal</b>Para a compra com nota do fornecedor, prefira lançar a <b>nota de entrada</b> (capítulo 11): ela dá entrada no estoque, atualiza o custo médio e gera as contas a pagar de uma vez só.</div>
 </section>
 
-<!-- 10 -->
+<!-- 11 -->
 <section>
-  <h2>10. Alertas e solicitações de pedido</h2>
+  <h2>11. Compras: fornecedores e notas de entrada</h2>
+  <p><i>Estoquista e administrador lançam; o gerente consulta.</i> A nota de entrada registra a mercadoria comprada <b>com custo</b>: num só passo ela dá entrada no estoque, recalcula o <b>custo médio</b> de cada produto, lembra o código do produto no fornecedor e cria as <b>contas a pagar</b> das parcelas.</p>
+
+  <h3>11.1 Fornecedores</h3>
+  <p>Menu <span class="ui">Fornecedores</span> › <span class="ui">Novo fornecedor</span>: razão social, nome fantasia, CNPJ/CPF (validado), telefone, e-mail, contato, <b>prazo de entrega</b> e <b>condição de pagamento</b>. Fornecedores que vêm num XML são cadastrados sozinhos.</p>
+  <figure><img src="img/fornecedores.png" alt=""><figcaption>Lista de fornecedores</figcaption></figure>
+  <p>Clique no fornecedor para ver as notas lançadas, as contas em aberto e os <b>produtos fornecidos</b>, com o código no fornecedor, a conversão (ex.: caixa com 12) e o último custo. A <b>estrela</b> marca o fornecedor preferido do produto, sugerido nas solicitações de pedido.</p>
+  <figure class="half"><img src="img/fornecedor-detalhe.png" alt=""><figcaption>Fornecedor com os produtos fornecidos</figcaption></figure>
+
+  <h3>11.2 Importar o XML da NF-e (o jeito mais rápido)</h3>
+  <ol class="steps">
+    <li>Peça ao fornecedor o <b>arquivo XML</b> da nota (normalmente chega por e-mail).</li>
+    <li>Menu <span class="ui">Notas de entrada</span> › <span class="ui">Importar XML da NF-e</span> e escolha o arquivo. A nota vira um <b>rascunho</b> com fornecedor, número, série, emissão, chave de acesso, itens, frete, descontos e as parcelas (duplicatas).</li>
+    <li>Os itens já conhecidos são <b>associados sozinhos</b> (pelo código no fornecedor ou pelo código de barras). Os que ficam em vermelho precisam de <span class="ui">Associar produto</span>: escolha o produto do cadastro.</li>
+    <li>Confira a <b>conversão</b>: quantas unidades do seu produto vêm em cada unidade da nota (ex.: nota em <i>CX</i>, você vende em <i>UN</i>, caixa com 12 → conversão 12). O sistema mostra o total em unidades e o <b>custo por unidade</b>, com a margem sobre o preço de venda.</li>
+    <li>Confira o total calculado com o <b>total impresso na nota</b> e clique em <span class="ui">Lançar nota</span>.</li>
+  </ol>
+  <figure><img src="img/nota-xml.png" alt=""><figcaption>XML importado: um item ainda sem produto associado (em vermelho) e conversão a conferir</figcaption></figure>
+  <figure><img src="img/nota-conversao.png" alt=""><figcaption>Itens associados, com conversão (caixa com 12) e custo por unidade</figcaption></figure>
+  <div class="warn"><b>Atenção à conversão</b>Uma conversão errada distorce o estoque e o custo. Se o custo por unidade ficar muito acima do preço de venda (margem negativa em vermelho), a conversão provavelmente está errada. Na próxima nota do mesmo fornecedor, o sistema lembra a conversão.</div>
+
+  <h3>11.3 Digitar uma nota</h3>
+  <p>Sem XML (nota em papel, compra no atacarejo), use <span class="ui">Digitar nota</span>: escolha o fornecedor, o número, <span class="ui">Adicionar produto</span> em cada item (quantidade e custo unitário), frete, outras despesas e desconto. Em <b>Parcelas a pagar</b>, use <span class="ui">Gerar</span> para dividir o total. <span class="ui">Salvar rascunho</span> guarda para terminar depois.</p>
+
+  <h3>11.4 O que acontece ao lançar</h3>
+  <ul>
+    <li>O estoque de cada produto aumenta (movimentação <i>Pedido recebido</i>, com o número da nota).</li>
+    <li>O <b>custo médio</b> é recalculado: <span class="formula">(saldo × custo médio + quantidade × custo da nota) ÷ (saldo + quantidade)</span>. Com o saldo zerado ou negativo, vale o custo da nota. Frete, despesas e desconto são rateados entre os itens pelo valor.</li>
+    <li>O <b>último custo</b> e o vínculo produto–fornecedor (código e conversão) ficam gravados.</li>
+    <li>Cada parcela vira uma <b>conta a pagar</b> na categoria <i>Compra de mercadorias</i> (capítulo 15).</li>
+  </ul>
+  <figure><img src="img/nota-lancada.png" alt=""><figcaption>Nota lançada, com as parcelas já em Contas a pagar</figcaption></figure>
+  <div class="tip"><b>Bom saber</b>A mesma NF-e (chave de acesso) não pode ser importada duas vezes. Rascunhos podem ser excluídos; a nota lançada não é desfeita: corrija o estoque com um ajuste e a conta em Contas a pagar. Kits não entram em nota (lance os itens).</div>
+  <figure><img src="img/notas-entrada.png" alt=""><figcaption>Notas de entrada: rascunhos e lançadas</figcaption></figure>
+</section>
+
+<!-- 12 -->
+<section>
+  <h2>12. Alertas e solicitações de pedido</h2>
   <h3>Situação de cada produto</h3>
   <table>
-    <tr><th style="width:24%">Situação</th><th>Quando aparece</th></tr>
+    <thead><tr><th style="width:24%">Situação</th><th>Quando aparece</th></tr></thead>
     <tr><td><span class="badge b-ok">Normal</span></td><td>Estoque acima do ponto de pedido.</td></tr>
     <tr><td><span class="badge b-reorder">Repor</span></td><td>Chegou no ponto de pedido: hora de pedir.</td></tr>
     <tr><td><span class="badge b-critical">Crítico</span></td><td>Abaixo do estoque de segurança: risco de faltar.</td></tr>
     <tr><td><span class="badge b-out">Sem estoque</span></td><td>Saldo zerado (ruptura).</td></tr>
   </table>
   <h3>Solicitações de pedido</h3>
-  <p>Quando um produto com reposição ligada chega ao ponto de pedido, o sistema cria uma solicitação com a <b>quantidade sugerida</b> em <span class="ui">Solicitações de pedido</span>.</p>
+  <p>Quando um produto com reposição ligada chega ao ponto de pedido, o sistema cria uma solicitação com a <b>quantidade sugerida</b> em <span class="ui">Solicitações de pedido</span>, já indicando o <b>fornecedor preferido</b> do produto (a estrela no cadastro do fornecedor) e o último custo. Ligue <span class="ui">Agrupar por fornecedor</span> para ver e imprimir um pedido pronto para cada fornecedor, com o valor estimado.</p>
   <figure><img src="../screenshots/pedidos.png" alt=""><figcaption>Solicitações de pedido</figcaption></figure>
   <ol class="steps">
     <li><b>Pendente:</b> ao pedir ao fornecedor, clique em <span class="ui">Pedido feito</span> (ou <span class="ui">Cancelar</span>).</li>
     <li><b>Pedido feito:</b> quando a mercadoria chegar, clique em <span class="ui">Recebido</span>.</li>
-    <li>Registre a entrada da mercadoria (capítulo 9) para atualizar o saldo.</li>
+    <li>Lance a nota de entrada (capítulo 11) ou registre a entrada (capítulo 10) para atualizar o saldo. Ao lançar a nota, as solicitações abertas dos produtos dela são marcadas como recebidas sozinhas.</li>
   </ol>
   <div class="tip"><b>Quantidade sugerida</b><span class="formula">ES + consumo médio × (prazo + dias de cobertura) − saldo atual</span>. Os dias de cobertura (padrão 7) ficam em <span class="ui">Configurações</span>.</div>
 </section>
 
-<!-- 11 -->
+<!-- 13 -->
 <section>
-  <h2>11. Relatórios de estoque</h2>
+  <h2>13. Relatórios de estoque</h2>
   <figure><img src="../screenshots/relatorios.png" alt=""><figcaption>Relatório de movimentações por período</figcaption></figure>
   <p>Menu <span class="ui">Relatórios</span>. Escolha o período e, se quiser, filtre um produto.</p>
   <table>
-    <tr><th style="width:30%">Aba</th><th>O que mostra</th></tr>
+    <thead><tr><th style="width:30%">Aba</th><th>O que mostra</th></tr></thead>
     <tr><td><b>Por produto</b></td><td>Entradas, saídas e saldo de cada produto no período.</td></tr>
     <tr><td><b>Estoque parado</b></td><td>Produtos sem nenhuma saída no período.</td></tr>
     <tr><td><b>Rupturas</b></td><td>Produtos sem estoque.</td></tr>
@@ -543,12 +700,14 @@ npm.cmd run setup</pre>
   <p><span class="ui">Imprimir</span> gera papel ou PDF; <span class="ui">Exportar Excel (CSV)</span> abre no Excel.</p>
 </section>
 
-<!-- 12 -->
+<!-- 14 -->
 <section>
-  <h2>12. Gerência: vendas e caixas</h2>
+  <h2>14. Gerência: vendas e caixas</h2>
   <h3>Relatório de vendas</h3>
-  <p>Menu <span class="ui">Vendas</span>. Escolha o período (<i>Hoje, 7 dias, 30 dias</i> ou datas) para ver o <b>total vendido</b>, o número de vendas, o <b>ticket médio</b>, os <b>descontos</b>, a <b>margem bruta</b> (com o custo cadastrado), os valores por <b>forma de pagamento</b>, os <b>produtos mais vendidos</b> e as vendas por operador. Abaixo fica a lista de vendas: busque pelo número ou filtre as canceladas, e clique numa venda para reimprimir, gerar PDF ou cancelar. <span class="ui">Exportar CSV</span> abre no Excel.</p>
+  <p>Menu <span class="ui">Vendas</span>. Escolha o período (<i>Hoje, 7 dias, 30 dias</i> ou datas) para ver o <b>total vendido</b>, o número de vendas, o <b>ticket médio</b>, os <b>descontos</b>, a <b>margem bruta</b> (com o custo cadastrado), os valores por <b>forma de pagamento</b>, os <b>produtos mais vendidos</b> e as vendas por operador. Abaixo fica a lista de vendas: busque pelo número ou filtre as canceladas, e clique numa venda para reimprimir, gerar PDF, cancelar ou fazer <span class="ui">Troca / devolução</span>. <span class="ui">Exportar CSV</span> abre no Excel. As <b>devoluções</b> do período aparecem no relatório e são descontadas do total.</p>
   <figure><img src="../screenshots/vendas.png" alt=""><figcaption>Relatório de vendas do período</figcaption></figure>
+  <figure class="half"><img src="img/venda-com-devolucao.png" alt=""><figcaption>Venda com item devolvido: a devolução aparece no detalhe</figcaption></figure>
+  <div class="tip"><b>Cancelar ou devolver?</b><b>Cancelar</b> anula a venda inteira e só vale para o caixa ainda aberto (venda lançada errado). <b>Devolver</b> é para o cliente que volta com o produto depois: pode ser parcial, a qualquer tempo dentro do prazo, e fica registrada com motivo.</div>
   <h3>Caixas</h3>
   <p>Menu <span class="ui">Caixas</span>: todos os turnos, com quem abriu e fechou, o dinheiro esperado, o contado e a <b>diferença</b> (falta em vermelho, sobra em amarelo). Reimprima ou baixe em PDF o relatório de qualquer fechamento.</p>
   <figure><img src="../screenshots/caixas.png" alt=""><figcaption>Conferência dos caixas</figcaption></figure>
@@ -557,9 +716,63 @@ npm.cmd run setup</pre>
   <figure><img src="img/painel.png" alt=""><figcaption>Painel</figcaption></figure>
 </section>
 
-<!-- 13 -->
+<!-- 15 -->
 <section>
-  <h2>13. Excluir e recuperar produtos</h2>
+  <h2>15. Financeiro</h2>
+  <p><i>Gerente e administrador.</i> O grupo <b>Financeiro</b> do menu reúne o que a loja tem a pagar, o que tem a receber no fiado e, juntando tudo com as vendas, o <b>fluxo de caixa</b> e o <b>resultado do mês</b>.</p>
+
+  <h3>15.1 Contas a pagar</h3>
+  <figure><img src="img/contas-a-pagar.png" alt=""><figcaption>Contas a pagar: vencidas, que vencem hoje, próximos 7 dias e total em aberto</figcaption></figure>
+  <ol class="steps">
+    <li>Menu <span class="ui">Contas a pagar</span> › <span class="ui">Nova conta</span>.</li>
+    <li>Informe a descrição, a <b>categoria</b> (aluguel, energia, salários…), o fornecedor (opcional), o valor, o vencimento e o nº do documento (boleto, fatura).</li>
+    <li>Em <span class="ui">Repetir / parcelar em</span>, escolha <b>Só esta vez</b> ou quantas vezes: o valor total é dividido nas parcelas, uma a cada 30 dias. Com <span class="ui">Conta fixa mensal</span> ligado, o <b>mesmo valor se repete</b> todo mês (ex.: aluguel lançado para 12 meses).</li>
+    <li>No dia do pagamento, clique em <span class="ui">Pagar</span>: data, valor pago (juros e multa são calculados pela diferença) e a forma de pagamento. Anexe o comprovante (PDF ou imagem), se quiser.</li>
+  </ol>
+  <figure class="half"><img src="img/conta-nova.png" alt=""><figcaption>Nova conta a pagar</figcaption></figure>
+  <p>As abas filtram por situação (em aberto, pagas, canceladas) e por vencimento. <span class="ui">Desfazer pagamento</span> reabre uma conta paga por engano. As parcelas das <b>notas de entrada</b> chegam sozinhas, na categoria <i>Compra de mercadorias</i>. Em <span class="ui">Categorias</span> você cria categorias de despesa.</p>
+
+  <h3>15.2 Fiado (contas a receber)</h3>
+  <figure><img src="img/fiado.png" alt=""><figcaption>Fiado: total em aberto, vencido, atraso por faixa e maiores devedores</figcaption></figure>
+  <p>Menu <span class="ui">Fiado (a receber)</span>: todas as parcelas das vendas no fiado. No topo, o total em aberto, o vencido (e quantos clientes estão em atraso), o que vai vencer e o que passou de 90 dias. O quadro <b>Atraso por faixa</b> mostra quanto está vencido há quanto tempo, e <b>Maiores devedores</b> ordena os clientes pelo valor.</p>
+  <p>O <b>recebimento</b> é feito no caixa (<kbd>F11</kbd> › Receber fiado, capítulo 9.10), para o dinheiro entrar na gaveta e no fechamento. Para um acordo ou perdão de dívida, o gerente usa <span class="ui">Cancelar o saldo desta parcela</span>, com motivo.</p>
+
+  <h3>15.3 Fluxo de caixa</h3>
+  <figure><img src="img/fluxo-caixa.png" alt=""><figcaption>Fluxo de caixa: realizado e previsto, dia a dia</figcaption></figure>
+  <p>Menu <span class="ui">Fluxo de caixa e resultado</span>, aba <b>Fluxo de caixa</b>. Mostra, para o período escolhido (padrão: hoje + 30 dias), quanto <b>entrou</b> e <b>saiu</b> (realizado) e quanto <b>vai entrar</b> e <b>vai sair</b> (previsto), com o <b>saldo do período</b> e o gráfico dia a dia com o saldo acumulado.</p>
+  <table>
+    <thead><tr><th style="width:30%">Entra</th><th>Quando</th></tr></thead>
+    <tr><td>Vendas em dinheiro e PIX</td><td>No dia da venda.</td></tr>
+    <tr><td>Vendas no cartão</td><td>No dia em que a operadora paga (prazo da forma de pagamento), já <b>sem a taxa</b>.</td></tr>
+    <tr><td>Fiado</td><td>Recebido: no dia do recebimento. A receber: no vencimento da parcela.</td></tr>
+    <tr><th>Sai</th><th>Quando</th></tr>
+    <tr><td>Contas a pagar</td><td>Pagas: na data do pagamento. Em aberto: no vencimento.</td></tr>
+    <tr><td>Devoluções em dinheiro</td><td>No dia da devolução.</td></tr>
+  </table>
+  <p>Contas e parcelas de fiado <b>vencidas</b> aparecem num aviso à parte (não entram no gráfico, porque já estão atrasadas). As tabelas <b>De onde vem o dinheiro</b> e <b>Para onde vai o dinheiro</b> separam por forma de pagamento e por categoria. <span class="ui">Exportar Excel (CSV)</span> e <span class="ui">Imprimir</span> estão no topo.</p>
+
+  <h3>15.4 Resultado do mês (DRE gerencial)</h3>
+  <figure><img src="img/resultado-dre.png" alt=""><figcaption>Resultado do período: da venda ao lucro (ou prejuízo)</figcaption></figure>
+  <p>Aba <b>Resultado (DRE)</b>: mostra se a loja deu lucro no período, <b>por competência</b> (vendas pela data da venda, despesas pelo vencimento):</p>
+  <table>
+    <thead><tr><th style="width:45%">Linha</th><th>De onde vem</th></tr></thead>
+    <tr><td>Vendas</td><td>Total vendido (já com os descontos), sem as canceladas</td></tr>
+    <tr><td>(−) Devoluções</td><td>Valor devolvido aos clientes</td></tr>
+    <tr><td><b>= Receita líquida</b></td><td></td></tr>
+    <tr><td>(−) Custo das mercadorias vendidas (CMV)</td><td>Custo médio de cada produto no momento da venda (devoluções que voltaram ao estoque saem do custo)</td></tr>
+    <tr><td><b>= Lucro bruto</b></td><td>e a <b>margem bruta</b></td></tr>
+    <tr><td>(−) Taxas de cartão</td><td>Taxa de cada forma de pagamento</td></tr>
+    <tr><td>(−) Perdas de estoque</td><td>Saídas por perda, quebra, vencimento e itens avariados, pelo custo</td></tr>
+    <tr><td>(−) Despesas</td><td>Contas a pagar do período, por categoria (exceto compra de mercadorias)</td></tr>
+    <tr><td><b>= Resultado do período</b></td><td>Lucro ou prejuízo</td></tr>
+  </table>
+  <div class="tip"><b>Por que a compra de mercadoria não é despesa?</b>A mercadoria vira custo quando é <b>vendida</b> (no CMV). Somar a nota inteira como despesa contaria o custo duas vezes. O quadro ao lado mostra quanto foi comprado em mercadoria no período, só para informação.</div>
+  <div class="warn"><b>Gerencial</b>O resultado é uma visão gerencial para decidir preços e despesas; não substitui a contabilidade. Para ele ficar certo, mantenha o custo dos produtos atualizado (as notas de entrada fazem isso) e lance todas as despesas em Contas a pagar.</div>
+</section>
+
+<!-- 16 -->
+<section>
+  <h2>16. Excluir e recuperar produtos</h2>
   <ol class="steps">
     <li>Abra o produto e clique em <span class="ui">Excluir</span> › <span class="ui">Mover para a lixeira</span> (o PIN é pedido).</li>
     <li>O produto some das listas, mas pode voltar com <span class="ui">Restaurar</span> durante o prazo (padrão: <b>15 dias</b>), em <span class="ui">Lixeira</span>.</li>
@@ -568,10 +781,10 @@ npm.cmd run setup</pre>
   <div class="warn"><b>Atenção</b>A exclusão definitiva não pode ser desfeita.</div>
 </section>
 
-<!-- 14 -->
+<!-- 17 -->
 <section>
-  <h2>14. Impressoras</h2>
-  <p>O sistema imprime comprovante de venda, orçamento, sangria/suprimento e fechamento de caixa. Todo comprovante traz <b>“Documento Não Fiscal — Sem Valor Fiscal”</b>.</p>
+  <h2>17. Impressoras</h2>
+  <p>O sistema imprime comprovante de venda (no fiado, com as parcelas e a assinatura do cliente), orçamento, sangria/suprimento, fechamento de caixa, devolução, vale-troca e recebimento de fiado. Todo comprovante traz <b>“Documento Não Fiscal — Sem Valor Fiscal”</b>.</p>
   <h3>Térmica USB ou serial (mais comum)</h3>
   <ol class="steps">
     <li>Instale o <b>driver do fabricante</b> (Epson, Elgin, Bematech, Daruma, Tanca…) e imprima uma página de teste pelo Windows.</li>
@@ -590,9 +803,9 @@ npm.cmd run setup</pre>
   <p>Escolha <b>Folha A4</b> para impressoras comuns. O orçamento sai sempre em A4. Em qualquer comprovante, o botão <span class="ui">PDF</span> gera o arquivo, mesmo sem internet.</p>
 </section>
 
-<!-- 15 -->
+<!-- 18 -->
 <section>
-  <h2>15. Backup</h2>
+  <h2>18. Backup</h2>
   <h3>Aplicativo: automático no Google Drive</h3>
   <ol class="steps">
     <li>Instale o <b>Google Drive para computador</b> e entre com a conta Google da loja.</li>
@@ -609,16 +822,16 @@ npm.cmd run setup</pre>
   <div class="danger"><b>Nunca coloque a pasta viva do banco no OneDrive ou no Google Drive</b>A sincronização pode corromper o banco enquanto o sistema está ligado. Só os arquivos de backup podem ir para a nuvem.</div>
 </section>
 
-<!-- 16 -->
+<!-- 19 -->
 <section>
-  <h2>16. Privacidade e LGPD</h2>
+  <h2>19. Privacidade e LGPD</h2>
   <p>O sistema trata dados pessoais de quem o usa (nome, login, e-mail e registro das ações) e, na frente de caixa, dos <b>clientes cadastrados</b>. Ele ajuda a empresa a cumprir a <b>LGPD (Lei nº 13.709/2018)</b>.</p>
   <h3>Termo de Uso e Política de Privacidade</h3>
   <p>Explica quais dados são tratados, para quê, por quanto tempo e os direitos de cada pessoa, inclusive dos clientes. Todo usuário dá ciência no primeiro acesso; o termo fica sempre em <span class="ui">Termos e privacidade</span>, no menu, e no link da tela de login. Se o termo mudar, o sistema pede nova leitura (e, enquanto isso, guarda as vendas offline do usuário sem perdê-las).</p>
   <div class="warn"><b>Para o administrador</b>Preencha os dados da empresa e do <b>encarregado de dados</b> em <span class="ui">Configurações</span> › <span class="ui">Empresa e privacidade</span>. O texto do termo é um modelo: revise com um profissional jurídico.</div>
   <h3>Direitos dos usuários (funcionários)</h3>
   <table>
-    <tr><th style="width:34%">Direito</th><th>Como exercer</th></tr>
+    <thead><tr><th style="width:34%">Direito</th><th>Como exercer</th></tr></thead>
     <tr><td>Ver os próprios dados</td><td><span class="ui">Meu perfil</span> › <span class="ui">Baixar meus dados</span>: cadastro, auditoria, operações de estoque, vendas feitas e caixas abertos.</td></tr>
     <tr><td>Corrigir o e-mail</td><td><span class="ui">Meu perfil</span>, confirmando com a senha atual.</td></tr>
     <tr><td>Corrigir o nome</td><td>Pedir a um administrador.</td></tr>
@@ -626,7 +839,7 @@ npm.cmd run setup</pre>
   </table>
   <figure class="half"><img src="img/perfil-privacidade.png" alt=""><figcaption>Meu perfil › Privacidade</figcaption></figure>
   <h3>Direitos dos clientes</h3>
-  <p>O cliente pede a um gerente ou administrador, que no cadastro dele usa <span class="ui">Exportar dados</span> ou <span class="ui">Apagar dados (LGPD)</span> (capítulo 7). Dados pessoais de clientes só são guardados com a <b>autorização registrada</b>, e ofertas exigem consentimento separado.</p>
+  <p>O cliente pede a um gerente ou administrador, que no cadastro dele usa <span class="ui">Exportar dados</span> (cadastro, compras, fiado e vales-troca) ou <span class="ui">Apagar dados (LGPD)</span> (capítulo 8; cliente com fiado em aberto só depois de quitar). Dados pessoais de clientes só são guardados com a <b>autorização registrada</b>, e ofertas exigem consentimento separado.</p>
   <p>O prazo legal para responder aos pedidos é de <b>15 dias</b>.</p>
   <h3>O que o sistema faz sozinho</h3>
   <ul>
@@ -638,9 +851,9 @@ npm.cmd run setup</pre>
   </ul>
 </section>
 
-<!-- 17 -->
+<!-- 20 -->
 <section>
-  <h2>17. Celular e uso sem internet</h2>
+  <h2>20. Celular e uso sem internet</h2>
   <h3>Outros computadores, tablets e celulares</h3>
   <ol class="steps">
     <li>No computador principal, descubra o IP (no <code>cmd</code>, rode <code>ipconfig</code>; ex.: <i>192.168.0.10</i>).</li>
@@ -658,14 +871,14 @@ npm.cmd run setup</pre>
     <li>Entradas e saídas de estoque também ficam guardadas.</li>
     <li>Quando a conexão volta, tudo é <b>enviado sozinho, sem duplicar</b>.</li>
   </ul>
-  <div class="warn"><b>Precisa de conexão</b>Abrir e fechar o caixa, sangria e suprimento, cancelar vendas, autorização do gerente para descontos acima do limite e cadastro de cliente novo. O fechamento fica bloqueado enquanto houver vendas offline não enviadas.</div>
+  <div class="warn"><b>Precisa de conexão</b>Abrir e fechar o caixa, sangria e suprimento, cancelar vendas, autorização do gerente para descontos acima do limite, cadastro de cliente novo, <b>pagamento com vale-troca ou no fiado</b>, troca/devolução, recebimento de fiado e consulta de vale. O fechamento fica bloqueado enquanto houver vendas offline não enviadas.</div>
 </section>
 
-<!-- 18 -->
+<!-- 21 -->
 <section>
-  <h2>18. Dúvidas frequentes</h2>
+  <h2>21. Dúvidas frequentes</h2>
   <table>
-    <tr><th style="width:38%">Situação</th><th>O que fazer</th></tr>
+    <thead><tr><th style="width:38%">Situação</th><th>O que fazer</th></tr></thead>
     <tr><td>Esqueci minha senha</td><td><span class="ui">Esqueci minha senha</span> no login (capítulo 3). Sem e-mail, peça ao administrador para usar <span class="ui">Redefinir senha</span>.</td></tr>
     <tr><td>O código de recuperação não chegou</td><td>Confira o spam e o e-mail em <span class="ui">Meu perfil</span>. O administrador testa em <span class="ui">Configurações</span> › <span class="ui">Enviar e-mail de teste</span>.</td></tr>
     <tr><td>Aparece o termo de uso ao entrar</td><td>O termo foi atualizado. Leia, marque “Li e concordo” e continue.</td></tr>
@@ -681,14 +894,21 @@ npm.cmd run setup</pre>
     <tr><td>Registrei uma quantidade errada no estoque</td><td>O administrador faz um ajuste com a diferença; o histórico guarda as duas operações.</td></tr>
     <tr><td>O produto sumiu da lista</td><td>Confira a <span class="ui">Lixeira</span> (administrador).</td></tr>
     <tr><td>Tela antiga depois de atualizar</td><td>Fora do caixa, <kbd>Ctrl</kbd>+<kbd>F5</kbd>.</td></tr>
+    <tr><td>O cliente quer trocar um produto</td><td>No caixa, <kbd>F11</kbd> › <b>1</b>, número da venda, devolva em <b>vale-troca</b> com “Trocar agora” ligado e bipe os produtos novos (capítulo 9.10).</td></tr>
+    <tr><td>O fiado pede autorização do gerente</td><td>O gerente libera com usuário e PIN, ou o cliente paga as parcelas atrasadas antes (<kbd>F11</kbd> › <b>2</b>).</td></tr>
+    <tr><td>O vale-troca não é aceito</td><td>Consulte o código (<kbd>F11</kbd> › <b>3</b>): o vale pode estar vencido, cancelado ou sem saldo.</td></tr>
+    <tr><td>A etiqueta da balança não lança o produto</td><td>Confira se a leitura está ligada em Configurações › Balança, se o número de dígitos e o modo (preço ou peso) estão iguais aos da balança e se o produto tem o <b>Código na balança</b> certo.</td></tr>
+    <tr><td>“Esta nota já foi importada”</td><td>A mesma NF-e já está em Notas de entrada; abra a entrada indicada.</td></tr>
+    <tr><td>O custo do produto ficou estranho depois da nota</td><td>Provavelmente a conversão estava errada (ex.: caixa com 12 lançada como 1). Corrija o custo no cadastro e o estoque com um ajuste.</td></tr>
+    <tr><td>O resultado do mês deu prejuízo</td><td>Confira se os produtos têm custo cadastrado, se as despesas do mês estão corretas e a linha de perdas de estoque.</td></tr>
   </table>
 </section>
 
-<!-- 19 -->
+<!-- 22 -->
 <section>
-  <h2>19. Glossário</h2>
+  <h2>22. Glossário</h2>
   <table>
-    <tr><th style="width:30%">Termo</th><th>Significado</th></tr>
+    <thead><tr><th style="width:30%">Termo</th><th>Significado</th></tr></thead>
     <tr><td>Bipar</td><td>Passar o produto no leitor de código de barras.</td></tr>
     <tr><td>Cupom</td><td>A lista de itens da venda em andamento no caixa.</td></tr>
     <tr><td>Terminal</td><td>Cada computador de caixa (ex.: “Caixa 01”).</td></tr>
@@ -696,7 +916,7 @@ npm.cmd run setup</pre>
     <tr><td>Sangria / suprimento</td><td>Retirada / colocação de dinheiro na gaveta durante o turno.</td></tr>
     <tr><td>PIN</td><td>Senha curta (4 a 6 números) pessoal de cada usuário.</td></tr>
     <tr><td>SKU</td><td>Código interno do produto.</td></tr>
-    <tr><td>EM, ES, PP</td><td>Estoque mínimo, estoque de segurança e ponto de pedido (capítulo 6).</td></tr>
+    <tr><td>EM, ES, PP</td><td>Estoque mínimo, estoque de segurança e ponto de pedido (capítulo 7).</td></tr>
     <tr><td>Margem bruta</td><td>Valor vendido menos o custo dos produtos vendidos.</td></tr>
     <tr><td>Ticket médio</td><td>Total vendido ÷ número de vendas.</td></tr>
     <tr><td>Orçamento</td><td>Documento com itens e preços; não é venda e não baixa estoque.</td></tr>
@@ -704,6 +924,17 @@ npm.cmd run setup</pre>
     <tr><td>Documento não fiscal</td><td>Comprovante sem valor fiscal: não substitui a NFC-e ou a nota fiscal.</td></tr>
     <tr><td>Encarregado (DPO)</td><td>Pessoa que responde aos pedidos sobre dados pessoais (LGPD).</td></tr>
     <tr><td>Anonimizar</td><td>Apagar os dados pessoais mantendo os registros sem identificar a pessoa.</td></tr>
+    <tr><td>Vale-troca</td><td>Crédito com código (VT-…) gerado numa devolução, para usar como pagamento em outra compra.</td></tr>
+    <tr><td>Fiado / crediário</td><td>Venda a prazo para cliente identificado, paga depois em uma ou mais parcelas.</td></tr>
+    <tr><td>Nota de entrada</td><td>Registro da compra com custo (digitada ou pelo XML da NF-e do fornecedor).</td></tr>
+    <tr><td>XML da NF-e</td><td>Arquivo eletrônico da nota fiscal do fornecedor, com todos os itens e valores.</td></tr>
+    <tr><td>Conversão</td><td>Quantas unidades de venda vêm em cada unidade da nota (ex.: caixa com 12).</td></tr>
+    <tr><td>Custo médio</td><td>Custo do produto ponderado pelas quantidades compradas a cada preço.</td></tr>
+    <tr><td>CMV</td><td>Custo das mercadorias vendidas no período.</td></tr>
+    <tr><td>DRE</td><td>Demonstração do resultado: das vendas ao lucro ou prejuízo do período.</td></tr>
+    <tr><td>Fluxo de caixa</td><td>Entradas e saídas de dinheiro, realizadas e previstas, dia a dia.</td></tr>
+    <tr><td>PLU</td><td>Código do produto programado na balança.</td></tr>
+    <tr><td>Kit / combo</td><td>Produto formado por outros; a venda baixa o estoque de cada item.</td></tr>
   </table>
   <div class="warn"><b>Sistema não fiscal</b>Esta versão não emite NFC-e, SAT nem nota fiscal. Na maioria dos estados, quem vende ao consumidor é obrigado a emitir documento fiscal: confirme a situação da loja com o contador.</div>
 </section>
