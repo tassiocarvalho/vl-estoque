@@ -5,6 +5,7 @@ import {
   ClipboardList,
   FileInput,
   HandCoins,
+  LineChart,
   NotebookPen,
   Contact,
   FolderTree,
@@ -65,6 +66,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Financeiro',
     items: [
+      { to: '/financeiro', label: 'Fluxo de caixa e resultado', icon: LineChart, permission: P.FINANCE_READ, keywords: 'dre lucro prejuizo saldo entradas saidas' },
       { to: '/fiado', label: 'Fiado (a receber)', icon: NotebookPen, permission: P.FINANCE_READ, keywords: 'crediario contas a receber inadimplencia devedor' },
       { to: '/contas-a-pagar', label: 'Contas a pagar', icon: HandCoins, permission: P.FINANCE_READ, keywords: 'despesa boleto vencimento aluguel' },
     ],

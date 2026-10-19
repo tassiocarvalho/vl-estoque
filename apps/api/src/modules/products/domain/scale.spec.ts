@@ -42,9 +42,11 @@ describe('etiqueta de balança', () => {
     // Até R$ 10/kg cada grama vale menos de 1 centavo: sempre existe um peso que bate exatamente.
     const exact = quantityForPrice(487, 9.99);
     expect(Math.round(999 * exact)).toBe(487);
-    // Produto caro (R$ 34,90/kg): cada grama soma ~3,5 centavos; fica o peso mais próximo.
-    const close = quantityForPrice(1587, 34.9);
-    expect(Math.abs(Math.round(3490 * close) - 1587)).toBeLessThanOrEqual(2);
+    // Produto caro (R$ 39,90/kg): cada grama soma ~4 centavos e nenhum peso dá R$ 15,87;
+    // fica o maior peso que não passa do preço da etiqueta (0,397 kg = R$ 15,84).
+    const close = quantityForPrice(1587, 39.9);
+    expect(close).toBe(0.397);
+    expect(Math.round(3990 * close)).toBeLessThanOrEqual(1587);
   });
 
   it('normaliza o código (sem zeros à esquerda)', () => {

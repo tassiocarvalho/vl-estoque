@@ -56,18 +56,20 @@ export function parseScaleLabel(code: string, settings: ScaleSettings | null | u
 
 /**
  * Quantidade (3 casas) que faz o total do item bater exatamente com o preço da etiqueta
- * (o caixa calcula preço × quantidade, arredondado em centavos). Se nenhuma bater, a mais próxima.
+ * (o caixa calcula preço × quantidade, arredondado em centavos). Se nenhuma bater (produto caro:
+ * cada grama vale mais de 1 centavo), a maior quantidade cujo total fica abaixo da etiqueta —
+ * o cliente nunca paga mais do que está impresso.
  */
 export function quantityForPrice(priceCents: number, unitPrice: number): number {
   const unitCents = Math.round(unitPrice * 100);
   if (unitCents <= 0) return 0;
   const base = Math.round((priceCents / unitCents) * 1000);
-  let best = base;
   for (let delta = 0; delta <= 20; delta++) {
     for (const candidate of [base - delta, base + delta]) {
       if (candidate > 0 && Math.round((unitCents * candidate) / 1000) === priceCents) return candidate / 1000;
     }
   }
-  if (best <= 0) best = 1;
-  return best / 1000;
+  let below = base + 20;
+  while (below > 1 && Math.round((unitCents * below) / 1000) > priceCents) below--;
+  return Math.max(below, 1) / 1000;
 }

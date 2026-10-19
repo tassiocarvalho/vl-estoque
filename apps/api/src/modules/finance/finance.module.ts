@@ -26,10 +26,12 @@ import {
   ExpenseCategoryDto,
   ListPayablesQueryDto,
   PayPayableDto,
+  PeriodQueryDto,
   UpdateExpenseCategoryDto,
   UpdatePayableDto,
 } from './finance.dto';
 import { PayablesService } from './payables.service';
+import { FinanceReportsService } from './reports.service';
 
 class ListCategoriesQueryDto {
   @IsOptional()
@@ -138,9 +140,28 @@ class PayablesController {
   }
 }
 
+@Controller('finance')
+class FinanceReportsController {
+  constructor(private readonly reports: FinanceReportsService) {}
+
+  /** Fluxo de caixa realizado e previsto (padrão: do início do mês aos próximos 30 dias). */
+  @Get('cash-flow')
+  @RequirePermissions(Permission.FINANCE_READ)
+  cashFlow(@Query() query: PeriodQueryDto) {
+    return this.reports.cashFlow(query);
+  }
+
+  /** Resultado do período (DRE gerencial; padrão: o mês atual). */
+  @Get('result')
+  @RequirePermissions(Permission.FINANCE_READ)
+  result(@Query() query: PeriodQueryDto) {
+    return this.reports.result(query);
+  }
+}
+
 @Module({
-  controllers: [ExpenseCategoriesController, PayablesController],
-  providers: [PayablesService],
+  controllers: [ExpenseCategoriesController, PayablesController, FinanceReportsController],
+  providers: [PayablesService, FinanceReportsService],
   exports: [PayablesService],
 })
 export class FinanceModule {}
