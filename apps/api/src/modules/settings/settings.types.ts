@@ -66,6 +66,17 @@ export interface CreditSettings {
   defaultLimit: number;
 }
 
+/** Etiqueta de balança (EAN-13 com peso ou preço embutido). */
+export interface ScaleSettings {
+  enabled: boolean;
+  /** Primeiro dígito das etiquetas (normalmente "2"). */
+  prefix: string;
+  /** Dígitos do código do produto na balança (4 a 6). */
+  codeLength: number;
+  /** PRICE: a etiqueta traz o preço total. WEIGHT: o peso em gramas. */
+  mode: 'PRICE' | 'WEIGHT';
+}
+
 /** Parâmetros do sistema que o administrador pode alterar sem reprogramar. */
 export interface SystemSettings {
   /** Dias que um produto excluído fica na lixeira antes de ser apagado definitivamente. */
@@ -80,6 +91,7 @@ export interface SystemSettings {
   printer: PrinterSettings;
   pos: PosSettings;
   credit: CreditSettings;
+  scale: ScaleSettings;
 }
 
 export const DEFAULT_SETTINGS: SystemSettings = {
@@ -124,7 +136,13 @@ export const DEFAULT_SETTINGS: SystemSettings = {
     blockOverdue: true,
     defaultLimit: 0,
   },
+  scale: {
+    enabled: false,
+    prefix: '2',
+    codeLength: 4,
+    mode: 'PRICE',
+  },
 };
 
 /** Grupos de configuração que são objetos (mesclados campo a campo nas alterações). */
-export const NESTED_SETTINGS = ['pinRequired', 'store', 'printer', 'pos', 'credit'] as const;
+export const NESTED_SETTINGS = ['pinRequired', 'store', 'printer', 'pos', 'credit', 'scale'] as const;

@@ -74,6 +74,13 @@ class PosSettingsDto {
   @IsOptional() @IsInt() @Min(0) @Max(3650) voucherValidityDays?: number;
 }
 
+class ScaleSettingsDto {
+  @IsOptional() @IsBoolean() enabled?: boolean;
+  @IsOptional() @Matches(/^\d$/, { message: 'Prefixo da balança: um dígito (normalmente 2)' }) prefix?: string;
+  @IsOptional() @IsInt() @Min(4) @Max(6) codeLength?: number;
+  @IsOptional() @IsIn(['PRICE', 'WEIGHT']) mode?: 'PRICE' | 'WEIGHT';
+}
+
 class CreditSettingsDto {
   @IsOptional() @IsInt() @Min(0) @Max(365) firstDueDays?: number;
   @IsOptional() @IsInt() @Min(1) @Max(365) intervalDays?: number;
@@ -122,4 +129,9 @@ export class UpdateSettingsDto {
   @ValidateNested()
   @Type(() => CreditSettingsDto)
   credit?: CreditSettingsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ScaleSettingsDto)
+  scale?: ScaleSettingsDto;
 }

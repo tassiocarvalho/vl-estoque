@@ -55,6 +55,14 @@ export class ProductsService {
     return toProductView(product);
   }
 
+  /** Produto pelo código da balança (etiqueta com peso ou preço embutido). */
+  async lookupScale(scaleCode: string): Promise<ProductView> {
+    const normalized = scaleCode.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    const product = await this.prisma.product.findFirst({ where: { deletedAt: null, scaleCode: normalized }, include: productInclude });
+    if (!product) throw notFound(`Produto com código de balança "${normalized}"`);
+    return toProductView(product);
+  }
+
   /** Busca exata por SKU ou código de barras — usada na bipagem. */
   async lookup(code: string): Promise<ProductView> {
     const product = await this.prisma.product.findFirst({
@@ -66,14 +74,24 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, actor: Actor): Promise<ProductView> {
-    const { initialStock = 0, ...input } = dto;
-    const data = { ...input, ...this.consumptionFor(input.replenishmentEnabled ?? true, input) };
+    const { initialStock: rawStock = 0, components, ...input } = dto;
+    const isKit = input.isKit ?? false;
+    // Kit não tem estoque próprio nem reposição: quem tem são os itens dele.
+    const initialStock = isKit ? 0 : rawStock;
+    if (isKit) await this.assertComponents(components, null);
+    await this.assertScaleCode(input.scaleCode);
+    const data = { ...input, ...(isKit && { replenishmentEnabled: false }), ...this.consumptionFor(isKit ? false : (input.replenishmentEnabled ?? true), input) };
     this.assertConsumption(data);
     await this.assertCategory(data.categoryId);
 
     const product = await this.prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { ...data, ...calculateIndicators(data), currentStock: initialStock },
+        data: {
+          ...data,
+          ...calculateIndicators(data),
+          currentStock: initialStock,
+          ...(isKit && components?.length && { kitComponents: { create: components.map((c) => ({ componentId: c.productId, quantity: c.quantity })) } }),
+        },
         include: productInclude,
       });
       if (initialStock > 0) {
@@ -100,8 +118,15 @@ export class ProductsService {
     const current = await this.prisma.product.findFirst({ where: { id, deletedAt: null } });
     if (!current) throw notFound('Produto');
     if (dto.categoryId) await this.assertCategory(dto.categoryId);
+    const { components, ...changes } = dto;
+    const isKit = dto.isKit ?? current.isKit;
+    if (isKit && !current.isKit && toNumber(current.currentStock) !== 0) {
+      throw badRequest('Zere o estoque do produto antes de transformá-lo em kit (kit não tem estoque próprio)');
+    }
+    if (isKit && (components !== undefined || !current.isKit)) await this.assertComponents(components, id);
+    if (dto.scaleCode !== undefined) await this.assertScaleCode(dto.scaleCode, id);
 
-    const enabled = dto.replenishmentEnabled ?? current.replenishmentEnabled;
+    const enabled = isKit ? false : (dto.replenishmentEnabled ?? current.replenishmentEnabled);
     const profile: ConsumptionProfile = this.consumptionFor(enabled, {
       avgDailyConsumption: dto.avgDailyConsumption ?? toNumber(current.avgDailyConsumption),
       maxDailyConsumption: dto.maxDailyConsumption ?? toNumber(current.maxDailyConsumption),
@@ -109,10 +134,18 @@ export class ProductsService {
     });
     this.assertConsumption(profile);
 
-    const product = await this.prisma.product.update({
-      where: { id },
-      data: { ...dto, ...profile, ...calculateIndicators(profile) },
-      include: productInclude,
+    const product = await this.prisma.$transaction(async (tx) => {
+      if (components !== undefined || (!isKit && current.isKit)) {
+        await tx.kitComponent.deleteMany({ where: { kitId: id } });
+        if (isKit && components?.length) {
+          await tx.kitComponent.createMany({ data: components.map((c) => ({ kitId: id, componentId: c.productId, quantity: c.quantity })) });
+        }
+      }
+      return tx.product.update({
+        where: { id },
+        data: { ...changes, replenishmentEnabled: enabled, ...profile, ...calculateIndicators(profile) },
+        include: productInclude,
+      });
     });
     await this.log(actor, 'product.update', id, toJson(dto));
     return toProductView(product);
@@ -130,7 +163,7 @@ export class ProductsService {
     const { fields } = this.prisma.product;
     switch (status) {
       case 'OUT_OF_STOCK':
-        return { currentStock: { lte: 0 } };
+        return { currentStock: { lte: 0 }, isKit: false };
       case 'CRITICAL':
         return { AND: [{ currentStock: { gt: 0 } }, { currentStock: { lte: fields.safetyStock } }] };
       case 'REORDER':
@@ -138,7 +171,7 @@ export class ProductsService {
       case 'OK':
         return { currentStock: { gt: fields.reorderPoint } };
       case 'ATTENTION':
-        return { currentStock: { lte: fields.reorderPoint } };
+        return { currentStock: { lte: fields.reorderPoint }, isKit: false };
       default:
         return {};
     }
@@ -152,6 +185,24 @@ export class ProductsService {
       maxDailyConsumption: values.maxDailyConsumption ?? 0,
       leadTimeDays: values.leadTimeDays ?? 0,
     };
+  }
+
+  /** Itens do kit: existem, não são kits e não repetem; um kit precisa de ao menos 1 item. */
+  private async assertComponents(components: { productId: string; quantity: number }[] | undefined, kitId: string | null) {
+    if (!components?.length) throw badRequest('Informe os itens do kit');
+    const ids = components.map((c) => c.productId);
+    if (new Set(ids).size !== ids.length) throw badRequest('Item repetido no kit');
+    if (kitId && ids.includes(kitId)) throw badRequest('Um kit não pode conter ele mesmo');
+    const found = await this.prisma.product.findMany({ where: { id: { in: ids }, deletedAt: null }, select: { id: true, name: true, isKit: true } });
+    if (found.length !== ids.length) throw notFound('Item do kit');
+    const nested = found.find((p) => p.isKit);
+    if (nested) throw badRequest(`"${nested.name}" já é um kit: monte o kit só com produtos simples`);
+  }
+
+  private async assertScaleCode(scaleCode: string | null | undefined, exceptId?: string) {
+    if (!scaleCode) return;
+    const existing = await this.prisma.product.findFirst({ where: { scaleCode, ...(exceptId && { id: { not: exceptId } }) } });
+    if (existing) throw badRequest(`O código de balança ${scaleCode} já é do produto "${existing.name}"`);
   }
 
   private assertConsumption({ avgDailyConsumption, maxDailyConsumption }: ConsumptionProfile) {

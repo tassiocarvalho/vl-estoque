@@ -22,8 +22,8 @@ export class ProductsController {
 
   @Get('lookup')
   @RequirePermissions(Permission.PRODUCT_READ)
-  lookup(@Query() { code }: LookupQueryDto) {
-    return this.products.lookup(code);
+  lookup(@Query() { code, scale }: LookupQueryDto) {
+    return scale ? this.products.lookupScale(code) : this.products.lookup(code);
   }
 
   /** Catálogo no layout da planilha de importação. Declarado antes de ":id". */

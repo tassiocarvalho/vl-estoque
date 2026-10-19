@@ -5,7 +5,8 @@ import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatQuantity, parseQuantity } from '@/lib/format';
 import type { CatalogItem } from '../../offline/offline-store';
-import { findByCode, searchProducts } from '../../stock/ProductScanner';
+import { parseScaleLabel, quantityForPrice, type ScaleSettings } from '@/lib/scale';
+import { findByCode, findByScaleCode, searchProducts } from '../../stock/ProductScanner';
 
 /** "3*7891234567890" ou "0,5x PAO-FRANCES": quantidade antes do código. */
 const MULTIPLIER = /^(\d+(?:[.,]\d{1,3})?)\s*[*xX]\s*(.+)$/;
@@ -16,13 +17,15 @@ interface PosSearchProps {
   /** Setas sem sugestões abertas movem a seleção dos itens do cupom. */
   onNavigate: (delta: number) => void;
   disabled?: boolean;
+  /** Etiqueta de balança (peso ou preço embutido no código). */
+  scale?: ScaleSettings | null;
 }
 
 /**
  * Campo principal do caixa: o leitor de código de barras "digita" o código e envia Enter.
  * Também busca por nome ou SKU, e aceita multiplicador ("3*" antes do código).
  */
-export const PosSearch = forwardRef<HTMLInputElement, PosSearchProps>(({ onAdd, onNotFound, onNavigate, disabled }, ref) => {
+export const PosSearch = forwardRef<HTMLInputElement, PosSearchProps>(({ onAdd, onNotFound, onNavigate, disabled, scale }, ref) => {
   const [term, setTerm] = useState('');
   const [resolving, setResolving] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -56,6 +59,17 @@ export const PosSearch = forwardRef<HTMLInputElement, PosSearchProps>(({ onAdd, 
     }
     setResolving(true);
     try {
+      // Etiqueta da balança: o código traz o produto (PLU) e o peso ou o preço total.
+      const label = parseScaleLabel(query, scale);
+      const weighed = label ? await findByScaleCode(label.scaleCode) : null;
+      if (label && weighed) {
+        const qty = label.weightKg ?? quantityForPrice(label.priceCents!, weighed.salePrice);
+        setTerm('');
+        setHighlight(0);
+        if (qty > 0) onAdd(weighed, qty);
+        else onNotFound(`"${weighed.name}" está sem preço de venda`);
+        return;
+      }
       const product = await findByCode(query);
       if (product) choose(product);
       else {

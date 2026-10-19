@@ -1,13 +1,36 @@
-import { Category, Prisma, Product } from '@prisma/client';
+import { Category, KitComponent, Prisma, Product, Unit } from '@prisma/client';
 import { toNumber } from '../../common/decimal';
 import { classifyStock } from './domain/replenishment';
 
 /** Inclusão padrão para montar a visão do produto (categoria + categoria pai). */
 export const productInclude = {
   category: { include: { parent: true } },
+  kitComponents: {
+    include: { component: { select: { id: true, name: true, sku: true, unit: true, currentStock: true, costPrice: true, deletedAt: true } } },
+  },
 } satisfies Prisma.ProductInclude;
 
-type ProductWithCategory = Product & { category: Category & { parent: Category | null } };
+type ComponentRow = KitComponent & {
+  component: { id: string; name: string; sku: string; unit: Unit; currentStock: Prisma.Decimal; costPrice: Prisma.Decimal; deletedAt: Date | null };
+};
+
+type ProductWithCategory = Product & { category: Category & { parent: Category | null }; kitComponents?: ComponentRow[] };
+
+/** Kit: quantos dá para montar com o estoque dos itens, e o custo somado dos itens. */
+export function kitSummary(components: ComponentRow[]) {
+  const items = components.map((c) => ({
+    productId: c.componentId,
+    name: c.component.name,
+    sku: c.component.sku,
+    unit: c.component.unit,
+    quantity: toNumber(c.quantity),
+    stock: toNumber(c.component.currentStock),
+    costPrice: toNumber(c.component.costPrice),
+  }));
+  const available = items.length ? Math.max(0, Math.floor(Math.min(...items.map((i) => (i.quantity > 0 ? i.stock / i.quantity : 0))))) : 0;
+  const cost = Math.round(items.reduce((sum, i) => sum + i.costPrice * i.quantity, 0) * 10_000) / 10_000;
+  return { items, available, cost };
+}
 
 export function toProductView(product: ProductWithCategory) {
   const indicators = {
@@ -15,7 +38,8 @@ export function toProductView(product: ProductWithCategory) {
     safetyStock: toNumber(product.safetyStock),
     reorderPoint: toNumber(product.reorderPoint),
   };
-  const currentStock = toNumber(product.currentStock);
+  const kit = product.isKit ? kitSummary(product.kitComponents ?? []) : null;
+  const currentStock = kit ? kit.available : toNumber(product.currentStock);
   const { category } = product;
 
   return {
@@ -29,12 +53,15 @@ export function toProductView(product: ProductWithCategory) {
       name: category.name,
       path: category.parent ? `${category.parent.name} › ${category.name}` : category.name,
     },
-    replenishmentEnabled: product.replenishmentEnabled,
+    replenishmentEnabled: kit ? false : product.replenishmentEnabled,
+    isKit: product.isKit,
+    scaleCode: product.scaleCode,
+    components: kit?.items ?? [],
     avgDailyConsumption: toNumber(product.avgDailyConsumption),
     maxDailyConsumption: toNumber(product.maxDailyConsumption),
     leadTimeDays: product.leadTimeDays,
     currentStock,
-    costPrice: toNumber(product.costPrice),
+    costPrice: kit ? kit.cost : toNumber(product.costPrice),
     lastCost: toNumber(product.lastCost),
     salePrice: toNumber(product.salePrice),
     ...indicators,

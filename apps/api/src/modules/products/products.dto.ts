@@ -1,7 +1,9 @@
 import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { Unit } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -15,6 +17,7 @@ import {
   Max,
   Min,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination';
 
@@ -27,9 +30,19 @@ const emptyToNull = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() || null : value;
 
 const QUANTITY = { maxDecimalPlaces: 3 };
+
+export class KitComponentDto {
+  @IsUUID('all', { message: 'Item do kit inválido' })
+  productId: string;
+
+  @IsNumber({ maxDecimalPlaces: 3 }, { message: 'Quantidade do item do kit inválida' })
+  @Min(0.001)
+  @Max(10_000)
+  quantity: number;
+}
 /** Valida o campo se a reposição estiver ligada (ou não informada) ou se o valor vier preenchido. */
-const replenishmentOn = (dto: { replenishmentEnabled?: boolean }, value: unknown) =>
-  dto.replenishmentEnabled !== false || value !== undefined;
+const replenishmentOn = (dto: { replenishmentEnabled?: boolean; isKit?: boolean }, value: unknown) =>
+  value !== undefined || (!dto.isKit && dto.replenishmentEnabled !== false);
 const MONEY = { maxDecimalPlaces: 2 };
 
 export class CreateProductDto {
@@ -91,6 +104,25 @@ export class CreateProductDto {
   @Max(1_000_000)
   salePrice?: number;
 
+  /** Kit / combo: sem estoque próprio; a venda baixa os itens de "components". */
+  @IsOptional()
+  @IsBoolean()
+  isKit?: boolean;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => KitComponentDto)
+  @IsArray()
+  @ArrayMaxSize(30)
+  components?: KitComponentDto[];
+
+  /** Código do produto na balança (PLU) — etiqueta com peso ou preço embutido. */
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\D/g, '').replace(/^0+(?=\d)/, '') || null : value))
+  @ValidateIf((_, v) => v !== null)
+  @Matches(/^\d{1,6}$/, { message: 'Código da balança: de 1 a 6 números' })
+  scaleCode?: string | null;
+
   /** Saldo inicial ao cadastrar (gera uma movimentação de "estoque inicial"). */
   @IsOptional()
   @IsNumber(QUANTITY)
@@ -125,5 +157,11 @@ export class LookupQueryDto {
   @IsString()
   @Length(1, 40)
   code: string;
+
+  /** "true": o código é o da balança (PLU), lido da etiqueta. */
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  scale?: boolean;
 }
 

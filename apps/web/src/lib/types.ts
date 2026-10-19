@@ -43,6 +43,11 @@ export interface Product {
   category: { id: string; name: string; path: string };
   /** Desligado: sem consumo/prazo, ponto de pedido nem solicitação automática. */
   replenishmentEnabled: boolean;
+  /** Kit / combo: o saldo é quantos dá para montar com o estoque dos itens. */
+  isKit: boolean;
+  /** Código do produto na balança (etiqueta com peso ou preço embutido). */
+  scaleCode: string | null;
+  components: { productId: string; name: string; sku: string; unit: Unit; quantity: number; stock: number; costPrice: number }[];
   avgDailyConsumption: number;
   maxDailyConsumption: number;
   leadTimeDays: number;
@@ -170,6 +175,13 @@ export interface PosSettings {
   voucherValidityDays: number;
 }
 
+export interface ScaleSettings {
+  enabled: boolean;
+  prefix: string;
+  codeLength: number;
+  mode: 'PRICE' | 'WEIGHT';
+}
+
 export interface CreditSettings {
   firstDueDays: number;
   intervalDays: number;
@@ -209,6 +221,7 @@ export interface SystemSettings {
   printer: PrinterSettings;
   pos: PosSettings;
   credit: CreditSettings;
+  scale: ScaleSettings;
 }
 
 export interface Dashboard {

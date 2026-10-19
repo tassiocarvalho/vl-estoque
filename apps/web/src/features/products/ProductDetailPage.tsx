@@ -74,7 +74,8 @@ export function ProductDetailPage() {
           </div>
           <p className="mt-1 text-sm text-slate-500">
             SKU {product.sku}
-            {product.barcode && ` · EAN ${product.barcode}`} · {product.category.path}
+            {product.barcode && ` · EAN ${product.barcode}`}
+            {product.scaleCode && ` · balança ${product.scaleCode}`} · {product.category.path}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -97,8 +98,27 @@ export function ProductDetailPage() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Indicator label="Saldo atual" value={qty(product.currentStock)} hint="Quantidade em estoque" highlight />
-        {product.replenishmentEnabled ? (
+        <Indicator
+          label={product.isKit ? 'Kits disponíveis' : 'Saldo atual'}
+          value={qty(product.currentStock)}
+          hint={product.isKit ? 'Quantos dá para montar com o estoque dos itens' : 'Quantidade em estoque'}
+          highlight
+        />
+        {product.isKit ? (
+          <Card className="col-span-1 p-4 lg:col-span-3">
+            <p className="mb-2 text-xs font-medium text-slate-500">Itens do kit (a venda baixa o estoque deles)</p>
+            <ul className="grid gap-1 text-sm sm:grid-cols-2">
+              {product.components.map((c) => (
+                <li key={c.productId} className="flex justify-between gap-2">
+                  <Link to={`/produtos/${c.productId}`} className="text-slate-800 hover:underline">
+                    {formatNumber(c.quantity)} × {c.name}
+                  </Link>
+                  <span className="text-xs text-slate-500 tabular-nums">estoque {formatNumber(c.stock)}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : product.replenishmentEnabled ? (
           <>
             <Indicator label="Ponto de pedido (PP)" value={qty(product.reorderPoint)} hint="Ao atingir, gera solicitação" />
             <Indicator label="Estoque de segurança (ES)" value={qty(product.safetyStock)} hint="Proteção contra picos" />

@@ -81,7 +81,8 @@ export const salesOutbox = {
 export type CatalogItem = Pick<
   Product,
   'id' | 'name' | 'sku' | 'barcode' | 'unit' | 'currentStock' | 'status' | 'salePrice'
->;
+> &
+  Partial<Pick<Product, 'scaleCode' | 'isKit'>>;
 
 const CATALOG_KEY = 'products';
 
@@ -91,6 +92,9 @@ export const catalog = {
   async findByCode(code: string) {
     const normalized = code.trim().toUpperCase();
     return (await this.all()).find((p) => p.barcode === code.trim() || p.sku === normalized);
+  },
+  async findByScaleCode(scaleCode: string) {
+    return (await this.all()).find((p) => p.scaleCode === scaleCode);
   },
   async search(term: string, limit = 8) {
     const query = term.trim().toLowerCase();

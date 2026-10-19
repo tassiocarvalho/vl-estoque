@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { MovementSource, MovementType, Prisma, PurchaseRequestStatus } from '@prisma/client';
 import { toNumber } from '../../common/decimal';
-import { AppException, ErrorCode, notFound } from '../../common/errors';
+import { AppException, badRequest, ErrorCode, notFound } from '../../common/errors';
 import { Paginated, toSkipTake } from '../../common/pagination';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { needsReorder, suggestOrderQuantity } from '../products/domain/replenishment';
@@ -77,6 +77,8 @@ export class StockService {
     }
 
     const entry = isEntry(command.type);
+    const target = await tx.product.findUnique({ where: { id: command.productId }, select: { isKit: true, name: true } });
+    if (target?.isKit) throw badRequest(`"${target.name}" é um kit: o estoque é o dos itens que o compõem`);
     await this.applyBalanceChange(tx, command, entry, options.allowNegative, options.allowTrashed ?? false);
 
     const product = await tx.product.findUniqueOrThrow({ where: { id: command.productId }, include: productInclude });

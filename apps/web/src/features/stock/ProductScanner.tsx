@@ -29,6 +29,17 @@ export async function findByCode(code: string): Promise<CatalogItem | null> {
   }
 }
 
+/** Produto pelo código da balança (lido da etiqueta). */
+export async function findByScaleCode(scaleCode: string): Promise<CatalogItem | null> {
+  try {
+    return await http.get<Product>('/products/lookup', { code: scaleCode, scale: true });
+  } catch (error) {
+    if (isNetworkError(error)) return (await catalog.findByScaleCode(scaleCode)) ?? null;
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
 interface ProductScannerProps {
   onSelect: (product: CatalogItem) => void;
 }

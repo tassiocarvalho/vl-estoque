@@ -21,6 +21,14 @@ import { SupervisorAuthorizationService } from './supervisor-authorization.servi
 
 const money = (value: number) => value.toFixed(2).replace('.', ',');
 
+/** Itens de estoque de um item vendido: o próprio produto ou, no kit, os itens dele (composição da venda). */
+export function expandKit(item: { productId: string; quantity: Prisma.Decimal | number; kitComponents: Prisma.JsonValue | null }, quantity?: number) {
+  const sold = quantity ?? toNumber(item.quantity);
+  const components = Array.isArray(item.kitComponents) ? (item.kitComponents as unknown as { productId: string; quantity: number }[]) : null;
+  if (!components?.length) return [{ productId: item.productId, quantity: sold, kit: false }];
+  return components.map((c) => ({ productId: c.productId, quantity: Math.round(sold * c.quantity * 1000) / 1000, kit: true }));
+}
+
 @Injectable()
 export class SalesService {
   constructor(
@@ -48,7 +56,10 @@ export class SalesService {
     }
 
     const productIds = [...new Set(dto.items.map((item) => item.productId))];
-    const products = await this.prisma.product.findMany({ where: { id: { in: productIds } } });
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { kitComponents: { include: { component: { select: { costPrice: true } } } } },
+    });
     const byId = new Map(products.map((p) => [p.id, p]));
     for (const item of dto.items) if (!byId.has(item.productId)) throw notFound('Produto da venda');
 
@@ -111,6 +122,7 @@ export class SalesService {
               create: dto.items.map((item, index) => {
                 const product = byId.get(item.productId)!;
                 const calculated = totals.items[index];
+                const kit = product.isKit ? product.kitComponents : null;
                 return {
                   position: index + 1,
                   productId: product.id,
@@ -119,7 +131,11 @@ export class SalesService {
                   unit: product.unit,
                   quantity: item.quantity,
                   unitPrice: item.unitPrice,
-                  unitCost: product.costPrice,
+                  // Kit: custo = soma dos custos dos itens.
+                  unitCost: kit
+                    ? Math.round(kit.reduce((sum, c) => sum + toNumber(c.component.costPrice) * toNumber(c.quantity), 0) * 10_000) / 10_000
+                    : product.costPrice,
+                  kitComponents: kit ? toJson(kit.map((c) => ({ productId: c.componentId, quantity: toNumber(c.quantity) }))) : undefined,
                   discountType: item.discount?.value ? item.discount.type : null,
                   discountValue: item.discount?.value ? item.discount.value : null,
                   discount: fromCents(calculated.discountCents),
@@ -158,20 +174,22 @@ export class SalesService {
         // Venda offline já aconteceu no balcão: nunca é barrada por saldo do sistema.
         const allowNegative = offline || !settings.pos.blockSaleWithoutStock;
         for (const [index, item] of dto.items.entries()) {
-          await this.stock.registerInTransaction(
-            tx,
-            {
-              id: deterministicUuid(`sale:${dto.id}:${index}`),
-              productId: item.productId,
-              type: MovementType.OUT_SALE,
-              quantity: item.quantity,
-              note: `Venda nº ${created.number}`,
-              source: MovementSource.PDV,
-              userId: user.id,
-              occurredAt: dto.occurredAt,
-            },
-            { allowNegative, coverageDays: settings.orderCoverageDays, allowTrashed: offline },
-          );
+          const product = byId.get(item.productId)!;
+          const lines = product.isKit
+            ? product.kitComponents.map((c, k) => ({
+                id: deterministicUuid(`sale:${dto.id}:${index}:${k}`),
+                productId: c.componentId,
+                quantity: Math.round(item.quantity * toNumber(c.quantity) * 1000) / 1000,
+                note: `Venda nº ${created.number} (kit ${product.name})`,
+              }))
+            : [{ id: deterministicUuid(`sale:${dto.id}:${index}`), productId: item.productId, quantity: item.quantity, note: `Venda nº ${created.number}` }];
+          for (const line of lines) {
+            await this.stock.registerInTransaction(
+              tx,
+              { ...line, type: MovementType.OUT_SALE, source: MovementSource.PDV, userId: user.id, occurredAt: dto.occurredAt },
+              { allowNegative, coverageDays: settings.orderCoverageDays, allowTrashed: offline },
+            );
+          }
         }
         return tx.sale.findUniqueOrThrow({ where: { id: created.id }, include: saleInclude });
       });
@@ -234,19 +252,21 @@ export class SalesService {
       }
 
       for (const item of sale.items) {
-        await this.stock.registerInTransaction(
-          tx,
-          {
-            id: deterministicUuid(`sale-cancel:${id}:${item.position}`),
-            productId: item.productId,
-            type: MovementType.IN_SALE_CANCEL,
-            quantity: toNumber(item.quantity),
-            note: `Cancelamento da venda nº ${sale.number}`,
-            source: MovementSource.PDV,
-            userId: user.id,
-          },
-          { allowNegative: true, coverageDays: settings.orderCoverageDays, allowTrashed: true },
-        );
+        for (const [k, line] of expandKit(item).entries()) {
+          await this.stock.registerInTransaction(
+            tx,
+            {
+              id: deterministicUuid(line.kit ? `sale-cancel:${id}:${item.position}:${k}` : `sale-cancel:${id}:${item.position}`),
+              productId: line.productId,
+              type: MovementType.IN_SALE_CANCEL,
+              quantity: line.quantity,
+              note: `Cancelamento da venda nº ${sale.number}${line.kit ? ` (kit ${item.productName})` : ''}`,
+              source: MovementSource.PDV,
+              userId: user.id,
+            },
+            { allowNegative: true, coverageDays: settings.orderCoverageDays, allowTrashed: true },
+          );
+        }
       }
       return tx.sale.findUniqueOrThrow({ where: { id }, include: saleInclude });
     });

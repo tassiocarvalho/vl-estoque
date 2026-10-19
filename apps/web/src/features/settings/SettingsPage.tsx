@@ -285,6 +285,44 @@ export function SettingsPage() {
           </Card>
 
           <Card>
+            <CardHeader title="Balança (etiqueta com peso ou preço)" description="Para a balança que imprime etiqueta com código de barras começando com 2" />
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Switch
+                  label="Ler etiquetas da balança no caixa"
+                  description="Cadastre em cada produto pesado o “Código na balança (PLU)”, igual ao programado na balança."
+                  checked={form.scale.enabled}
+                  onChange={(checked) => setForm({ ...form, scale: { ...form.scale, enabled: checked } })}
+                />
+              </div>
+              <Field label="A etiqueta traz">
+                {(id) => (
+                  <Select id={id} value={form.scale.mode} onChange={(e) => setForm({ ...form, scale: { ...form.scale, mode: e.target.value as 'PRICE' | 'WEIGHT' } })}>
+                    <option value="PRICE">O preço total (mais comum)</option>
+                    <option value="WEIGHT">O peso (em gramas)</option>
+                  </Select>
+                )}
+              </Field>
+              <Field label="Dígitos do código do produto" hint="Ex.: 2 CCCC 0PPPPP D = 4 dígitos">
+                {(id) => (
+                  <Select id={id} value={form.scale.codeLength} onChange={(e) => setForm({ ...form, scale: { ...form.scale, codeLength: Number(e.target.value) } })}>
+                    {[4, 5, 6].map((n) => (
+                      <option key={n} value={n}>
+                        {n} dígitos
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <Field label="Primeiro dígito da etiqueta" hint="Quase sempre 2">
+                {(id) => (
+                  <Input id={id} value={form.scale.prefix} maxLength={1} inputMode="numeric" onChange={(e) => setForm({ ...form, scale: { ...form.scale, prefix: e.target.value.replace(/\D/g, '').slice(0, 1) || '2' } })} className="w-20" />
+                )}
+              </Field>
+            </div>
+          </Card>
+
+          <Card>
             <CardHeader title="Trocas, vales e fiado" description="Regras da devolução, do vale-troca e do crediário" />
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <Field label="Prazo para troca (dias)" hint="Depois disso, só com o gerente. 0 = sem prazo.">

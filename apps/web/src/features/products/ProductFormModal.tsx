@@ -1,18 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Calculator } from 'lucide-react';
-import { useEffect } from 'react';
+import { Calculator, PackagePlus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Button } from '@/components/ui/Button';
+import { Button, IconButton } from '@/components/ui/Button';
 import { Field, Input, Select, Switch } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { errorMessage, isCanceled } from '@/lib/api';
-import { formatDecimal, formatMoney, formatNumber, parseMoney } from '@/lib/format';
+import { formatDecimal, formatInput, formatMoney, formatNumber, parseDecimal, parseMoney } from '@/lib/format';
 import { UNIT_LABELS, UNIT_SHORT } from '@/lib/labels';
 import type { Product, Unit } from '@/lib/types';
 import { previewIndicators, useSaveProduct } from './api';
 import { CategorySelect } from './CategorySelect';
+import { ProductPickerModal } from './ProductPickerModal';
 
 /** Campo numérico: vazio é tratado como "não informado" (e não como zero). */
 const emptyToUndefined = (value: unknown) => (value === '' || value === null ? undefined : value);
@@ -52,6 +53,7 @@ const schema = z
     initialStock: z.preprocess(emptyToUndefined, z.coerce.number().min(0, 'Não pode ser negativo').optional()),
     costPrice: money,
     salePrice: money,
+    scaleCode: z.string().trim().regex(/^\d{0,6}$/, 'Código da balança: até 6 números'),
   })
   // Consumo e prazo só são obrigatórios com "Controlar consumo e reposição" ligado.
   .superRefine((data, ctx) => {
@@ -85,7 +87,17 @@ const EMPTY: FormInput = {
   initialStock: '' as unknown as number,
   costPrice: '' as unknown as number,
   salePrice: '' as unknown as number,
+  scaleCode: '',
 };
+
+interface ComponentRow {
+  productId: string;
+  name: string;
+  sku: string;
+  unit: Unit;
+  costPrice: number;
+  quantity: string;
+}
 
 interface ProductFormModalProps {
   open: boolean;
@@ -102,6 +114,10 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
     defaultValues: EMPTY,
   });
   const { errors } = formState;
+  const [isKit, setIsKit] = useState(false);
+  const [components, setComponents] = useState<ComponentRow[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [kitError, setKitError] = useState<string>();
 
   useEffect(() => {
     if (!open) return;
@@ -119,9 +135,15 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
             leadTimeDays: product.leadTimeDays,
             costPrice: product.costPrice ? (formatDecimal(product.costPrice) as unknown as number) : ('' as unknown as number),
             salePrice: product.salePrice ? (formatDecimal(product.salePrice) as unknown as number) : ('' as unknown as number),
+            scaleCode: product.scaleCode ?? '',
           }
         : EMPTY,
     );
+    setIsKit(product?.isKit ?? false);
+    setComponents(
+      (product?.components ?? []).map((c) => ({ productId: c.productId, name: c.name, sku: c.sku, unit: c.unit, costPrice: c.costPrice, quantity: formatInput(c.quantity, 3) })),
+    );
+    setKitError(undefined);
   }, [open, product, reset]);
 
   const [avg, max, lead, unit, cost, price, replenishment] = watch([
@@ -138,13 +160,31 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
   const margin = costValue > 0 && priceValue > 0 ? ((priceValue - costValue) / priceValue) * 100 : null;
   const preview = previewIndicators(Number(avg) || 0, Number(max) || 0, Number(lead) || 0);
 
+  const kitCost = components.reduce((sum, c) => sum + c.costPrice * (parseDecimal(c.quantity, 3) || 0), 0);
+
   const onSubmit = handleSubmit(async (values) => {
+    if (isKit) {
+      if (!components.length) return setKitError('Adicione os itens que compõem o kit');
+      if (components.some((c) => !(parseDecimal(c.quantity, 3) > 0))) return setKitError('Informe a quantidade de cada item do kit');
+    }
+    const kit = isKit
+      ? {
+          isKit: true,
+          components: components.map((c) => ({ productId: c.productId, quantity: parseDecimal(c.quantity, 3) })),
+          replenishmentEnabled: false,
+          avgDailyConsumption: undefined,
+          maxDailyConsumption: undefined,
+          leadTimeDays: undefined,
+          initialStock: undefined,
+          costPrice: undefined,
+        }
+      : { isKit: false };
     const consumption = values.replenishmentEnabled
       ? {}
       : { avgDailyConsumption: undefined, maxDailyConsumption: undefined, leadTimeDays: undefined };
     // O custo médio guarda 4 casas: só é enviado se foi alterado à mão (senão a edição o arredondaria).
     const keepCost = editing && !formState.dirtyFields.costPrice ? { costPrice: undefined } : {};
-    const data = { ...values, ...consumption, ...keepCost, ...(editing && { initialStock: undefined }) };
+    const data = { ...values, scaleCode: values.scaleCode || null, ...consumption, ...keepCost, ...(editing && { initialStock: undefined }), ...kit };
     try {
       const saved = await save.mutateAsync({ id: product?.id, data });
       toast.success(editing ? 'Produto atualizado' : 'Produto cadastrado');
@@ -199,16 +239,77 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
               </Select>
             )}
           </Field>
+          <Field label="Código na balança (PLU)" error={errors.scaleCode?.message} hint="Só para produtos pesados na balança que imprime etiqueta">
+            {(id) => <Input id={id} inputMode="numeric" placeholder="Ex.: 42" aria-invalid={!!errors.scaleCode} {...register('scaleCode')} />}
+          </Field>
+          <div className="flex items-end">
+            <Switch
+              label="Kit / combo"
+              description="Sem estoque próprio: a venda baixa os itens do kit."
+              checked={isKit}
+              onChange={(value) => {
+                setIsKit(value);
+                setKitError(undefined);
+              }}
+            />
+          </div>
         </fieldset>
+
+        {isKit && (
+          <fieldset className="rounded-xl border border-brand-200 bg-brand-50/40 p-4">
+            <legend className="px-1 text-xs font-semibold tracking-wide text-brand-800 uppercase">Itens do kit</legend>
+            {components.length === 0 ? (
+              <p className="mb-3 text-sm text-slate-600">Ex.: “Cesta café da manhã” = 1 café + 1 pão de forma + 1 leite.</p>
+            ) : (
+              <ul className="mb-3 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+                {components.map((c) => (
+                  <li key={c.productId} className="flex items-center gap-3 px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-slate-900">{c.name}</span>
+                      <span className="block text-xs text-slate-500">
+                        {c.sku} · custo {formatMoney(c.costPrice)}
+                      </span>
+                    </span>
+                    <Input
+                      value={c.quantity}
+                      inputMode="decimal"
+                      onChange={(e) => setComponents(components.map((x) => (x.productId === c.productId ? { ...x, quantity: e.target.value } : x)))}
+                      className="h-8 w-20 text-right"
+                      aria-label={`Quantidade de ${c.name} no kit`}
+                    />
+                    <span className="w-8 text-xs text-slate-500">{UNIT_SHORT[c.unit]}</span>
+                    <IconButton label="Tirar do kit" onClick={() => setComponents(components.filter((x) => x.productId !== c.productId))}>
+                      <Trash2 className="size-4" />
+                    </IconButton>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Button size="sm" variant="outline" icon={<PackagePlus className="size-4" />} onClick={() => setPicking(true)}>
+                Adicionar item
+              </Button>
+              {components.length > 0 && <span className="text-sm text-slate-600">Custo do kit: {formatMoney(kitCost)}</span>}
+            </div>
+            {kitError && <p className="mt-2 text-xs font-medium text-red-600">{kitError}</p>}
+          </fieldset>
+        )}
 
         <fieldset className="grid gap-4 sm:grid-cols-3">
           <legend className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Preços</legend>
           <Field label="Preço de venda (R$)" error={errors.salePrice?.message} hint="Cobrado no caixa. Em branco = não vendido no caixa.">
             {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.salePrice} {...register('salePrice')} />}
           </Field>
-          <Field label="Custo médio (R$)" error={errors.costPrice?.message} hint="Atualizado sozinho pelas notas de entrada; base da margem">
-            {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.costPrice} {...register('costPrice')} />}
-          </Field>
+          {isKit ? (
+            <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              <span className="text-xs text-slate-500">Custo (soma dos itens)</span>
+              <span className="font-semibold text-slate-900">{formatMoney(kitCost)}</span>
+            </div>
+          ) : (
+            <Field label="Custo médio (R$)" error={errors.costPrice?.message} hint="Atualizado sozinho pelas notas de entrada; base da margem">
+              {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" aria-invalid={!!errors.costPrice} {...register('costPrice')} />}
+            </Field>
+          )}
           <div className="flex flex-col justify-center rounded-lg bg-slate-50 px-3 py-2 text-sm">
             <span className="text-xs text-slate-500">Margem sobre a venda</span>
             <span className="font-semibold text-slate-900">
@@ -220,7 +321,7 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
           </div>
         </fieldset>
 
-        {!editing && (
+        {!editing && !isKit && (
           <fieldset className="grid gap-4 sm:grid-cols-3">
             <legend className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Estoque</legend>
             <Field label="Estoque inicial" error={errors.initialStock?.message} hint="Quantidade que já existe hoje">
@@ -229,7 +330,7 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
           </fieldset>
         )}
 
-        <div className="rounded-xl border border-slate-200 p-4">
+        <div className={isKit ? 'hidden' : 'rounded-xl border border-slate-200 p-4'}>
           <Switch
             label="Controlar consumo e reposição"
             description={
@@ -282,6 +383,19 @@ export function ProductFormModal({ open, product, onClose, onSaved }: ProductFor
           )}
         </div>
       </form>
+      <ProductPickerModal
+        open={picking}
+        title="Item do kit"
+        onClose={() => setPicking(false)}
+        onSelect={(picked) => {
+          setPicking(false);
+          if (picked.isKit) return void toast.error('Um kit não pode conter outro kit');
+          if (picked.id === product?.id) return;
+          if (components.some((c) => c.productId === picked.id)) return;
+          setComponents([...components, { productId: picked.id, name: picked.name, sku: picked.sku, unit: picked.unit, costPrice: picked.costPrice, quantity: '1' }]);
+          setKitError(undefined);
+        }}
+      />
     </Modal>
   );
 }

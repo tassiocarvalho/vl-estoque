@@ -12,6 +12,7 @@ import { dateOnly, localDay, todayIso } from '../finance/dates';
 import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
 import { CashService } from './cash.service';
+import { expandKit } from './sales.service';
 import { netItemValues, PostSaleError, refundForItem, returnableQuantity } from './domain/post-sale';
 import { fromCents, toCents } from './domain/sale-calculator';
 import { CreateReturnDto, ListReturnsQueryDto } from './post-sale.dto';
@@ -231,34 +232,37 @@ export class ReturnsService {
 
         for (const [index, { line, item }] of lines.entries()) {
           const options = { allowNegative: true, coverageDays: settings.orderCoverageDays, allowTrashed: true };
-          await this.stock.registerInTransaction(
-            tx,
-            {
-              id: deterministicUuid(`return:${dto.id}:${index}`),
-              productId: item.productId,
-              type: MovementType.IN_SALE_RETURN,
-              quantity: line.quantity,
-              note: `${note} (devolução nº ${saleReturn.number})`,
-              source: MovementSource.PDV,
-              userId: user.id,
-            },
-            options,
-          );
-          // Produto avariado: entra e sai como perda (fica registrado no histórico e nos relatórios).
-          if (!line.restock) {
+          for (const [k, part] of expandKit(item, line.quantity).entries()) {
+            const suffix = part.kit ? `:${k}` : '';
             await this.stock.registerInTransaction(
               tx,
               {
-                id: deterministicUuid(`return-loss:${dto.id}:${index}`),
-                productId: item.productId,
-                type: MovementType.OUT_LOSS,
-                quantity: line.quantity,
-                note: `Avaria na devolução nº ${saleReturn.number}`,
+                id: deterministicUuid(`return:${dto.id}:${index}${suffix}`),
+                productId: part.productId,
+                type: MovementType.IN_SALE_RETURN,
+                quantity: part.quantity,
+                note: `${note} (devolução nº ${saleReturn.number})${part.kit ? ` · kit ${item.productName}` : ''}`,
                 source: MovementSource.PDV,
                 userId: user.id,
               },
               options,
             );
+            // Produto avariado: entra e sai como perda (fica registrado no histórico e nos relatórios).
+            if (!line.restock) {
+              await this.stock.registerInTransaction(
+                tx,
+                {
+                  id: deterministicUuid(`return-loss:${dto.id}:${index}${suffix}`),
+                  productId: part.productId,
+                  type: MovementType.OUT_LOSS,
+                  quantity: part.quantity,
+                  note: `Avaria na devolução nº ${saleReturn.number}`,
+                  source: MovementSource.PDV,
+                  userId: user.id,
+                },
+                options,
+              );
+            }
           }
         }
 

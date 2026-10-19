@@ -162,9 +162,13 @@ export function ProductsPage() {
                   {data?.items.map((product) => (
                     <tr key={product.id} className="cursor-pointer" onClick={() => navigate(`/produtos/${product.id}`)}>
                       <td>
-                        <p className="font-medium text-slate-900">{product.name}</p>
+                        <p className="font-medium text-slate-900">
+                          {product.name}
+                          {product.isKit && <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700">KIT</span>}
+                        </p>
                         <p className="text-xs text-slate-500">
                           {product.sku}
+                          {product.scaleCode && <span className="text-slate-400"> · balança {product.scaleCode}</span>}
                           {product.barcode && <span className="text-slate-400"> · {product.barcode}</span>}
                         </p>
                       </td>

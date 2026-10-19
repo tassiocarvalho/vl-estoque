@@ -36,8 +36,8 @@ async function refreshCatalogFromApi() {
   const items = [];
   for (let page = 1; ; page++) {
     const result = await http.get<Paginated<Product>>('/products', { page, pageSize: 100 });
-    items.push(...result.items.map(({ id, name, sku, barcode, unit, currentStock, status, salePrice }) => ({
-      id, name, sku, barcode, unit, currentStock, status, salePrice,
+    items.push(...result.items.map(({ id, name, sku, barcode, unit, currentStock, status, salePrice, scaleCode, isKit }) => ({
+      id, name, sku, barcode, unit, currentStock, status, salePrice, scaleCode, isKit,
     })));
     if (page * result.pageSize >= result.total) break;
   }

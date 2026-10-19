@@ -117,6 +117,10 @@ model Product {
   unit                 Unit
   /// Desligado: o produto não usa consumo/prazo, não tem ponto de pedido nem gera solicitação automática.
   replenishmentEnabled Boolean   @default(true)
+  /// Kit / combo: não tem estoque próprio; a venda baixa os itens que o compõem.
+  isKit                Boolean   @default(false)
+  /// Código do produto na balança (PLU), lido da etiqueta com peso ou preço embutido.
+  scaleCode            String?   @unique
   avgDailyConsumption  Decimal   @db.Decimal(12, 3)
   maxDailyConsumption  Decimal   @db.Decimal(12, 3)
   leadTimeDays         Int
@@ -143,11 +147,26 @@ model Product {
   suppliers        ProductSupplier[]
   invoiceItems     PurchaseInvoiceItem[]
   returnItems      SaleReturnItem[]
+  kitComponents    KitComponent[]        @relation("KitComponents")
+  usedInKits       KitComponent[]        @relation("KitComponentOf")
 
   @@index([deletedAt])
   @@index([name])
   @@index([categoryId])
   @@map("products")
+}
+
+/// Item que compõe um kit / combo (quantidade por kit).
+model KitComponent {
+  kitId       String  @db.Uuid
+  kit         Product @relation("KitComponents", fields: [kitId], references: [id], onDelete: Cascade)
+  componentId String  @db.Uuid
+  component   Product @relation("KitComponentOf", fields: [componentId], references: [id], onDelete: Restrict)
+  quantity    Decimal @db.Decimal(12, 3)
+
+  @@id([kitId, componentId])
+  @@index([componentId])
+  @@map("kit_components")
 }
 
 // ─── Movimentação de estoque (livro de registros imutável) ────────────────────
@@ -398,6 +417,8 @@ model SaleItem {
   discountValue Decimal?      @db.Decimal(12, 2)
   discount      Decimal       @db.Decimal(12, 2)
   total         Decimal       @db.Decimal(12, 2)
+  /// Kit vendido: composição no momento da venda ([{ productId, quantity }]), usada no cancelamento e na devolução.
+  kitComponents Json?
 
   returnItems SaleReturnItem[]
 

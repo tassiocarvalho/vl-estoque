@@ -23,6 +23,9 @@ export interface ProductInput {
   initialStock?: number;
   costPrice?: number;
   salePrice?: number;
+  scaleCode?: string | null;
+  isKit?: boolean;
+  components?: { productId: string; quantity: number }[];
 }
 
 /** Tudo que depende do saldo de estoque precisa ser recarregado após uma alteração. */

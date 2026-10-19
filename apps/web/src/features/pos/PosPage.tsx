@@ -482,7 +482,7 @@ export function PosPage() {
       <div className="grid min-h-0 flex-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_25rem]">
         {/* Esquerda: busca + itens */}
         <section className="flex min-h-0 flex-col gap-3">
-          <PosSearch ref={searchRef} onAdd={addProduct} onNavigate={(delta) => dispatch({ type: 'moveSelection', delta })} onNotFound={(message) => {
+          <PosSearch ref={searchRef} scale={printer.settings?.scale} onAdd={addProduct} onNavigate={(delta) => dispatch({ type: 'moveSelection', delta })} onNotFound={(message) => {
             beep('error');
             toast.error(message);
           }} />

@@ -24,7 +24,7 @@ const invoiceInclude = {
   items: {
     orderBy: { position: 'asc' },
     include: {
-      product: { select: { id: true, name: true, sku: true, barcode: true, unit: true, costPrice: true, salePrice: true, deletedAt: true } },
+      product: { select: { id: true, name: true, sku: true, barcode: true, unit: true, costPrice: true, salePrice: true, deletedAt: true, isKit: true } },
     },
   },
   payables: {
@@ -256,6 +256,8 @@ export class InvoicesService {
     if (invoice.items.length === 0) throw badRequest('A nota não tem itens');
     const pending = invoice.items.find((item) => !item.productId || !item.product || item.product.deletedAt);
     if (pending) throw badRequest(`Associe o item ${pending.position} ("${pending.description}") a um produto do cadastro`);
+    const kit = invoice.items.find((item) => item.product?.isKit);
+    if (kit) throw badRequest(`Item ${kit.position}: "${kit.product!.name}" é um kit. Lance a entrada dos produtos que o compõem.`);
 
     const { totalCents } = invoiceTotals(invoice);
     if (invoice.declaredTotal !== null && Math.abs(toCents(toNumber(invoice.declaredTotal)) - totalCents) > 1) {
