@@ -21,6 +21,7 @@ export interface CustomerInput {
   consentChannel?: string;
   marketingConsent?: boolean;
   active?: boolean;
+  creditLimit?: number;
 }
 
 export const useCustomers = (filters: CustomerFilters, enabled = true) =>

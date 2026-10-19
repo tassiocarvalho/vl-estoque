@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Ban, FileDown, Printer } from 'lucide-react';
+import { Ban, FileDown, Printer, Undo2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/Display';
@@ -9,9 +9,10 @@ import { Modal } from '@/components/ui/Modal';
 import { errorMessage, http, isCanceled } from '@/lib/api';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 import { formatDocument } from '@/lib/document';
-import { UNIT_SHORT } from '@/lib/labels';
+import { REFUND_METHOD_LABELS, UNIT_SHORT } from '@/lib/labels';
 import type { Sale } from '@/lib/types';
 import { invalidateSalesData } from '../pos/api';
+import { ReturnModal } from '../pos/components/ReturnModal';
 import { usePrinter } from '../printing/usePrinter';
 
 export const saleNumberLabel = (sale: Sale) => `Nº ${String(sale.number).padStart(6, '0')}`;
@@ -29,9 +30,19 @@ export function SaleStatusBadge({ sale }: { sale: Sale }) {
 }
 
 /** Detalhe de uma venda: itens, pagamentos, reimpressão (2ª via), PDF e cancelamento com estorno. */
-export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose: () => void }) {
+export function SaleDetailModal({
+  sale,
+  onClose,
+  returnSessionId,
+}: {
+  sale: Sale | null;
+  onClose: () => void;
+  /** Caixa aberto onde a devolução será feita (permite devolver em dinheiro). */
+  returnSessionId?: string;
+}) {
   const queryClient = useQueryClient();
-  const { printSale, pdf } = usePrinter();
+  const { printSale, printReturn, pdf } = usePrinter();
+  const [returning, setReturning] = useState(false);
   const [current, setCurrent] = useState<Sale | null>(sale);
   const [canceling, setCanceling] = useState(false);
   const [reason, setReason] = useState('');
@@ -44,7 +55,9 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
   }, [sale]);
 
   if (!current) return null;
-  const cancelable = current.status === 'COMPLETED' && current.session.status === 'OPEN';
+  const hasReturns = Boolean(current.returns?.length);
+  const cancelable = current.status === 'COMPLETED' && current.session.status === 'OPEN' && !hasReturns;
+  const returnable = current.status === 'COMPLETED' && current.number > 0 && current.items.some((i) => (i.returnedQuantity ?? 0) < i.quantity);
 
   const cancel = async (event: FormEvent) => {
     event.preventDefault();
@@ -64,8 +77,9 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
   };
 
   return (
+    <>
     <Modal
-      open={Boolean(sale)}
+      open={Boolean(sale) && !returning}
       onClose={onClose}
       size="lg"
       title={`Venda ${saleNumberLabel(current)}`}
@@ -76,6 +90,11 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
             {cancelable && (
               <Button variant="outline" className="mr-auto text-red-600" icon={<Ban className="size-4" />} onClick={() => setCanceling(true)}>
                 Cancelar venda
+              </Button>
+            )}
+            {returnable && (
+              <Button variant="outline" className={cancelable ? '' : 'mr-auto'} icon={<Undo2 className="size-4" />} onClick={() => setReturning(true)}>
+                Troca / devolução
               </Button>
             )}
             <Button variant="outline" icon={<FileDown className="size-4" />} onClick={() => void pdf.sale(current)}>
@@ -127,6 +146,7 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
                   </td>
                   <td className="text-right tabular-nums">
                     {formatNumber(item.quantity)} {UNIT_SHORT[item.unit]}
+                    {(item.returnedQuantity ?? 0) > 0 && <p className="text-xs text-amber-700">devolvido {formatNumber(item.returnedQuantity!)}</p>}
                   </td>
                   <td className="text-right tabular-nums">{formatMoney(item.unitPrice)}</td>
                   <td className="text-right font-medium tabular-nums">{formatMoney(item.total)}</td>
@@ -139,7 +159,11 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
           <dl className="space-y-1 text-sm">
             {current.payments.map((p, index) => (
               <div key={index} className="flex justify-between">
-                <dt className="text-slate-500">{p.name}</dt>
+                <dt className="text-slate-500">
+                  {p.name}
+                  {p.storeCreditCode && <span className="ml-1 font-mono text-xs">{p.storeCreditCode}</span>}
+                  {p.installments && p.installments > 1 && <span className="ml-1 text-xs">({p.installments}x)</span>}
+                </dt>
                 <dd className="tabular-nums">{formatMoney(p.amount)}</dd>
               </div>
             ))}
@@ -168,6 +192,22 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
           </dl>
         </div>
 
+        {hasReturns && (
+          <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p className="font-medium">Devoluções desta venda</p>
+            <ul className="mt-1 space-y-0.5">
+              {current.returns!.map((r) => (
+                <li key={r.id} className="flex justify-between gap-2">
+                  <span>
+                    nº {r.number} · {formatDateTime(r.createdAt)} · {REFUND_METHOD_LABELS[r.refundMethod]}
+                  </span>
+                  <span className="tabular-nums">−{formatMoney(r.total)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {canceling && (
           <form onSubmit={cancel} className="space-y-3 rounded-xl border border-red-200 bg-red-50/50 p-4">
             <Field label="Motivo do cancelamento" hint="Obrigatório. Os itens voltam para o estoque.">
@@ -185,5 +225,21 @@ export function SaleDetailModal({ sale, onClose }: { sale: Sale | null; onClose:
         )}
       </div>
     </Modal>
+    <ReturnModal
+      open={returning}
+      saleId={current.id}
+      sessionId={returnSessionId}
+      onClose={() => setReturning(false)}
+      onDone={(saleReturn) => {
+        setReturning(false);
+        invalidateSalesData(queryClient);
+        void printReturn(saleReturn);
+        toast.success(`Devolução nº ${saleReturn.number}: ${formatMoney(saleReturn.total)}`, {
+          description: saleReturn.storeCredit ? `Vale-troca ${saleReturn.storeCredit.code}` : saleReturn.refundMethodName ?? undefined,
+        });
+        void http.get<Sale>(`/sales/${current.id}`).then(setCurrent).catch(() => undefined);
+      }}
+    />
+    </>
   );
 }

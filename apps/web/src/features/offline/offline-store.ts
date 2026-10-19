@@ -37,7 +37,7 @@ export interface SalePayload {
   items: { productId: string; quantity: number; unitPrice: number; discount?: Discount }[];
   orderDiscount?: Discount;
   /** methodId: forma cadastrada. method: código de fábrica (vendas offline de versões anteriores). */
-  payments: { methodId?: string; method?: string; amount: number }[];
+  payments: { methodId?: string; method?: string; amount: number; storeCreditId?: string; installments?: number }[];
   customerId?: string;
   customerDocument?: string;
   removedItems?: { productId: string; name: string; quantity: number; at: string }[];

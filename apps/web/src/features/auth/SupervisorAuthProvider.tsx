@@ -20,6 +20,8 @@ const PERMISSION_LABELS: Record<string, string> = {
   'pos:discount': 'Desconto acima do limite',
   'pos:cancel': 'Cancelamento de venda',
   'cash:movement': 'Sangria / suprimento',
+  'pos:return': 'Troca / devolução',
+  'pos:credit': 'Fiado fora da regra (limite ou atraso)',
 };
 
 const SupervisorContext = createContext<((request: AuthorizationRequest) => Promise<Authorization | null>) | null>(null);

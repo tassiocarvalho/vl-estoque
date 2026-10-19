@@ -2,9 +2,19 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { errorMessage, http } from '@/lib/api';
-import type { CashMovement, CashSession, PaperSize, Sale, SystemSettings } from '@/lib/types';
+import type { CashMovement, CashSession, CustomerReceipt, PaperSize, Sale, SaleReturn, StoreCredit, SystemSettings } from '@/lib/types';
 import { useBranding } from '../branding/BrandingProvider';
-import { cashMovementDocument, cashReportDocument, quoteDocument, saleDocument, type PrintDocument, type QuoteData } from './document';
+import {
+  cashMovementDocument,
+  cashReportDocument,
+  quoteDocument,
+  receiptDocument,
+  returnDocument,
+  saleDocument,
+  voucherDocument,
+  type PrintDocument,
+  type QuoteData,
+} from './document';
 import { printHtml, renderHtml } from './render-html';
 import { downloadPdf } from './render-pdf';
 
@@ -72,6 +82,22 @@ export function usePrinter() {
     [branding, network, viaNetwork, browserPrint],
   );
 
+  /** Comprovantes do pós-venda: na impressora de rede vão como blocos; senão, pelo navegador. */
+  const printDocument = useCallback(
+    (doc: PrintDocument, options: { openDrawer?: boolean } = {}) =>
+      network ? viaNetwork('/printing/document', { title: doc.title, blocks: doc.blocks, openDrawer: options.openDrawer }, doc) : browserPrint(doc),
+    [network, viaNetwork, browserPrint],
+  );
+  const printReturn = useCallback(
+    (saleReturn: SaleReturn) => printDocument(returnDocument(saleReturn, branding, branding.logo), { openDrawer: saleReturn.refundMethod === 'CASH' }),
+    [branding, printDocument],
+  );
+  const printReceipt = useCallback(
+    (receipt: CustomerReceipt) => printDocument(receiptDocument(receipt, branding, branding.logo), { openDrawer: receipt.methodKind === 'CASH' }),
+    [branding, printDocument],
+  );
+  const printVoucher = useCallback((credit: StoreCredit) => printDocument(voucherDocument(credit, branding, branding.logo)), [branding, printDocument]);
+
   /** Orçamento sai em A4 (layout de pedido/orçamento). */
   const printQuote = useCallback((quote: QuoteData) => browserPrint(quoteDocument(quote, branding, branding.logo), 'A4'), [branding, browserPrint]);
 
@@ -80,8 +106,10 @@ export function usePrinter() {
       sale: (sale: Sale, format: PaperSize = 'A4') => downloadPdf(saleDocument(sale, branding, { logo: branding.logo }), format),
       quote: (quote: QuoteData) => downloadPdf(quoteDocument(quote, branding, branding.logo), 'A4'),
       cashReport: (session: CashSession) => downloadPdf(cashReportDocument(session, branding, branding.logo), 'A4'),
+      saleReturn: (saleReturn: SaleReturn) => downloadPdf(returnDocument(saleReturn, branding, branding.logo), paper),
+      receipt: (receipt: CustomerReceipt) => downloadPdf(receiptDocument(receipt, branding, branding.logo), paper),
     }),
-    [branding],
+    [branding, paper],
   );
 
   return {
@@ -93,6 +121,9 @@ export function usePrinter() {
     printCashReport,
     printCashMovement,
     printQuote,
+    printReturn,
+    printReceipt,
+    printVoucher,
     pdf,
     /** Abre a gaveta (só com impressora de rede; nas USB a gaveta abre pelo driver ao imprimir). */
     openDrawer: () => http.post('/printing/drawer'),

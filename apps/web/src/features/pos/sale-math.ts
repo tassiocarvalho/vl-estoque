@@ -59,6 +59,11 @@ export interface PaymentLine {
   amount: number;
   /** Cópia da regra da forma: aceita valor maior que o devido (troco). */
   allowsChange: boolean;
+  /** Vale-troca usado (formas de natureza "vale-troca"). */
+  storeCreditId?: string;
+  storeCreditCode?: string;
+  /** Parcelas do fiado. */
+  installments?: number;
 }
 
 /** Situação do pagamento enquanto o operador lança as formas (dinheiro + PIX, por exemplo). */

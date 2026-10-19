@@ -20,6 +20,8 @@ export const P = {
   POS_CANCEL: 'pos:cancel',
   CASH_MOVEMENT: 'cash:movement',
   SALES_READ: 'sales:read',
+  POS_RETURN: 'pos:return',
+  POS_CREDIT: 'pos:credit',
   CUSTOMER_READ: 'customer:read',
   CUSTOMER_WRITE: 'customer:write',
   CUSTOMER_MANAGE: 'customer:manage',

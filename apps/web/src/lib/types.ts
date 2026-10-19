@@ -8,6 +8,7 @@ export type MovementType =
   | 'IN_RETURN'
   | 'IN_ADJUSTMENT'
   | 'IN_SALE_CANCEL'
+  | 'IN_SALE_RETURN'
   | 'OUT_SALE'
   | 'OUT_LOSS'
   | 'OUT_ADJUSTMENT';
@@ -163,6 +164,17 @@ export interface PrinterSettings {
 export interface PosSettings {
   maxDiscountPercent: number;
   blockSaleWithoutStock: boolean;
+  /** Prazo (dias) para troca e devolução (0 = sem prazo). */
+  returnDays: number;
+  /** Validade do vale-troca em dias (0 = não vence). */
+  voucherValidityDays: number;
+}
+
+export interface CreditSettings {
+  firstDueDays: number;
+  intervalDays: number;
+  blockOverdue: boolean;
+  defaultLimit: number;
 }
 
 export interface CompanyInfo {
@@ -196,6 +208,7 @@ export interface SystemSettings {
   store: StoreBranding;
   printer: PrinterSettings;
   pos: PosSettings;
+  credit: CreditSettings;
 }
 
 export interface Dashboard {
@@ -242,7 +255,7 @@ export interface AuditLog {
 // ─── Frente de caixa ──────────────────────────────────────────────────────────
 
 /** Natureza da forma de pagamento (as formas em si são configuráveis). */
-export type PaymentKind = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'VOUCHER' | 'CHECK' | 'OTHER';
+export type PaymentKind = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'VOUCHER' | 'CHECK' | 'OTHER' | 'STORE_CREDIT' | 'ON_ACCOUNT';
 
 export interface PaymentMethod {
   id: string;
@@ -265,6 +278,10 @@ export interface SalePaymentLine {
   name: string;
   kind: PaymentKind;
   amount: number;
+  /** Vale-troca usado neste pagamento. */
+  storeCreditCode?: string | null;
+  /** Parcelas do fiado. */
+  installments?: number | null;
 }
 
 export interface MethodTotal {
@@ -287,6 +304,8 @@ export interface Customer {
   consentAt: string | null;
   consentChannel: string | null;
   marketingConsent: boolean;
+  /** Limite do fiado (0 = não liberado). */
+  creditLimit: number;
   anonymizedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -313,6 +332,13 @@ export interface CashSummary {
   cashSales: number;
   supplies: number;
   withdrawals: number;
+  receiptsCount: number;
+  receiptsTotal: number;
+  receiptMethods: MethodTotal[];
+  cashReceipts: number;
+  returnsCount: number;
+  returnsTotal: number;
+  cashRefunds: number;
   expectedCash: number;
 }
 
@@ -372,6 +398,8 @@ export interface SaleItem {
   discountValue: number | null;
   discount: number;
   total: number;
+  /** Quantidade já devolvida (trocas e devoluções). */
+  returnedQuantity?: number;
 }
 
 export interface Sale {
@@ -398,6 +426,7 @@ export interface Sale {
   cancelReason: string | null;
   items: SaleItem[];
   payments: SalePaymentLine[];
+  returns?: { id: string; number: number; total: number; refundMethod: RefundMethod; createdAt: string }[];
 }
 
 export interface SalesReport {
@@ -409,6 +438,9 @@ export interface SalesReport {
     discounts: number;
     net: number;
     averageTicket: number;
+    returnsCount?: number;
+    returns?: number;
+    netAfterReturns?: number;
     cost: number;
     margin: number;
   };
@@ -581,4 +613,135 @@ export interface PayablesSummary {
   today: AmountCount;
   next7: AmountCount;
   open: AmountCount;
+}
+
+// ─── Pós-venda: devolução, vale-troca e fiado ─────────────────────────────────
+
+export type RefundMethod = 'CASH' | 'ORIGINAL' | 'STORE_CREDIT' | 'ACCOUNT';
+
+export interface ReturnPreview {
+  sale: {
+    id: string;
+    number: number;
+    status: SaleStatus;
+    occurredAt: string;
+    total: number;
+    customer: { id: string; name: string } | null;
+    payments: { name: string; kind: PaymentKind; amount: number }[];
+  };
+  daysSinceSale: number;
+  deadlineDays: number;
+  withinDeadline: boolean;
+  items: {
+    saleItemId: string;
+    productId: string;
+    productName: string;
+    unit: Unit;
+    soldQuantity: number;
+    returnedQuantity: number;
+    returnableQuantity: number;
+    paidTotal: number;
+    refundableRemaining: number;
+  }[];
+  previousReturns: { id: string; number: number; total: number; refundMethod: RefundMethod; createdAt: string }[];
+  refundOptions: { cash: boolean; original: string | null; storeCredit: boolean; account: number | null };
+}
+
+export interface SaleReturn {
+  id: string;
+  number: number;
+  sale: { id: string; number: number; occurredAt: string };
+  session: { id: string; terminal: string } | null;
+  customer: { id: string; name: string } | null;
+  user: { id: string; name: string };
+  authorizedBy: { id: string; name: string } | null;
+  reason: string;
+  refundMethod: RefundMethod;
+  refundMethodName: string | null;
+  total: number;
+  storeCredit: { id: string; code: string; amount: number; balance: number; expiresAt: string | null } | null;
+  createdAt: string;
+  items: { id: string; saleItemId: string; productId: string; productName: string; unit: Unit; quantity: number; amount: number; restock: boolean }[];
+}
+
+export type StoreCreditStatus = 'ACTIVE' | 'USED' | 'EXPIRED' | 'CANCELED';
+
+export interface StoreCredit {
+  id: string;
+  code: string;
+  customer: { id: string; name: string } | null;
+  amount: number;
+  balance: number;
+  expiresAt: string | null;
+  note: string | null;
+  createdAt: string;
+  canceledAt: string | null;
+  status: StoreCreditStatus;
+  origin: { returnId: string; returnNumber: number; saleNumber: number } | null;
+  entries: { id: string; type: 'ISSUE' | 'REDEEM' | 'REVERSAL' | 'CANCEL'; amount: number; saleId: string | null; createdAt: string }[];
+}
+
+export type ReceivableStatus = 'OPEN' | 'PAID' | 'CANCELED';
+
+export interface Receivable {
+  id: string;
+  customer: { id: string; name: string; phone: string | null };
+  sale: { id: string; number: number } | null;
+  description: string;
+  installment: number;
+  installments: number;
+  dueDate: string;
+  amount: number;
+  paidAmount: number;
+  balance: number;
+  status: ReceivableStatus;
+  overdue: boolean;
+  daysOverdue: number;
+  paidAt: string | null;
+  canceledAt: string | null;
+  createdAt: string;
+}
+
+export interface CreditInfo {
+  customerId: string;
+  limit: number;
+  open: number;
+  overdue: number;
+  overdueCount: number;
+  oldestOverdue: string | null;
+  available: number;
+  storeCredit: { count: number; balance: number };
+  installments: Receivable[];
+}
+
+export interface CustomerReceipt {
+  id: string;
+  number: number;
+  customer: { id: string; name: string };
+  session: { id: string; terminal: string };
+  user: { id: string; name: string };
+  methodId: string;
+  methodName: string;
+  methodKind: PaymentKind;
+  amount: number;
+  received: number;
+  change: number;
+  occurredAt: string;
+  allocations: { receivableId: string; description: string; installment: number; installments: number; dueDate: string | null; amount: number }[];
+  balanceAfter: number | null;
+}
+
+export interface CustomerStatement {
+  credit: Omit<CreditInfo, 'installments'>;
+  receivables: Receivable[];
+  receipts: CustomerReceipt[];
+}
+
+export interface ReceivablesSummary {
+  open: number;
+  overdue: number;
+  customers: number;
+  overdueCustomers: number;
+  aging: { current: number; d1_30: number; d31_60: number; d61_90: number; d90: number };
+  debtors: { customer: { id: string; name: string; phone: string | null }; open: number; overdue: number; oldestDays: number }[];
 }

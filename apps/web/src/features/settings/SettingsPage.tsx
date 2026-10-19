@@ -92,6 +92,9 @@ export function SettingsPage() {
     setForm({ ...form, printer: { ...form.printer, [key]: value } });
   const pos = <K extends keyof SystemSettings['pos']>(key: K, value: SystemSettings['pos'][K]) =>
     setForm({ ...form, pos: { ...form.pos, [key]: value } });
+  const credit = <K extends keyof SystemSettings['credit']>(key: K, value: SystemSettings['credit'][K]) =>
+    setForm({ ...form, credit: { ...form.credit, [key]: value } });
+  const days = (value: string) => Math.max(0, Math.round(Number(value) || 0));
   const changed = JSON.stringify(form) !== JSON.stringify(data);
 
   const onLogo = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -278,6 +281,37 @@ export function SettingsPage() {
                 checked={form.pos.blockSaleWithoutStock}
                 onChange={(checked) => pos('blockSaleWithoutStock', checked)}
               />
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Trocas, vales e fiado" description="Regras da devolução, do vale-troca e do crediário" />
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <Field label="Prazo para troca (dias)" hint="Depois disso, só com o gerente. 0 = sem prazo.">
+                {(id) => <Input id={id} type="number" min={0} max={365} value={form.pos.returnDays} onChange={(e) => pos('returnDays', days(e.target.value))} />}
+              </Field>
+              <Field label="Validade do vale-troca (dias)" hint="0 = o vale não vence.">
+                {(id) => <Input id={id} type="number" min={0} max={3650} value={form.pos.voucherValidityDays} onChange={(e) => pos('voucherValidityDays', days(e.target.value))} />}
+              </Field>
+              <Field label="1º vencimento do fiado (dias)" hint="Contados a partir da compra.">
+                {(id) => <Input id={id} type="number" min={0} max={365} value={form.credit.firstDueDays} onChange={(e) => credit('firstDueDays', days(e.target.value))} />}
+              </Field>
+              <Field label="Dias entre as parcelas">
+                {(id) => <Input id={id} type="number" min={1} max={365} value={form.credit.intervalDays} onChange={(e) => credit('intervalDays', Math.max(1, days(e.target.value)))} />}
+              </Field>
+              <Field label="Limite de fiado para clientes novos (R$)" hint="0 = o gerente libera cliente por cliente." className="sm:col-span-2">
+                {(id) => (
+                  <Input id={id} type="number" min={0} step="10" value={form.credit.defaultLimit} onChange={(e) => credit('defaultLimit', Math.max(0, Number(e.target.value) || 0))} className="w-40" />
+                )}
+              </Field>
+              <div className="sm:col-span-2">
+                <Switch
+                  label="Bloquear fiado de cliente com parcela vencida"
+                  description="O gerente pode liberar a venda com o próprio PIN."
+                  checked={form.credit.blockOverdue}
+                  onChange={(checked) => credit('blockOverdue', checked)}
+                />
+              </div>
             </div>
           </Card>
 

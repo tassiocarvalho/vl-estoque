@@ -35,6 +35,7 @@ const SuppliersPage = page(() => import('./features/suppliers/SuppliersPage'), '
 const InvoicesPage = page(() => import('./features/invoices/InvoicesPage'), 'InvoicesPage');
 const InvoiceEditorPage = page(() => import('./features/invoices/InvoiceEditorPage'), 'InvoiceEditorPage');
 const PayablesPage = page(() => import('./features/finance/PayablesPage'), 'PayablesPage');
+const ReceivablesPage = page(() => import('./features/finance/ReceivablesPage'), 'ReceivablesPage');
 
 /** O operador de caixa cai direto na frente de caixa; os demais, no painel. */
 function Home() {
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
           { path: 'fornecedores', element: <RequirePermission permission={P.PURCHASE_READ}><SuppliersPage /></RequirePermission> },
           { path: 'notas-entrada', element: <RequirePermission permission={P.PURCHASE_READ}><InvoicesPage /></RequirePermission> },
           { path: 'notas-entrada/:id', element: <RequirePermission permission={P.PURCHASE_READ}><InvoiceEditorPage /></RequirePermission> },
+          { path: 'fiado', element: <RequirePermission permission={P.FINANCE_READ}><ReceivablesPage /></RequirePermission> },
           { path: 'contas-a-pagar', element: <RequirePermission permission={P.FINANCE_READ}><PayablesPage /></RequirePermission> },
           { path: 'relatorios', element: <RequirePermission permission={P.REPORT_READ}><ReportsPage /></RequirePermission> },
           { path: 'usuarios', element: <RequirePermission permission={P.USER_MANAGE}><UsersPage /></RequirePermission> },

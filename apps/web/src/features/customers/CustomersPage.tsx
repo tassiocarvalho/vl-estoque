@@ -16,6 +16,7 @@ import { useSales } from '../pos/api';
 import { SaleDetailModal, saleNumberLabel, SaleStatusBadge } from '../sales/SaleDetailModal';
 import { exportCustomer, useAnonymizeCustomer, useCustomer, useCustomers, useSaveCustomer } from './api';
 import { CustomerFormModal } from './CustomerFormModal';
+import { CustomerCreditPanel } from './CustomerCreditPanel';
 
 type Status = 'active' | 'inactive' | 'all';
 
@@ -261,6 +262,8 @@ function CustomerDetailModal({ id, onClose, onEdit }: { id: string | null; onClo
                 ))}
               </dl>
             )}
+
+            {!anonymized && <CustomerCreditPanel customerId={customer.id} limit={customer.creditLimit} />}
 
             {can(P.SALES_READ) && (
               <div>

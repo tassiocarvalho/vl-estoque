@@ -116,11 +116,13 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     return request<T>(path, { ...options, pin });
   }
 
-  const canAskAuthorization = requestAuthorization && !options.silent && !options.headers?.['X-Supervisor-Token'];
+  // Uma mesma ação pode precisar de mais de uma liberação (ex.: desconto e fiado): os tokens vão juntos.
+  const tokens = options.headers?.['X-Supervisor-Token']?.split(',').filter(Boolean) ?? [];
+  const canAskAuthorization = requestAuthorization && !options.silent && tokens.length < 3;
   if (code === 'AUTHORIZATION_REQUIRED' && canAskAuthorization) {
     const token = await requestAuthorization!({ permission: data?.permission, scope: data?.scope ?? null, message });
     if (!token) throw new ApiError(0, 'Operação cancelada', 'CANCELED');
-    return request<T>(path, { ...options, headers: { ...options.headers, 'X-Supervisor-Token': token } });
+    return request<T>(path, { ...options, headers: { ...options.headers, 'X-Supervisor-Token': [...tokens, token].join(',') } });
   }
 
   if (response.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/pin-login')) {

@@ -55,6 +55,7 @@ export function SessionSalesModal({ open, sessionId, onClose }: { open: boolean;
       </Modal>
       <SaleDetailModal
         sale={selected}
+        returnSessionId={sessionId}
         onClose={() => {
           setSelected(null);
           void refetch();

@@ -24,7 +24,7 @@ import { formatMoney, formatNumber, formatQuantity } from '@/lib/format';
 import { ROLE_LABELS, UNIT_SHORT } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { formatDocument } from '@/lib/document';
-import type { CashSession, Discount, Paginated, PaymentMethod, Sale } from '@/lib/types';
+import type { CashSession, Discount, Paginated, PaymentMethod, Sale, StoreCredit } from '@/lib/types';
 import { useAuth } from '../auth/AuthProvider';
 import { useSupervisorAuthorization } from '../auth/SupervisorAuthProvider';
 import { useBranding } from '../branding/BrandingProvider';
@@ -37,6 +37,9 @@ import { cartReducer, loadCart, saveCart, type CartState } from './cart';
 import { CashMovementModal, CloseCashModal, OpenCashScreen } from './components/CashModals';
 import { CustomerPickerModal } from './components/CustomerPickerModal';
 import { PaymentModal } from './components/PaymentModal';
+import { MoreActionsModal, ReceiptModal, VoucherModal } from './components/PostSaleModals';
+import { ReturnModal } from './components/ReturnModal';
+import { lookupCredit } from './post-sale-api';
 import { PosSearch } from './components/PosSearch';
 import { SessionSalesModal } from './components/SessionSalesModal';
 import { DiscountModal, QuantityModal, SwitchOperatorModal } from './components/SmallModals';
@@ -54,7 +57,11 @@ type ModalName =
   | 'quote'
   | 'cancelSale'
   | 'complete'
-  | 'customer';
+  | 'customer'
+  | 'more'
+  | 'return'
+  | 'receipt'
+  | 'voucher';
 
 /** Bipe curto do caixa (item lido) e bipe grave (erro). */
 function beep(kind: 'ok' | 'error') {
@@ -156,6 +163,8 @@ export function PosPage() {
   const [cart, dispatch] = useReducer(cartReducer, terminal, loadCart);
   const [modal, setModal] = useState<ModalName | null>(null);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  /** Vale gerado numa troca: entra sozinho como pagamento da próxima venda. */
+  const [exchangeCredit, setExchangeCredit] = useState<StoreCredit | null>(null);
   const [clock, setClock] = useState(() => new Date());
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -267,6 +276,7 @@ export function PosPage() {
 
   const completeSale = (sale: Sale, offline: boolean) => {
     dispatch({ type: 'reset' });
+    if (sale.payments.some((p) => p.storeCreditCode)) setExchangeCredit(null);
     setLastSale(sale);
     setModal('complete');
     invalidateSalesData(queryClient);
@@ -282,7 +292,7 @@ export function PosPage() {
       occurredAt: new Date().toISOString(),
       items: cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, discount: i.discount ?? undefined })),
       orderDiscount: cart.orderDiscount ?? undefined,
-      payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+      payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount, storeCreditId: p.storeCreditId, installments: p.installments })),
       customerId: cart.customer?.id,
       customerDocument: cart.customerDocument ?? undefined,
       removedItems: cart.removed.length ? cart.removed : undefined,
@@ -372,6 +382,7 @@ export function PosPage() {
       if (hasItems) return void toast.warning('Finalize ou cancele a venda atual antes de fechar o caixa');
       setModal('closeCash');
     },
+    F11: () => setModal('more'),
     Delete: removeSelected,
     Insert: () => setModal('customer'),
     Escape: () => hasItems && setModal('cancelSale'),
@@ -621,7 +632,18 @@ export function PosPage() {
             <Shortcut keyName="Del" label="Remover item" onClick={actions.Delete} disabled={!selected} tone="danger" />
             <Shortcut keyName="Esc" label="Cancelar venda" onClick={actions.Escape} disabled={!hasItems} tone="danger" />
             <Shortcut keyName="Ins" label="Cliente / CPF" onClick={actions.Insert} />
+            <Shortcut keyName="F11" label="Troca, fiado e vale" onClick={actions.F11} className="col-span-3" />
           </div>
+          {exchangeCredit && (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              <span>
+                Troca: vale <b>{exchangeCredit.code}</b> de {formatMoney(exchangeCredit.balance)} entra no pagamento
+              </span>
+              <button type="button" className="text-xs underline" onClick={() => setExchangeCredit(null)}>
+                Tirar
+              </button>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -632,10 +654,51 @@ export function PosPage() {
         open={modal === 'payment'}
         totalCents={totals.totalCents}
         methods={paymentMethods}
-        hasCustomer={Boolean(cart.customer)}
+        customer={cart.customer}
+        online={online}
+        presetCredit={exchangeCredit}
         onClose={closeModal}
         onConfirm={finalize}
       />
+      <MoreActionsModal open={modal === 'more'} online={online} onClose={closeModal} onChoose={(action) => setModal(action)} />
+      <ReturnModal
+        open={modal === 'return'}
+        sessionId={session.id}
+        onClose={closeModal}
+        onDone={(saleReturn, exchange) => {
+          invalidateSalesData(queryClient);
+          void queryClient.invalidateQueries({ queryKey: cashKey(terminal) });
+          void printer.printReturn(saleReturn);
+          toast.success(`Devolução nº ${saleReturn.number}: ${formatMoney(saleReturn.total)}`, {
+            description: saleReturn.storeCredit ? `Vale-troca ${saleReturn.storeCredit.code}` : saleReturn.refundMethodName ?? undefined,
+          });
+          if (exchange && saleReturn.storeCredit) {
+            void lookupCredit(saleReturn.storeCredit.code).then((credit) => {
+              setExchangeCredit(credit);
+              toast.info('Bipe os produtos da troca: o vale entra sozinho no pagamento.');
+            });
+          }
+          closeModal();
+        }}
+      />
+      <ReceiptModal
+        open={modal === 'receipt'}
+        sessionId={session.id}
+        methods={paymentMethods}
+        customer={cart.customer}
+        onClose={closeModal}
+        onDone={(receipt) => {
+          void queryClient.invalidateQueries({ queryKey: cashKey(terminal) });
+          void queryClient.invalidateQueries({ queryKey: ['customers'] });
+          void queryClient.invalidateQueries({ queryKey: ['receivables'] });
+          void printer.printReceipt(receipt);
+          toast.success(`Recebido ${formatMoney(receipt.amount)} de ${receipt.customer.name}`, {
+            description: receipt.change > 0 ? `Troco: ${formatMoney(receipt.change)}` : `Saldo devedor: ${formatMoney(receipt.balanceAfter ?? 0)}`,
+          });
+          closeModal();
+        }}
+      />
+      <VoucherModal open={modal === 'voucher'} onClose={closeModal} onPrint={(credit) => void printer.printVoucher(credit)} />
       <CustomerPickerModal
         open={modal === 'customer'}
         current={{ customer: cart.customer, document: cart.customerDocument }}

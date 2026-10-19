@@ -5,8 +5,8 @@
  */
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 import { formatDocument } from '@/lib/document';
-import { CASH_MOVEMENT_LABELS, NON_FISCAL_NOTICE, UNIT_SHORT } from '@/lib/labels';
-import type { CashMovement, CashSession, Sale, StoreBranding } from '@/lib/types';
+import { CASH_MOVEMENT_LABELS, NON_FISCAL_NOTICE, REFUND_METHOD_LABELS, UNIT_SHORT } from '@/lib/labels';
+import type { CashMovement, CashSession, CustomerReceipt, Sale, SaleReturn, StoreBranding, StoreCredit } from '@/lib/types';
 
 export type Block =
   | { kind: 'logo'; src: string }
@@ -82,8 +82,13 @@ export function saleDocument(sale: Sale, store: StoreBranding, options: { copy?:
   blocks.push({ kind: 'pair', left: 'TOTAL', right: formatMoney(sale.total), bold: true, large: true });
   for (const payment of sale.payments) {
     blocks.push({ kind: 'pair', left: payment.name, right: formatMoney(payment.amount) });
+    if (payment.storeCreditCode) blocks.push({ kind: 'text', text: `Vale ${payment.storeCreditCode}`, small: true });
+    if (payment.kind === 'ON_ACCOUNT' && payment.installments && payment.installments > 1) {
+      blocks.push({ kind: 'text', text: `Em ${payment.installments} parcelas de ${formatMoney(Math.round((payment.amount / payment.installments) * 100) / 100)}`, small: true });
+    }
   }
   if (sale.change > 0) blocks.push({ kind: 'pair', left: 'Troco', right: formatMoney(sale.change), bold: true });
+  if (sale.payments.some((p) => p.kind === 'ON_ACCOUNT')) blocks.push({ kind: 'space' }, { kind: 'signature', label: 'Assinatura do cliente (fiado)' });
   if (sale.status === 'CANCELED' && sale.cancelReason) {
     blocks.push({ kind: 'text', text: `Motivo do cancelamento: ${sale.cancelReason}`, small: true });
   }
@@ -146,9 +151,20 @@ export function cashReportDocument(session: CashSession, store: StoreBranding, l
     { kind: 'separator' },
     ...summary.methods.map((method): Block => ({ kind: 'pair', left: method.name, right: formatMoney(method.amount) })),
     { kind: 'separator' },
+    ...(summary.receiptsCount
+      ? [
+          { kind: 'separator' } as Block,
+          { kind: 'text', text: `Recebimentos de fiado (${summary.receiptsCount})`, bold: true } as Block,
+          ...summary.receiptMethods.map((m): Block => ({ kind: 'pair', left: m.name, right: formatMoney(m.amount) })),
+        ]
+      : []),
+    ...(summary.returnsCount ? [{ kind: 'pair', left: `Devoluções (${summary.returnsCount})`, right: formatMoney(summary.returnsTotal) } as Block] : []),
+    { kind: 'separator' },
     { kind: 'pair', left: 'Troco inicial', right: formatMoney(summary.openingAmount) },
     { kind: 'pair', left: 'Suprimentos', right: formatMoney(summary.supplies) },
     { kind: 'pair', left: 'Sangrias', right: `−${formatMoney(summary.withdrawals)}` },
+    ...(summary.cashReceipts ? [{ kind: 'pair', left: 'Fiado recebido em dinheiro', right: formatMoney(summary.cashReceipts) } as Block] : []),
+    ...(summary.cashRefunds ? [{ kind: 'pair', left: 'Devolvido em dinheiro', right: `−${formatMoney(summary.cashRefunds)}` } as Block] : []),
     { kind: 'pair', left: 'Dinheiro esperado', right: formatMoney(summary.expectedCash), bold: true },
   );
   if (closed && session.countedCash !== null) {
@@ -193,4 +209,80 @@ export function cashMovementDocument(
     { kind: 'signature', label: 'Assinatura' },
   );
   return { title: CASH_MOVEMENT_LABELS[movement.type], blocks: [...blocks, ...footer(store)] };
+}
+
+const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR');
+
+/** Bloco do vale-troca (código grande para o cliente apresentar na próxima compra). */
+function voucherBlocks(credit: { code: string; balance: number; expiresAt: string | null }, customer: string | null): Block[] {
+  return [
+    { kind: 'separator' },
+    { kind: 'text', text: 'VALE-TROCA', align: 'center', bold: true },
+    { kind: 'title', text: credit.code },
+    { kind: 'pair', left: 'Saldo', right: formatMoney(credit.balance), bold: true, large: true },
+    { kind: 'text', text: credit.expiresAt ? `Válido até ${day(credit.expiresAt)}` : 'Sem data de validade', align: 'center', small: true },
+    ...(customer ? [{ kind: 'text', text: `Cliente: ${customer}`, align: 'center', small: true } as Block] : []),
+    { kind: 'text', text: 'Apresente este código no caixa para usar o saldo.', align: 'center', small: true },
+  ];
+}
+
+/** Comprovante de troca/devolução (com o vale-troca, quando o reembolso for em crédito). */
+export function returnDocument(saleReturn: SaleReturn, store: StoreBranding, logo: string | null): PrintDocument {
+  const number = `Nº ${String(saleReturn.number).padStart(6, '0')}`;
+  const blocks = header(store, `COMPROVANTE DE DEVOLUÇÃO ${number}`, logo);
+  blocks.push(
+    { kind: 'text', text: `${formatDateTime(saleReturn.createdAt)}${saleReturn.session ? ` · ${saleReturn.session.terminal}` : ''}`, small: true },
+    { kind: 'text', text: `Venda de origem: Nº ${String(saleReturn.sale.number).padStart(6, '0')} (${formatDateTime(saleReturn.sale.occurredAt)})`, small: true },
+    { kind: 'text', text: `Operador: ${saleReturn.user.name}`, small: true },
+    ...(saleReturn.authorizedBy ? [{ kind: 'text', text: `Autorizado por: ${saleReturn.authorizedBy.name}`, small: true } as Block] : []),
+    ...(saleReturn.customer ? [{ kind: 'text', text: `Cliente: ${saleReturn.customer.name}`, small: true } as Block] : []),
+    { kind: 'separator' },
+    {
+      kind: 'items',
+      rows: saleReturn.items.map((item) => ({
+        description: item.productName,
+        detail: `${formatNumber(item.quantity)} ${UNIT_SHORT[item.unit]}${item.restock ? '' : ' (avariado)'}`,
+        total: formatMoney(item.amount),
+      })),
+    },
+    { kind: 'separator' },
+    { kind: 'pair', left: 'TOTAL DEVOLVIDO', right: formatMoney(saleReturn.total), bold: true, large: true },
+    { kind: 'pair', left: 'Reembolso', right: saleReturn.refundMethodName ?? REFUND_METHOD_LABELS[saleReturn.refundMethod] },
+    { kind: 'text', text: `Motivo: ${saleReturn.reason}`, small: true },
+  );
+  if (saleReturn.storeCredit) blocks.push(...voucherBlocks(saleReturn.storeCredit, saleReturn.customer?.name ?? null));
+  blocks.push({ kind: 'space' }, { kind: 'signature', label: 'Assinatura do cliente' });
+  return { title: `Devolução ${number}`, blocks: [...blocks, ...footer(store)] };
+}
+
+/** Segunda via / consulta do vale-troca. */
+export function voucherDocument(credit: StoreCredit, store: StoreBranding, logo: string | null): PrintDocument {
+  const blocks = header(store, 'VALE-TROCA', logo);
+  if (credit.origin) blocks.push({ kind: 'text', text: `Origem: devolução nº ${credit.origin.returnNumber} (venda nº ${credit.origin.saleNumber})`, small: true });
+  blocks.push(...voucherBlocks(credit, credit.customer?.name ?? null));
+  return { title: `Vale ${credit.code}`, blocks: [...blocks, ...footer(store)] };
+}
+
+/** Recibo do pagamento de fiado. */
+export function receiptDocument(receipt: CustomerReceipt, store: StoreBranding, logo: string | null): PrintDocument {
+  const number = `Nº ${String(receipt.number).padStart(6, '0')}`;
+  const blocks = header(store, `RECIBO DE PAGAMENTO ${number}`, logo);
+  blocks.push(
+    { kind: 'text', text: `${formatDateTime(receipt.occurredAt)} · ${receipt.session.terminal}`, small: true },
+    { kind: 'text', text: `Cliente: ${receipt.customer.name}`, bold: true },
+    { kind: 'text', text: `Recebido por: ${receipt.user.name}`, small: true },
+    { kind: 'separator' },
+    ...receipt.allocations.map((a): Block => ({
+      kind: 'pair',
+      left: `${a.description}${a.installments > 1 ? ` (${a.installment}/${a.installments})` : ''}${a.dueDate ? ` · venc. ${day(a.dueDate)}` : ''}`,
+      right: formatMoney(a.amount),
+    })),
+    { kind: 'separator' },
+    { kind: 'pair', left: 'VALOR PAGO', right: formatMoney(receipt.amount), bold: true, large: true },
+    { kind: 'pair', left: receipt.methodName, right: formatMoney(receipt.received) },
+  );
+  if (receipt.change > 0) blocks.push({ kind: 'pair', left: 'Troco', right: formatMoney(receipt.change), bold: true });
+  if (receipt.balanceAfter !== null) blocks.push({ kind: 'pair', left: 'Saldo devedor restante', right: formatMoney(receipt.balanceAfter) });
+  blocks.push({ kind: 'space' }, { kind: 'signature', label: 'Assinatura de quem recebeu' });
+  return { title: `Recibo ${number}`, blocks: [...blocks, ...footer(store)] };
 }

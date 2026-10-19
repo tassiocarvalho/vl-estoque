@@ -5,6 +5,7 @@ import type {
   PaymentKind,
   PurchaseInvoiceStatus,
   PurchaseRequestStatus,
+  RefundMethod,
   Role,
   StockStatus,
   Unit,
@@ -60,6 +61,7 @@ export const MOVEMENT_LABELS: Record<MovementType, string> = {
   IN_RETURN: 'Retorno ao estoque',
   IN_ADJUSTMENT: 'Ajuste (entrada)',
   IN_SALE_CANCEL: 'Estorno de venda cancelada',
+  IN_SALE_RETURN: 'Devolução de venda',
   OUT_SALE: 'Venda',
   OUT_LOSS: 'Perda / quebra / vencimento',
   OUT_ADJUSTMENT: 'Ajuste (saída)',
@@ -145,6 +147,11 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'payable.cancel': 'Cancelou conta a pagar',
   'payable.attach': 'Anexou comprovante de conta',
   'payable.detach': 'Removeu comprovante de conta',
+  'sale.return': 'Registrou troca/devolução',
+  'sale.credit-override': 'Fiado liberado pelo gerente',
+  'credit.receive': 'Recebeu fiado no caixa',
+  'credit.cancel': 'Cancelou parcela de fiado',
+  'store-credit.cancel': 'Cancelou vale-troca',
 };
 
 export const INVOICE_STATUS_LABELS: Record<PurchaseInvoiceStatus, string> = {
@@ -167,6 +174,15 @@ export const PAYMENT_KIND_LABELS: Record<PaymentKind, string> = {
   VOUCHER: 'Vale (alimentação, refeição...)',
   CHECK: 'Cheque',
   OTHER: 'Outros',
+  STORE_CREDIT: 'Vale-troca / crédito',
+  ON_ACCOUNT: 'Fiado / crediário',
+};
+
+export const REFUND_METHOD_LABELS: Record<RefundMethod, string> = {
+  CASH: 'Dinheiro',
+  ORIGINAL: 'Estorno na forma original',
+  STORE_CREDIT: 'Vale-troca',
+  ACCOUNT: 'Abatido do fiado',
 };
 
 /** Teclas das formas de pagamento no caixa (F5 é "confirmar"). */

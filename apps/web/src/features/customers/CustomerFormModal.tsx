@@ -6,6 +6,9 @@ import { Field, Input, Select, Switch, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { errorMessage } from '@/lib/api';
 import { formatDocument, formatPhone, isValidDocument } from '@/lib/document';
+import { formatInput, parseDecimal } from '@/lib/format';
+import { P } from '@/lib/permissions';
+import { useAuth } from '../auth/AuthProvider';
 import type { Customer } from '@/lib/types';
 import { useSaveCustomer, type CustomerInput } from './api';
 
@@ -27,6 +30,7 @@ interface FormState {
   consent: boolean;
   consentChannel: string;
   marketingConsent: boolean;
+  creditLimit: string;
 }
 
 const EMPTY: FormState = {
@@ -40,6 +44,7 @@ const EMPTY: FormState = {
   consent: false,
   consentChannel: 'balcao',
   marketingConsent: false,
+  creditLimit: '',
 };
 
 const fromCustomer = (c: Customer): FormState => ({
@@ -53,6 +58,7 @@ const fromCustomer = (c: Customer): FormState => ({
   consent: Boolean(c.consentAt),
   consentChannel: c.consentChannel ?? 'balcao',
   marketingConsent: c.marketingConsent,
+  creditLimit: c.creditLimit ? formatInput(c.creditLimit, 2) : '',
 });
 
 /**
@@ -76,6 +82,8 @@ export function CustomerFormModal({
   onSaved?: (customer: Customer) => void;
 }) {
   const save = useSaveCustomer();
+  const { can } = useAuth();
+  const canSetLimit = can(P.CUSTOMER_MANAGE) && !quick;
   const [form, setForm] = useState<FormState>(EMPTY);
   const [error, setError] = useState<string>();
 
@@ -96,6 +104,8 @@ export function CustomerFormModal({
     if (form.name.trim().length < 2) return setError('Informe o nome do cliente');
     if (documentInvalid) return setError('CPF/CNPJ inválido: confira os números');
     if (needsConsent) return setError('Marque a autorização do cliente para guardar os dados pessoais (LGPD)');
+    const limit = form.creditLimit.trim() ? parseDecimal(form.creditLimit, 2) : 0;
+    if (canSetLimit && (Number.isNaN(limit) || limit < 0)) return setError('Limite do fiado inválido');
     const data: CustomerInput = {
       name: form.name.trim(),
       document: documentDigits || null,
@@ -107,6 +117,7 @@ export function CustomerFormModal({
       consent: form.consent,
       consentChannel: form.consentChannel,
       marketingConsent: form.marketingConsent,
+      ...(canSetLimit && { creditLimit: limit }),
     };
     try {
       const saved = await save.mutateAsync({ id: customer?.id, data });
@@ -179,6 +190,11 @@ export function CustomerFormModal({
               <Field label="Observações" className="sm:col-span-2">
                 {(id) => <Textarea id={id} maxLength={500} value={form.notes} onChange={(e) => update('notes', e.target.value)} />}
               </Field>
+              {canSetLimit && (
+                <Field label="Limite do fiado (R$)" hint="0 ou vazio: o cliente não compra no fiado sem o gerente liberar">
+                  {(id) => <Input id={id} inputMode="decimal" placeholder="0,00" value={form.creditLimit} onChange={(e) => update('creditLimit', e.target.value)} />}
+                </Field>
+              )}
             </>
           )}
         </div>

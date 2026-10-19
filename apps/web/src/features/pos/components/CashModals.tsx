@@ -250,10 +250,24 @@ export function CloseCashModal({
             {session.summary.methods.map((m) => (
               <Line key={m.id} label={m.name} value={formatMoney(m.amount)} />
             ))}
+            {session.summary.receiptsCount > 0 && (
+              <>
+                <hr className="my-2 border-slate-200" />
+                <Line label={`Recebimentos de fiado (${session.summary.receiptsCount})`} value={formatMoney(session.summary.receiptsTotal)} strong />
+                {session.summary.receiptMethods.map((m) => (
+                  <Line key={m.id} label={m.name} value={formatMoney(m.amount)} />
+                ))}
+              </>
+            )}
+            {session.summary.returnsCount > 0 && (
+              <Line label={`Devoluções (${session.summary.returnsCount})`} value={`−${formatMoney(session.summary.returnsTotal)}`} />
+            )}
             <hr className="my-2 border-slate-200" />
             <Line label="Troco inicial" value={formatMoney(session.summary.openingAmount)} />
             <Line label="Suprimentos" value={formatMoney(session.summary.supplies)} />
             <Line label="Sangrias" value={`−${formatMoney(session.summary.withdrawals)}`} />
+            {session.summary.cashReceipts > 0 && <Line label="Fiado recebido em dinheiro" value={formatMoney(session.summary.cashReceipts)} />}
+            {session.summary.cashRefunds > 0 && <Line label="Devolvido em dinheiro" value={`−${formatMoney(session.summary.cashRefunds)}`} />}
             <Line label="Dinheiro esperado na gaveta" value={formatMoney(session.summary.expectedCash)} strong />
           </div>
           <div className="space-y-4">
