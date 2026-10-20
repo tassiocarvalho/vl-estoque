@@ -14,7 +14,8 @@ interface OfflineContextValue {
   syncing: boolean;
   enqueue: (movement: PendingMovement) => Promise<void>;
   enqueueSale: (sale: PendingSale) => Promise<void>;
-  sync: () => Promise<void>;
+  /** retryFailed: tenta de novo também o que deu erro antes (envio pedido pelo usuário). */
+  sync: (options?: { retryFailed?: boolean }) => Promise<void>;
   discard: (id: string) => Promise<void>;
   discardSale: (id: string) => Promise<void>;
   /** Atualiza a cópia local dos produtos (preços e saldos) usada sem internet. */
@@ -24,11 +25,12 @@ interface OfflineContextValue {
 const OfflineContext = createContext<OfflineContextValue | null>(null);
 
 /**
- * Recusas que dependem do usuário (termo de uso pendente, senha provisória), não da venda:
- * a fila espera e tenta de novo depois, em vez de marcar a venda com erro.
+ * Recusas que dependem da sessão (login expirado, termo de uso pendente, senha provisória), não da venda:
+ * a fila espera e tenta de novo depois do login, em vez de marcar a venda com erro.
  */
 const isPendingAccountStep = (error: unknown) =>
-  error instanceof ApiError && (error.code === 'TERMS_ACCEPTANCE_REQUIRED' || error.code === 'PASSWORD_CHANGE_REQUIRED');
+  error instanceof ApiError &&
+  (error.status === 401 || error.code === 'TERMS_ACCEPTANCE_REQUIRED' || error.code === 'PASSWORD_CHANGE_REQUIRED');
 const SYNC_INTERVAL_MS = 30_000;
 
 /** Baixa o catálogo completo de produtos para consulta offline. */
@@ -63,7 +65,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     setPendingSales(sales);
   }, []);
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async ({ retryFailed = false }: { retryFailed?: boolean } = {}) => {
     // Só envia com a conta liberada (termo aceito e senha definitiva).
     if (syncingRef.current || !user || user.mustChangePassword || !user.termsAccepted) return;
     syncingRef.current = true;
@@ -73,7 +75,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     try {
       // Vendas primeiro: são as que mexem no dinheiro do caixa.
       for (const sale of await salesOutbox.list()) {
-        if (sale.error) continue;
+        if (sale.error && !retryFailed) continue;
         try {
           await http.post('/sales', { ...sale.payload, offline: true }, {
             silent: true,
@@ -87,7 +89,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
         }
       }
       for (const item of await outbox.list()) {
-        if (item.error) continue; // erros de negócio aguardam decisão do usuário
+        if (item.error && !retryFailed) continue; // erros de negócio aguardam decisão do usuário
         try {
           await http.post(`/stock/${item.kind}`, item.payload);
           await outbox.remove(item.id);
@@ -125,7 +127,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    void reload().then(sync);
+    void reload().then(() => sync());
     if (user.permissions.includes('product:read')) void refreshCatalogFromApi().catch(() => undefined);
 
     const timer = setInterval(() => {

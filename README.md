@@ -94,7 +94,7 @@ A segunda fase (clientes, troca/devolução, vale-troca, fiado, compras com nota
 | 💳 **Formas de pagamento** | Configuráveis: dinheiro, PIX, cartões, vale-alimentação/refeição, vale-troca, fiado, cheque e outras, com regras de troco, exigência de cliente, taxa e prazo de recebimento |
 | 💵 **Caixa** | Abertura com troco inicial, sangria, suprimento, leitura parcial e fechamento com conferência (com recebimentos de fiado e devoluções em dinheiro) |
 | 🛡️ **Autorização do supervisor** | Desconto acima do limite, cancelamento, sangria, devolução e fiado fora do limite pedem usuário + PIN de um gerente |
-| 📴 **Venda offline** | Sem internet o caixa continua vendendo, e as vendas sobem sozinhas quando a conexão volta |
+| 📴 **Venda offline** | Sem internet (ou com o servidor fora do ar) o caixa continua vendendo, e as vendas sobem sozinhas quando a conexão volta. A tela **Aguardando envio** mostra o que está na fila, o motivo de cada erro e permite reenviar ou descartar |
 | 🧾 **Comprovantes** | Venda (no fiado, com parcelas e assinatura), orçamento, sangria, fechamento, devolução, vale-troca e recebimento: bobina de 80/58 mm, A4 ou PDF, com 2ª via |
 | 📈 **Vendas** | Relatório por período: total, ticket médio, descontos, devoluções, margem bruta, formas de pagamento, operadores e produtos mais vendidos. Exporta CSV |
 | 🚚 **Fornecedores** | Cadastro com CNPJ validado, prazo de entrega e condição de pagamento; produtos fornecidos com código no fornecedor, conversão, último custo e fornecedor preferido |
@@ -649,8 +649,13 @@ sequenceDiagram
         API-->>C: devolve a mesma venda (idempotente)
     else nova
         API-->>C: 201 · venda nº 000124 (baixa no estoque)
+    else login vencido (401), termo ou senha pendentes
+        API-->>C: a venda continua na fila e vai depois do login
+    else recusa de negócio (ex.: caixa fechado)
+        API-->>C: 4xx · a venda fica marcada com o motivo
+        O->>C: "Ver o motivo" · reenviar ou descartar
     end
-    C->>Q: Remove da fila
+    C->>Q: Remove da fila (quando enviada)
 ```
 
 ### Fechamento de caixa
@@ -762,7 +767,7 @@ stateDiagram-v2
 | Sangria | Justificativa obrigatória e não pode passar do dinheiro esperado na gaveta |
 | Preço | Online, o preço tem que ser o do cadastro (se mudou, o caixa pede para bipar de novo). Offline, vale o preço salvo no aparelho e a diferença vai para a auditoria |
 | Estoque | Por padrão o caixa vende mesmo com saldo zerado (o produto está na mão do cliente) e avisa. Há a opção de bloquear |
-| Vendas offline | Nunca são barradas por saldo e precisam ser enviadas antes do fechamento |
+| Vendas offline | Nunca são barradas por saldo e precisam ser enviadas antes do fechamento. Falha de rede, servidor fora do ar e login vencido só adiam o envio; recusas de negócio ficam marcadas com o motivo até o usuário reenviar ("Enviar agora" tenta de novo também as que deram erro) ou descartar |
 
 ### Pós-venda, fiado e balança
 

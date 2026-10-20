@@ -869,7 +869,14 @@ npm.cmd run setup</pre>
   <ul>
     <li>O <b>caixa continua vendendo</b>: o rodapé mostra <i>“Offline — vendendo neste computador”</i>, cada venda fica guardada no aparelho e o comprovante sai normalmente (o número aparece depois).</li>
     <li>Entradas e saídas de estoque também ficam guardadas.</li>
-    <li>Quando a conexão volta, tudo é <b>enviado sozinho, sem duplicar</b>.</li>
+    <li>Quando a conexão volta, tudo é <b>enviado sozinho, sem duplicar</b>. O mesmo vale se o computador principal ficou desligado ou fora do ar por um tempo.</li>
+  </ul>
+  <h3>Aguardando envio</h3>
+  <p>Enquanto houver algo na fila, uma faixa amarela no topo mostra <i>“N venda(s) aguardando envio”</i> (no caixa, o aviso fica no rodapé). Clique em <span class="ui">Detalhes</span> (ou no aviso do rodapé do caixa) para ver cada venda ou movimentação guardada: valor, data e situação.</p>
+  <ul>
+    <li><span class="ui">Enviar agora</span> (ou <span class="ui">Tentar enviar de novo</span>) envia na hora, inclusive o que tinha dado erro antes.</li>
+    <li>Se o <b>login venceu</b>, nada se perde: as vendas esperam e são enviadas depois que você entra de novo.</li>
+    <li>Se o servidor <b>recusou</b> um registro, ele aparece em vermelho com o <b>motivo</b> (ex.: caixa já fechado). Corrija a causa e reenvie, ou use o botão de lixeira para <b>descartar</b>. Descartar apaga o registro do aparelho e não pode ser desfeito: confira antes se a venda não precisa ser lançada de novo.</li>
   </ul>
   <div class="warn"><b>Precisa de conexão</b>Abrir e fechar o caixa, sangria e suprimento, cancelar vendas, autorização do gerente para descontos acima do limite, cadastro de cliente novo, <b>pagamento com vale-troca ou no fiado</b>, troca/devolução, recebimento de fiado e consulta de vale. O fechamento fica bloqueado enquanto houver vendas offline não enviadas.</div>
 </section>
@@ -889,6 +896,7 @@ npm.cmd run setup</pre>
     <tr><td>A forma de pagamento está apagada no caixa</td><td>Ela exige cliente: identifique-o com <kbd>Ins</kbd>.</td></tr>
     <tr><td>Desconto pede autorização</td><td>Passou do limite do operador: um gerente digita usuário e PIN.</td></tr>
     <tr><td>Não consigo fechar o caixa</td><td>Há vendas offline pendentes: verifique a conexão e clique em “aguardando envio” no rodapé.</td></tr>
+    <tr><td>“1 venda aguardando envio (1 com erro)”</td><td>Clique em <span class="ui">ver o motivo</span>. Se foi login vencido ou o servidor fora do ar, clique em <span class="ui">Enviar agora</span>; nas outras recusas, resolva a causa e reenvie, ou descarte (capítulo 20).</td></tr>
     <tr><td>Diferença no fechamento</td><td>Confira sangrias, suprimentos, trocos e se alguma venda foi lançada na forma errada (relatório do caixa).</td></tr>
     <tr><td>O comprovante sai cortado</td><td>Na janela de impressão, <i>Margens: nenhuma</i> e o papel da bobina.</td></tr>
     <tr><td>Registrei uma quantidade errada no estoque</td><td>O administrador faz um ajuste com a diferença; o histórico guarda as duas operações.</td></tr>

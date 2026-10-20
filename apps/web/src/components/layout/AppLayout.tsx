@@ -19,6 +19,7 @@ import { LoadingState } from '@/components/ui/Display';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useBranding } from '@/features/branding/BrandingProvider';
 import { useOffline } from '@/features/offline/OfflineProvider';
+import { PendingQueueModal } from '@/features/offline/PendingQueueModal';
 import { cn } from '@/lib/cn';
 import { ROLE_LABELS } from '@/lib/labels';
 import { MANUAL_URL } from '@/lib/manual';
@@ -237,6 +238,7 @@ function Sidebar({ onNavigate, onSearch, collapsed = false, onToggleCollapsed }:
 
 export function ConnectionBar() {
   const { online, pending, pendingSales, syncing, sync } = useOffline();
+  const [details, setDetails] = useState(false);
   const failed = pending.filter((p) => p.error).length + pendingSales.filter((s) => s.error).length;
   const waiting = pending.length + pendingSales.length;
   if (online && waiting === 0) return null;
@@ -262,14 +264,22 @@ export function ConnectionBar() {
             .filter(Boolean)
             .join(' e ')}{' '}
           aguardando envio
-          {failed > 0 && <strong className="text-red-600">({failed} com erro)</strong>}
+          {failed > 0 && (
+            <button type="button" onClick={() => setDetails(true)} className="font-bold text-red-600 underline">
+              ({failed} com erro — ver o motivo)
+            </button>
+          )}
           {online && (
-            <button onClick={() => void sync()} className="inline-flex items-center gap-1 font-medium underline">
+            <button onClick={() => void sync({ retryFailed: true })} className="inline-flex items-center gap-1 font-medium underline">
               <RefreshCw className={cn('size-3.5', syncing && 'animate-spin')} /> Enviar agora
             </button>
           )}
+          <button type="button" onClick={() => setDetails(true)} className="font-medium underline">
+            Detalhes
+          </button>
         </span>
       )}
+      <PendingQueueModal open={details} onClose={() => setDetails(false)} />
     </div>
   );
 }

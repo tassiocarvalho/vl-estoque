@@ -30,6 +30,7 @@ import { useSupervisorAuthorization } from '../auth/SupervisorAuthProvider';
 import { useBranding } from '../branding/BrandingProvider';
 import { customersCache, type CachedCustomer, type CatalogItem, type SalePayload } from '../offline/offline-store';
 import { useOffline } from '../offline/OfflineProvider';
+import { PendingQueueModal } from '../offline/PendingQueueModal';
 import { usePaymentMethods } from '../payment-methods/api';
 import { usePrinter } from '../printing/usePrinter';
 import { cashKey, invalidateSalesData, readTerminal, saveTerminal, useCurrentCash } from './api';
@@ -154,7 +155,7 @@ export function PosPage() {
   const queryClient = useQueryClient();
   const { user, can, loginWithPin } = useAuth();
   const { branding, logo } = useBranding();
-  const { online, pendingSales, enqueueSale, sync, refreshCatalog } = useOffline();
+  const { online, pendingSales, enqueueSale, refreshCatalog } = useOffline();
   const requestAuthorization = useSupervisorAuthorization();
   const printer = usePrinter();
   const { data: paymentMethods = [] } = usePaymentMethods();
@@ -166,6 +167,7 @@ export function PosPage() {
   /** Vale gerado numa troca: entra sozinho como pagamento da próxima venda. */
   const [exchangeCredit, setExchangeCredit] = useState<StoreCredit | null>(null);
   const [clock, setClock] = useState(() => new Date());
+  const [queueOpen, setQueueOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const posSettings = printer.settings?.pos ?? { maxDiscountPercent: 0, blockSaleWithoutStock: false };
@@ -455,11 +457,12 @@ export function PosPage() {
         {online ? 'Online' : 'Offline — vendendo neste computador'}
       </span>
       {pendingSales.length > 0 && (
-        <button type="button" onClick={() => void sync()} className="font-medium text-amber-800 underline">
-          {pendingSales.length} venda(s) aguardando envio
+        <button type="button" onClick={() => setQueueOpen(true)} className={cn('font-medium underline', pendingSales.some((s) => s.error) ? 'text-red-600' : 'text-amber-800')}>
+          {pendingSales.length} venda(s) aguardando envio{pendingSales.some((s) => s.error) && ' (com erro)'}
         </button>
       )}
       <span className="ml-auto tabular-nums">{clock.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+      <PendingQueueModal open={queueOpen} onClose={() => setQueueOpen(false)} />
     </footer>
   );
 
