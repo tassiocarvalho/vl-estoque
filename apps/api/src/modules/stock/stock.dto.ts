@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  MaxDate,
   MaxLength,
   Min,
   Max,
@@ -22,9 +21,6 @@ export const isEntry = (type: MovementType) => (ENTRY_TYPES as readonly Movement
 
 const trimOrUndefined = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() || undefined : value;
-
-/** Tolerância de relógio entre o dispositivo e o servidor. */
-const inNearFuture = () => new Date(Date.now() + 5 * 60_000);
 
 abstract class MovementDto {
   /** UUID gerado no dispositivo: torna o envio idempotente (reenvio offline não duplica). */
@@ -46,11 +42,13 @@ abstract class MovementDto {
   @MaxLength(200)
   note?: string;
 
-  /** Quando aconteceu (registros feitos offline chegam depois). */
+  /**
+   * Quando aconteceu (registros feitos offline chegam depois).
+   * Uma data no futuro (relógio do aparelho adiantado) é trocada pelo horário do servidor.
+   */
   @IsOptional()
   @Type(() => Date)
-  @IsDate()
-  @MaxDate(inNearFuture, { message: 'Data da movimentação no futuro' })
+  @IsDate({ message: 'Data da movimentação inválida' })
   occurredAt?: Date;
 }
 

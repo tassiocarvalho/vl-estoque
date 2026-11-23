@@ -53,12 +53,34 @@ export class StockService {
    * É idempotente pelo `id`: reenviar a mesma movimentação (ex.: sincronização offline) não duplica.
    */
   async register(command: RegisterMovementCommand) {
+    try {
+      return await this.registerOnce(command);
+    } catch (error) {
+      // Duas cópias do mesmo registro chegaram ao mesmo tempo (ex.: duas abas sincronizando a fila offline):
+      // a segunda esbarra na chave primária. Não é erro: a movimentação já foi gravada pela primeira.
+      if (command.id && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const existing = await this.findDuplicate(this.prisma, command.id);
+        if (existing) return existing;
+      }
+      throw error;
+    }
+  }
+
+  private async findDuplicate(db: Tx | PrismaService, id: string) {
+    const existing = await db.stockMovement.findUnique({ where: { id }, include: movementInclude });
+    return existing ? { movement: toMovementView(existing), purchaseRequestCreated: false, duplicated: true } : null;
+  }
+
+  private async registerOnce(command: RegisterMovementCommand) {
     const settings = await this.settings.get();
+    // Relógio do aparelho adiantado não pode recusar um registro feito offline: usa o horário do servidor.
+    const now = new Date();
+    const occurredAt = command.occurredAt && command.occurredAt < now ? command.occurredAt : now;
 
     return this.prisma.$transaction(async (tx) => {
       if (command.id) {
-        const existing = await tx.stockMovement.findUnique({ where: { id: command.id }, include: movementInclude });
-        if (existing) return { movement: toMovementView(existing), purchaseRequestCreated: false, duplicated: true };
+        const existing = await this.findDuplicate(tx, command.id);
+        if (existing) return existing;
       }
 
       const entry = isEntry(command.type);
@@ -75,7 +97,7 @@ export class StockService {
           note: command.note,
           source: command.source ?? MovementSource.APP,
           userId: command.userId,
-          occurredAt: command.occurredAt ?? new Date(),
+          occurredAt,
         },
         include: movementInclude,
       });

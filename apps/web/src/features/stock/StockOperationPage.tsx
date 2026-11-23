@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, CloudOff, Minus, Plus, Trash2, X, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, CloudOff, Minus, Plus, RotateCcw, Trash2, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { StockStatusBadge } from '@/components/StockStatusBadge';
@@ -11,8 +11,9 @@ import { cn } from '@/lib/cn';
 import { formatQuantity, uuid } from '@/lib/format';
 import { ENTRY_TYPES, EXIT_TYPES, MOVEMENT_LABELS, UNIT_SHORT } from '@/lib/labels';
 import type { MovementType, RegisterMovementResult } from '@/lib/types';
+import { useAuth } from '../auth/AuthProvider';
 import { useOffline } from '../offline/OfflineProvider';
-import type { CatalogItem } from '../offline/offline-store';
+import { belongsTo, type CatalogItem, type PendingMovement } from '../offline/offline-store';
 import { invalidateStockData } from '../products/api';
 import { ProductScanner } from './ProductScanner';
 
@@ -61,7 +62,8 @@ function readQuickMode() {
 export function StockOperationPage({ mode }: { mode: Mode }) {
   const config = CONFIG[mode];
   const queryClient = useQueryClient();
-  const { enqueue, pending, discard } = useOffline();
+  const { enqueue, pending, discard, retry } = useOffline();
+  const { user } = useAuth();
   const scannerRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState<CatalogItem | null>(null);
@@ -123,7 +125,14 @@ export function StockOperationPage({ mode }: { mode: Mode }) {
       resetForm();
     } catch (error) {
       if (isNetworkError(error)) {
-        await enqueue({ id: payload.id, kind: config.endpoint, payload, productName: target.name, unit: target.unit });
+        try {
+          await enqueue({ id: payload.id, kind: config.endpoint, payload, productName: target.name, unit: target.unit });
+        } catch {
+          toast.error('Sem conexão e não foi possível salvar o registro neste dispositivo', {
+            description: 'Anote a movimentação e registre de novo quando a internet voltar.',
+          });
+          return;
+        }
         setSession((list) => [{ ...record, offline: true }, ...list].slice(0, 15));
         toast.info('Sem conexão: registro salvo no dispositivo', {
           description: 'Ele será enviado automaticamente quando a internet voltar.',
@@ -161,6 +170,13 @@ export function StockOperationPage({ mode }: { mode: Mode }) {
   };
 
   const myPending = pending.filter((p) => p.kind === config.endpoint);
+
+  const confirmDiscard = (item: PendingMovement) => {
+    const ok = window.confirm(
+      `Descartar o registro de ${formatQuantity(item.payload.quantity, item.unit)} de "${item.productName}"? Ele não será enviado.`,
+    );
+    if (ok) void discard(item.id);
+  };
 
   return (
     <>
@@ -289,24 +305,38 @@ export function StockOperationPage({ mode }: { mode: Mode }) {
             <Card className="overflow-hidden border-amber-200">
               <CardHeader title="Aguardando envio" description="Registrados sem internet" />
               <ul className="divide-y divide-slate-100">
-                {myPending.map((item) => (
-                  <li key={item.id} className="flex items-start justify-between gap-3 px-5 py-3 text-sm">
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium text-slate-800">{item.productName}</span>
-                      <span className="text-xs text-slate-500">
-                        {MOVEMENT_LABELS[item.payload.type]} · {formatQuantity(item.payload.quantity, item.unit)}
+                {myPending.map((item) => {
+                  const ownedByOther = user !== null && !belongsTo(item, user.id);
+                  return (
+                    <li key={item.id} className="flex items-start justify-between gap-3 px-5 py-3 text-sm">
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-slate-800">{item.productName}</span>
+                        <span className="text-xs text-slate-500">
+                          {MOVEMENT_LABELS[item.payload.type]} · {formatQuantity(item.payload.quantity, item.unit)}
+                        </span>
+                        {ownedByOther && (
+                          <span className="block text-xs text-slate-500">
+                            Registrado por {item.userName ?? 'outro usuário'}: será enviado quando essa pessoa entrar neste
+                            dispositivo
+                          </span>
+                        )}
+                        {item.error && <span className="block text-xs font-medium text-red-600">{item.error}</span>}
                       </span>
-                      {item.error && <span className="block text-xs font-medium text-red-600">{item.error}</span>}
-                    </span>
-                    {item.error ? (
-                      <IconButton label="Descartar" onClick={() => void discard(item.id)}>
-                        <Trash2 className="size-4" />
-                      </IconButton>
-                    ) : (
-                      <CloudOff className="size-4 shrink-0 text-amber-500" />
-                    )}
-                  </li>
-                ))}
+                      {item.error && !ownedByOther ? (
+                        <span className="flex shrink-0 gap-1">
+                          <IconButton label="Tentar de novo" onClick={() => void retry(item.id)}>
+                            <RotateCcw className="size-4" />
+                          </IconButton>
+                          <IconButton label="Descartar" onClick={() => confirmDiscard(item)}>
+                            <Trash2 className="size-4" />
+                          </IconButton>
+                        </span>
+                      ) : (
+                        <CloudOff className="size-4 shrink-0 text-amber-500" />
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           )}
