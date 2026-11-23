@@ -171,7 +171,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function ConnectionBar() {
-  const { online, pending, syncing, sync } = useOffline();
+  const { online, pending, syncing, blocked, sync } = useOffline();
   const failed = pending.filter((p) => p.error).length;
   if (online && pending.length === 0) return null;
 
@@ -192,11 +192,18 @@ function ConnectionBar() {
           {pending.length} movimentação(ões) aguardando envio
           {failed > 0 && <strong className="text-red-600">({failed} com erro)</strong>}
           {online && (
-            <button onClick={() => void sync()} className="inline-flex items-center gap-1 font-medium underline">
-              <RefreshCw className={cn('size-3.5', syncing && 'animate-spin')} /> Enviar agora
+            <button
+              onClick={() => void sync()}
+              disabled={syncing}
+              className="inline-flex items-center gap-1 font-medium underline disabled:opacity-60"
+            >
+              <RefreshCw className={cn('size-3.5', syncing && 'animate-spin')} /> {syncing ? 'Enviando…' : 'Enviar agora'}
             </button>
           )}
         </span>
+      )}
+      {online && pending.length > 0 && blocked && !syncing && (
+        <span className="w-full text-center text-xs font-medium sm:w-auto">{blocked}</span>
       )}
     </div>
   );

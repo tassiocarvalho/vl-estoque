@@ -40,11 +40,24 @@ export const registerSessionExpiredHandler = (fn: (() => void) | null) => {
 
 type QueryValue = string | number | boolean | null | undefined;
 
+/**
+ * PIN compartilhado por várias requisições (ex.: envio da fila offline):
+ * o usuário confirma uma vez e o PIN vale para todos os registros daquele envio.
+ */
+export interface PinSession {
+  pin?: string;
+  /** false: não abre o diálogo de PIN; a requisição falha com PIN_REQUIRED. */
+  prompt?: boolean;
+  /** Texto mostrado no diálogo de PIN. */
+  reason?: string;
+}
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   query?: Record<string, QueryValue>;
   pin?: string;
+  pinSession?: PinSession;
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>) {
@@ -62,7 +75,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     'X-Requested-With': 'XMLHttpRequest',
   };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
-  if (options.pin) headers['X-Operation-Pin'] = options.pin;
+  const pin = options.pin ?? options.pinSession?.pin;
+  if (pin) headers['X-Operation-Pin'] = pin;
 
   let response: Response;
   try {
@@ -87,10 +101,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const code: string | undefined = data?.code;
 
   const pinProblem = code === 'PIN_REQUIRED' || (code === 'PIN_INVALID' && response.status === 403);
-  if (pinProblem && requestPin) {
-    const pin = await requestPin(code === 'PIN_INVALID' ? 'PIN incorreto. Tente novamente.' : undefined);
-    if (!pin) throw new ApiError(0, 'Operação cancelada', 'CANCELED');
-    return request<T>(path, { ...options, pin });
+  const session = options.pinSession;
+  if (pinProblem && requestPin && session?.prompt !== false) {
+    const typed = await requestPin(code === 'PIN_INVALID' ? 'PIN incorreto. Tente novamente.' : session?.reason);
+    if (!typed) throw new ApiError(0, 'Operação cancelada', 'CANCELED');
+    if (session) session.pin = typed;
+    return request<T>(path, { ...options, pin: typed });
   }
 
   if (response.status === 401 && !path.startsWith('/auth/login')) onSessionExpired?.();
@@ -99,7 +115,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export const http = {
   get: <T>(path: string, query?: Record<string, QueryValue>) => request<T>(path, { query }),
-  post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body: body ?? {} }),
+  post: <T>(path: string, body?: unknown, options?: { pinSession?: PinSession }) =>
+    request<T>(path, { method: 'POST', body: body ?? {}, pinSession: options?.pinSession }),
   patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body }),
   put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body }),
   delete: <T = void>(path: string) => request<T>(path, { method: 'DELETE' }),

@@ -16,7 +16,7 @@
     "dev": "concurrently -k -n banco,api,web -c blue,green,magenta \"npm run db -w @vl/api\" \"npm run dev -w @vl/api\" \"npm run dev -w @vl/web\"",
     "build": "npm run build -w @vl/web && npm run build -w @vl/api",
     "start": "concurrently -k -n banco,app -c blue,green \"npm run db -w @vl/api\" \"npm run start:prod -w @vl/api\"",
-    "test": "npm run test -w @vl/api",
+    "test": "npm run test -w @vl/api && npm run test -w @vl/web",
     "typecheck": "npm run typecheck -w @vl/api && npm run typecheck -w @vl/web",
     "desktop": "npm run build && npm run start -w @vl/desktop",
     "dist": "npm run manual && npm run dist -w @vl/desktop",
